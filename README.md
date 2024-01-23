@@ -8,6 +8,9 @@
     TOKEN=place_your_bot_token
     CLIENT_ID=bot_id
     GUILD_ID=discord_bot_development_server_id
+    DATABASE_CHANNEL_ID=bot_database_channel_id
+    BOT_ADMINS=a_comma-separated_and_space-free_list_of_discord_users_who_will_have_full_access_to_all_bot_commands
+    PREFIX=the_prefix_of_admin_commands // Default is _
     ```
 3. Install the dependecies
     ```bash
@@ -28,6 +31,7 @@ to deploy your commands, use once:
 ```bash
 $ DEPLOY=true npm run start
 ```
+~~or use command `deploy` on your bot (it is a admin command, use then with the bot prefix)~~ *(NOT WORKING)*
 
 ### Used Technologies:
 * Typescript

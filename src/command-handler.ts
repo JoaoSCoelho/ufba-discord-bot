@@ -3,49 +3,65 @@ import * as fs from 'fs';
 import Command from './classes/Command';
 import LocalClient from './classes/LocalClient';
 import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes } from 'discord.js';
+import AdminCommand from './classes/AdminCommand';
 
 const shouldDeploy = process.env.DEPLOY === 'true' ? true : false;
 const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
 export default async function commandHandler(client: LocalClient) {
-	const foldersPath = path.join(__dirname, 'commands');
-	const commandsFolder = fs.readdirSync(foldersPath);
+    const foldersPath = path.join(__dirname, 'commands');
+    const commandsFolder = fs.readdirSync(foldersPath);
 
-	for (const folder of commandsFolder) {
-		const commandsPath = path.join(foldersPath, folder);
-		const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
-		for (const file of commandFiles) {
-			const filePath = path.join(commandsPath, file);
-			const command: Command = (await import(filePath))?.default;
-			if ('data' in command && 'execute' in command) {
-				client.commands.set(command.data.name, command);
-				if (shouldDeploy) commands.push(command.data.toJSON());
-			} else {
-				console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-			}
-		}
-	}
-	shouldDeploy && deployCommands();
+    for (const folder of commandsFolder) {
+        const commandsPath = path.join(foldersPath, folder);
+        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
+        for (const file of commandFiles) {
+            const filePath = path.join(commandsPath, file);
+            const command: Command = (await import(filePath))?.default;
+            if ('data' in command && 'execute' in command) {
+                client.commands.set(command.data.name, command);
+                if (shouldDeploy) commands.push(command.data.toJSON());
+            } else {
+                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+            }
+        }
+    }
+    shouldDeploy && deployCommands(commands);
 }
 
-async function deployCommands() {
-	const rest = new REST().setToken(process.env.TOKEN!);
+export async function adminCommandHandler(client: LocalClient) {
+    const commandsPath = path.join(__dirname, 'admin-commands');
+    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
+    
+    for (const file of commandFiles) {
+        const filePath = path.join(commandsPath, file);
+        const command: AdminCommand = (await import(filePath))?.default;
+        if ('data' in command && 'execute' in command) {
+            client.adminCommands.set(command.data.name, command);
+        } else {
+            console.log(`[WARNING] The admin-command at ${filePath} is missing a required "data" or "execute" property.`);
+        }
+    }
+}
 
-	// and deploy your commands!
+export async function deployCommands(commands: RESTPostAPIChatInputApplicationCommandsJSONBody[]) {
+    const rest = new REST().setToken(process.env.TOKEN!);
 
-	try {
-		console.log(`Started refreshing ${commands.length} application (/) commands.`);
+    // and deploy your commands!
 
-		// The put method is used to fully refresh all commands in the guild with the current set
-		const data = await rest.put(
-			Routes.applicationGuildCommands(process.env.CLIENT_ID!, process.env.GUILD_ID!),
-			{ body: commands },
-		) as Command[];
+    try {
+        console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
-	} catch (error) {
-		// And of course, make sure you catch and log any errors!
-		console.error(error);
-	}
+        // The put method is used to fully refresh all commands in the guild with the current set
+        const data = await rest.put(
+            Routes.applicationGuildCommands(process.env.CLIENT_ID!, process.env.GUILD_ID!),
+            { body: commands },
+        ) as Command[];
+
+        console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+    } catch (error) {
+        // And of course, make sure you catch and log any errors!
+        console.error(error);
+    }
 
 }
