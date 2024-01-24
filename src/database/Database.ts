@@ -64,8 +64,8 @@ export default class Database extends EventEmitter {
                 haveShower: bathroomJson.haveShower,
                 createdBy: bathroomJson.createdBy,
                 localization: bathroomJson.localization,
-                mainImageId: bathroomJson.mainImageId,
-                imagesIds: bathroomJson.imagesIds
+                mainImageUrl: bathroomJson.mainImageUrl,
+                imagesUrls: bathroomJson.imagesUrls
             });
 
             this.bathroom.set(bathroom.id, bathroom);

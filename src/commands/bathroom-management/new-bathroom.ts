@@ -8,31 +8,31 @@ export default new Command(
         .setDescription('Creates a new bathroom in database')
         .setDefaultMemberPermissions(8)
         .addStringOption(
-            Command.commandOptions.bathroomManagement.campus
+            Command.commandOptions.bathroomManagement.campus()
                 .setRequired(true)
-        ) 
+        )
         .addStringOption(
-            Command.commandOptions.bathroomManagement.institute
+            Command.commandOptions.bathroomManagement.institute()
                 .setRequired(true)
         )
         .addIntegerOption(
-            Command.commandOptions.bathroomManagement.floor
+            Command.commandOptions.bathroomManagement.floor()
                 .setRequired(true)
         )
         .addBooleanOption(
-            Command.commandOptions.bathroomManagement.haveShower
+            Command.commandOptions.bathroomManagement.haveShower()
                 .setRequired(true)
         )
         .addStringOption(
-            Command.commandOptions.bathroomManagement.localization
+            Command.commandOptions.bathroomManagement.localization()
                 .setRequired(false)
         )
         .addAttachmentOption(
-            Command.commandOptions.bathroomManagement.images
+            Command.commandOptions.bathroomManagement.image()
                 .setRequired(false)
         ) as SlashCommandBuilder,
     async (interaction, client) => {
-        if (!client.admins.includes(interaction.user.id)) 
+        if (!client.admins.includes(interaction.user.id))
             return interaction.reply('You don\'t have autorization to do this!');
 
         const bathroom = new Bathroom(
@@ -45,7 +45,9 @@ export default new Command(
                 haveShower: interaction.options.get('have-shower')!.value as boolean,
                 createdBy: interaction.user.id,
                 institute: interaction.options.get('institute')!.value as string,
-                localization: interaction.options.get('localization')?.value as string,
+                localization: interaction.options.get('localization')?.value as string | undefined,
+                imagesUrls: interaction.options.get('image') ? [interaction.options.get('image')?.attachment.url] : undefined,
+                mainImageUrl: interaction.options.get('image')?.attachment.url,
             }
         );
 
