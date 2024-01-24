@@ -31,7 +31,7 @@ to deploy your commands, use once:
 ```bash
 $ DEPLOY=true npm run start
 ```
-~~or use command `deploy` on your bot (it is a admin command, use then with the bot prefix)~~ *(NOT WORKING)*
+or use command `deploy` on your bot (it is a admin command, use then with the bot prefix)
 
 ### Used Technologies:
 * Typescript

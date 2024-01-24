@@ -36,8 +36,8 @@ Clear a specific collection of the database
 | ---------- | ------ | -------------------------- | --------------------------------------------------- | -------- |
 | collection | string | 1                          | The name of the collection that you want to delete. | yes      |
 
-#### ~~/**deploy**~~
-\*_**ALERT**: This command is not working correctly at the moment_
+#### /**deploy**
 
-~~Deploy the bot commands to the discord API so that commands are visible in the interface.~~
+
+Deploy the bot commands to the discord API so that commands are visible in the interface.
 
