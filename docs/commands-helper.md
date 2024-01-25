@@ -36,6 +36,7 @@ Registers a new bathroom in the database.
 #### /**add-bathroom-images**
 
 Adds new images to a specific bathroom.
+
 \*The maximum quantity of images on a bathroom is 25
 
 ###### Options
