@@ -25,6 +25,14 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
         await this.database.edit(this.entityName, newEntity);
     }
 
+    async remove(entityId: string) {
+        if (!this.has(entityId)) throw new Error('There is not entity with this ID');
+
+        this.delete(entityId);
+
+        await this.database.remove(this.entityName, entityId);
+    }
+
     fetch() {
         return this.database.fetch<Entity>(this.entityName);
     }

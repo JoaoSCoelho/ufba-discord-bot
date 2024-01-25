@@ -82,6 +82,11 @@ export default class Database extends EventEmitter {
         this.emit('edit', entityName, newEntity);
     }
 
+    async remove(entityName: string, entityId: string) {
+        await this.updateInDiscord();
+        this.emit('remove', entityName, entityId);
+    }
+
     async updateInDiscord() {
         if (this.canUpdate) {
             const dbChannel = await this.getDbChannel();
