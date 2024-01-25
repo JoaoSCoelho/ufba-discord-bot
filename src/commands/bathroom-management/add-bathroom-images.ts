@@ -25,7 +25,10 @@ export default new Command(
                 .setRequired(false)
                 .setName('image-3')
         ) as SlashCommandBuilder,
+
+        
     async (interaction, client) => {
+        // Getting options
         const bathroomId = interaction.options.get('id')!.value as string;
         const image1Url = interaction.options.get('image-1')!.attachment.url;
         const image2Url = interaction.options.get('image-2')?.attachment.url;
@@ -36,6 +39,7 @@ export default new Command(
         
         const oldBathroom = client.database!.bathroom.get(bathroomId);
 
+        // Making verifications
         if (!oldBathroom) return interaction.reply('There is no bathroom with this ID');
         if (oldBathroom.imagesUrls.length >= Bathroom.imagesLimit) return interaction.reply('No more space for images in this bathroom');
 
@@ -44,7 +48,9 @@ export default new Command(
             imagesUrls.splice(-(oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit));
         }
             
+        // Editting the bathroom
 
+        // New instance of Bathroom with the new images
         const newBathroom = new Bathroom({
             ...oldBathroom,
             updatedAt: new Date(),

@@ -12,11 +12,14 @@ export default new Command(
         ) as SlashCommandBuilder,
 
 
+
     async (interaction, client) => {
         const collectorTime = 60000 * 5; // 5 minutes
         const bathroomId = interaction.options.get('id')!.value as string;
 
         const oldBathroom = client.database!.bathroom.get(bathroomId);
+
+        // Make some verifications
 
         if (!oldBathroom) return interaction.reply('There is no bathroom with this ID');
 
@@ -26,6 +29,8 @@ export default new Command(
         if (!oldBathroom.imagesUrls.length)
             return interaction.reply('Bathroom without images!');
 
+
+
         await interaction.reply({
             ephemeral: true,
             content: `${oldBathroom.imagesUrls.length} images urls found`
@@ -34,7 +39,9 @@ export default new Command(
         let remainingUrls = oldBathroom.imagesUrls;
         const imagesResponseCollectors: InteractionCollector<CollectedInteraction>[] = [];
 
+        // Sends each image with two buttons
         await Promise.all(oldBathroom.imagesUrls.map(async (imageUrl, index) => {
+            // Building each button 
             const cancelButton = new ButtonBuilder()
                 .setCustomId(`cancel-button-${index}`)
                 .setLabel('Cancelar')
@@ -49,6 +56,8 @@ export default new Command(
                 components: [cancelButton, deleteButton]
             });
 
+
+
             const imageResponse = await interaction.followUp({
                 ephemeral: true,
                 content: imageUrl,
@@ -57,11 +66,12 @@ export default new Command(
 
             const collector = imageResponse.createMessageComponentCollector({
                 filter: (i) => i.user.id === interaction.user.id,
-                time: collectorTime, // 5 minutes
+                time: collectorTime,
             });
 
             imagesResponseCollectors.push(collector);
 
+            // Manage when a image is selected or not
             collector.on('collect', async (i) => {
                 if (i.customId === `cancel-button-${index}`) {
                     row.components.splice(
@@ -88,6 +98,8 @@ export default new Command(
             });
         }));
 
+
+        // Bulding confirm and cancel button
         const cancelButton = new ButtonBuilder()
             .setCustomId('cancel-button')
             .setLabel('Cancel')
@@ -100,6 +112,9 @@ export default new Command(
         const row = new ActionRowBuilder<ButtonBuilder>()
             .setComponents(cancelButton, confirmButton);
 
+
+
+
         const confirmMessage = await interaction.followUp({
             content: 'Confirm here when are selected all images',
             ephemeral: true,
@@ -111,13 +126,16 @@ export default new Command(
             time: collectorTime,
         });
 
+        // Managing when the button is pressed
         confirmCollector.on('collect', async (i) => {
             if (i.customId === 'cancel-button') {
                 i.update({
                     content: 'Command canceled',
                     components: []
                 });
-            } else if (i.customId === 'confirm-button') {
+            } 
+            
+            else if (i.customId === 'confirm-button') {
                 if (oldBathroom.imagesUrls.length === remainingUrls.length) {
                     imagesResponseCollectors.forEach((collector) => collector.stop());
                     confirmCollector.stop();

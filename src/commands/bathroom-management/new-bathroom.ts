@@ -31,9 +31,11 @@ export default new Command(
             Command.commandOptions.bathroomManagement.image()
                 .setRequired(false)
         ) as SlashCommandBuilder,
+
+
+
     async (interaction, client) => {
-        if (!client.admins.includes(interaction.user.id))
-            return interaction.reply('You don\'t have autorization to do this!');
+        // Apply a rate limit by user here
 
         const bathroom = new Bathroom(
             {

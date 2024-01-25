@@ -37,7 +37,10 @@ export default new Command(
                 .setRequired(false)
         ) as SlashCommandBuilder,
 
+
+
     async (interaction, client) => {
+        // Getting options
         const options = {
             id: interaction.options.get('id')!.value as string,
             campus: interaction.options.get('campus')?.value as CampusValues | undefined,
@@ -50,6 +53,8 @@ export default new Command(
 
         const oldBathroom = client.database!.bathroom.get(options.id);
 
+        // Making some verifications
+
         if (!oldBathroom) return interaction.reply('There is no bathroom with this ID');
 
         if (interaction.user.id !== oldBathroom.createdBy && !client.admins.includes(interaction.user.id))
@@ -57,6 +62,9 @@ export default new Command(
 
         if (options.mainImageUrl && !oldBathroom.imagesUrls.includes(options.mainImageUrl))
             return interaction.reply('main-image-url is not a image from the bathroom. Use /add-bathroom-images before it');
+
+
+        // Edit the bathroom
 
         const newBathroom = new Bathroom({
             ...oldBathroom,
