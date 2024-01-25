@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 import Command from '../../classes/Command';
-import Bathroom, { CampusValues } from '../../classes/database/Bathroom';
+import Bathroom, { CampusValues, GenderValues } from '../../classes/database/Bathroom';
 
 export default new Command(
     new SlashCommandBuilder()
@@ -22,6 +22,22 @@ export default new Command(
         .addBooleanOption(
             Command.commandOptions.bathroomManagement.haveShower()
                 .setRequired(true)
+        )
+        .addBooleanOption(
+            Command.commandOptions.bathroomManagement.hasHandDryer()
+                .setRequired(true)
+        )
+        .addStringOption(
+            Command.commandOptions.bathroomManagement.gender()
+                .setRequired(false)
+        )
+        .addIntegerOption(
+            Command.commandOptions.bathroomManagement.cabins()
+                .setRequired(false)
+        )
+        .addIntegerOption(
+            Command.commandOptions.bathroomManagement.urinals()
+                .setRequired(false)
         )
         .addStringOption(
             Command.commandOptions.bathroomManagement.localization()
@@ -46,7 +62,11 @@ export default new Command(
                 floor: interaction.options.get('floor')!.value as number,
                 haveShower: interaction.options.get('have-shower')!.value as boolean,
                 createdBy: interaction.user.id,
+                hasHandDryer: interaction.options.get('has-hand-dryer')!.value as boolean,
                 institute: interaction.options.get('institute')!.value as string,
+                gender: interaction.options.get('gender')?.value as GenderValues | undefined,
+                cabins: interaction.options.get('cabins')?.value as number | undefined,
+                urinals: interaction.options.get('urinals')?.value as number | undefined,
                 localization: interaction.options.get('localization')?.value as string | undefined,
                 imagesUrls: interaction.options.get('image') ? [interaction.options.get('image')?.attachment.url] : undefined,
                 mainImageUrl: interaction.options.get('image')?.attachment.url,

@@ -1,6 +1,7 @@
 import Entity from './Entity';
 
 export type CampusValues = 'ONDINA' | 'FEDERACAO' | 'CANELA' | 'SAO_LAZARO' | 'VITORIA' | 'CAMACARI';
+export type GenderValues = 'MASCULINO' | 'FEMININO' | 'UNISSEX';
 
 export enum CampusNames {
     ONDINA='Ondina',
@@ -10,6 +11,11 @@ export enum CampusNames {
     VITORIA='Vitória da Conquista',
     CAMACARI='Camaçari'
 }
+export enum GenderNames {
+    MASCULINO='Masculino',
+    FEMININO='Feminino',
+    UNISSEX='Unissex'
+}
 
 export default class Bathroom extends Entity {
     public readonly campus: CampusValues;
@@ -17,13 +23,14 @@ export default class Bathroom extends Entity {
     public readonly floor: number;
     public readonly haveShower: boolean;
     public readonly createdBy: string;
+    public readonly hasHandDryer?: boolean;
+    public readonly gender?: GenderValues; 
+    public readonly cabins?: number;
+    public readonly urinals?: number;
     public localization?: string;
     public mainImageUrl?: string;
     public imagesUrls: string[];
-    // grade: number;
-    // cleaningGrade: number;
-    // cleaningNote?: string;
-    // hasPaper: boolean;
+    
     constructor(
         data: {
             id: string,
@@ -34,6 +41,10 @@ export default class Bathroom extends Entity {
             floor: number,
             haveShower: boolean,
             createdBy: string,
+            hasHandDryer?: boolean;
+            gender?: GenderValues;
+            cabins?: number;
+            urinals?: number;
             localization?: string,
             mainImageUrl?: string,
             imagesUrls?: string[],
@@ -46,6 +57,10 @@ export default class Bathroom extends Entity {
         this.floor = data.floor;
         this.haveShower = data.haveShower;
         this.createdBy = data.createdBy;
+        this.hasHandDryer = data.hasHandDryer;
+        this.gender = data.gender;
+        this.cabins = data.cabins;
+        this.urinals = data.urinals;
         this.localization = data.localization;
         this.mainImageUrl = data.mainImageUrl;
         this.imagesUrls = data.imagesUrls || [];

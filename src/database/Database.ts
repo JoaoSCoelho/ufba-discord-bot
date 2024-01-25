@@ -55,17 +55,9 @@ export default class Database extends EventEmitter {
         // Set the bathrooms at the cache
         data.bathroom.map(bathroomJson => {
             const bathroom = new Bathroom({
-                id: bathroomJson.id,
+                ...bathroomJson,
                 createdAt: new Date(bathroomJson.createdAt),
                 updatedAt: new Date(bathroomJson.updatedAt),
-                campus: bathroomJson.campus,
-                institute: bathroomJson.institute,
-                floor: bathroomJson.floor,
-                haveShower: bathroomJson.haveShower,
-                createdBy: bathroomJson.createdBy,
-                localization: bathroomJson.localization,
-                mainImageUrl: bathroomJson.mainImageUrl,
-                imagesUrls: bathroomJson.imagesUrls
             });
 
             this.bathroom.set(bathroom.id, bathroom);

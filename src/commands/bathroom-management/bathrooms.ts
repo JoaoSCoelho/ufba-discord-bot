@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder, SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
 import Command from '../../classes/Command';
-import { CampusNames } from '../../classes/database/Bathroom';
+import { CampusNames, GenderNames } from '../../classes/database/Bathroom';
 
 const data = new SlashCommandBuilder()
     .setName('bathrooms')
@@ -25,6 +25,22 @@ const data = new SlashCommandBuilder()
         Command.commandOptions.bathroomManagement.haveShower()
             .setRequired(false)
     )
+    .addBooleanOption(
+        Command.commandOptions.bathroomManagement.hasHandDryer()
+            .setRequired(false)
+    )
+    .addStringOption(
+        Command.commandOptions.bathroomManagement.gender()
+            .setRequired(false)
+    )
+    .addIntegerOption(
+        Command.commandOptions.bathroomManagement.cabins()
+            .setRequired(false)
+    )
+    .addIntegerOption(
+        Command.commandOptions.bathroomManagement.urinals()
+            .setRequired(false)
+    )
     .addUserOption(
         new SlashCommandUserOption()
             .setName('created-by')
@@ -47,6 +63,10 @@ export default new Command(
             institute: interaction.options.get('institute')?.value,
             floor: interaction.options.get('floor')?.value,
             haveShower: interaction.options.get('have-shower')?.value,
+            hasHandDryer: interaction.options.get('has-hand-dryer')?.value,
+            gender: interaction.options.get('gender')?.value,
+            cabins: interaction.options.get('cabins')?.value,
+            urinals: interaction.options.get('urinals')?.value,
             createdBy: interaction.options.get('created-by')?.value,
             haveImage: interaction.options.get('have-image')?.value ? true : false,
         };
@@ -57,6 +77,10 @@ export default new Command(
                 (filters.institute ? bathroom.institute === filters.institute : true) &&
                 (filters.floor ? bathroom.floor === filters.floor : true) &&
                 (filters.haveShower ? bathroom.haveShower === filters.haveShower : true) &&
+                (filters.hasHandDryer ? bathroom.hasHandDryer === filters.hasHandDryer : true) &&
+                (filters.gender ? bathroom.gender === filters.gender : true) &&
+                (filters.cabins ? bathroom.cabins === filters.cabins : true) &&
+                (filters.urinals ? bathroom.urinals === filters.urinals : true) &&
                 (filters.createdBy ? bathroom.createdBy === filters.createdBy : true) &&
                 (filters.haveImage ? bathroom.imagesUrls.length > 0 : true);
         });
@@ -80,12 +104,12 @@ export default new Command(
 
             if (bathroom.localization)
                 embedFields.push({
-                    name: 'Onde fica?',
+                    name: '🗺️ Onde fica?',
                     value: bathroom.localization
                 });
             if (bathroom.imagesUrls.length > 1)
                 embedFields.push({
-                    name: 'Imagens',
+                    name: '📸 Imagens',
                     value: bathroom.imagesUrls.reduce( // Put all images urls until 1024 characters, the ramaining will be substituted by a emoji
                         (prev, curr) => prev.length + curr.length > 1024 - (bathroom.imagesUrls.length * 4) ? `${prev} 🖼️` : `${prev} ${curr}`,
                         ''
@@ -93,8 +117,54 @@ export default new Command(
                 });
 
             return new EmbedBuilder({
-                title: `${bathroom.campus} - ${bathroom.institute} - ${bathroomFloorFormatted}`,
-                description: `🆔 **\`${bathroom.id}\`**\n🚿 Chuveiro? **${bathroom.haveShower ? 'Sim' : 'Não'}**\n📌 Campus: **${CampusNames[bathroom.campus]}**\n🏛️ Instituto: **${bathroom.institute}**\n🛗 Andar/Piso: **${bathroomFloorFormatted}**`,
+                title: [
+                    bathroom.gender &&
+                    (bathroom.gender === 'UNISSEX' ?
+                        '🚻' :
+                        bathroom.gender === 'MASCULINO' ?
+                            '🚹' :
+                            '🚺'),
+
+                    CampusNames[bathroom.campus],
+
+                    '-',
+
+                    bathroom.institute,
+
+                    '-',
+
+                    bathroomFloorFormatted
+                ].filter((t) => typeof t === 'string').join(' '),
+                description: [
+                    `🆔 **\`${bathroom.id}\`**`,
+
+                    bathroom.gender &&
+                    (bathroom.gender === 'UNISSEX' ?
+                        `🚾 **${GenderNames[bathroom.gender]}**` :
+                        bathroom.gender === 'FEMININO' ?
+                            `♀️ **${GenderNames[bathroom.gender]}**` :
+                            `♂️ **${GenderNames[bathroom.gender]}**`),
+
+                    `🚿 Chuveiro? **${bathroom.haveShower ? 'Sim' : 'Não'}**`,
+
+                    typeof bathroom.hasHandDryer === 'boolean' ?
+                        `🖐️ Secador de mãos? **${bathroom.hasHandDryer ? 'Sim' : 'Não'}**` :
+                        undefined,
+
+                    typeof bathroom.cabins === 'number' ?
+                        `🚽 Quantidade de cabines: **${bathroom.cabins}**` :
+                        undefined,
+
+                    (typeof bathroom.urinals === 'number' && bathroom.gender !== 'FEMININO') ?
+                        `🔫 Quantidade de mictórios: **${bathroom.urinals}**` :
+                        undefined,
+
+                    `📌 Campus: **${CampusNames[bathroom.campus]}**`,
+
+                    `🏛️ Instituto: **${bathroom.institute}**`,
+
+                    `🛗 Andar/Piso: **${bathroomFloorFormatted}**`
+                ].filter((t) => typeof t === 'string').join('\n'),
                 fields: embedFields,
                 author: {
                     name: embedAuthor.displayName,
@@ -104,7 +174,11 @@ export default new Command(
                 footer: {
                     text: `Ultima atualização em ${Intl.DateTimeFormat('pt-br', { dateStyle: 'long' }).format(bathroom.updatedAt)}`
                 },
-                color: Colors[Object.keys(Colors)[Math.round(Math.random() * (Object.values(Colors).length))]],
+                color: ['MASCULINO', 'FEMININO'].includes(bathroom.gender) ?
+                    bathroom.gender === 'MASCULINO' ?
+                        Colors.Blue :
+                        Colors.DarkVividPink :
+                    Colors.DarkGrey,
                 image: bathroom.mainImageUrl && { url: bathroom.mainImageUrl }
             });
         }));
@@ -117,42 +191,51 @@ export default new Command(
         }
 
         // Creates a new ButtonComponent, default disabled to show the current page that the user is navigating
-        function createCurrentPageButton() {
-            return new ButtonBuilder()
-                .setCustomId('current-page')
-                .setDisabled()
-                .setStyle(ButtonStyle.Secondary)
-                .setLabel(`${currentPage + 1} / ${paginatedEmbeds.length}`);
-        }
+        const createCurrentPageButton = () => new ButtonBuilder()
+            .setCustomId('current-page')
+            .setDisabled()
+            .setStyle(ButtonStyle.Secondary)
+            .setLabel(`${currentPage + 1} / ${paginatedEmbeds.length}`);
 
+        const createBackward10Button = () => new ButtonBuilder()
+            .setCustomId('backward-10')
+            .setLabel('10 <<')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(currentPage + 1 <= 2 ? true : false);
 
-        const rowComponents = new ActionRowBuilder<ButtonBuilder>()
+        const createBackwardButton = () => new ButtonBuilder()
+            .setCustomId('backward')
+            .setLabel('1 <<')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(currentPage + 1 === 1 ? true : false);
+
+        const createForwardButton = () => new ButtonBuilder()
+            .setCustomId('forward')
+            .setLabel('>> 1')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(currentPage + 1 === paginatedEmbeds.length);
+
+        const createForward10Button = () => new ButtonBuilder()
+            .setCustomId('forward-10')
+            .setLabel('>> 10')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(currentPage + 1 >= paginatedEmbeds.length - 1);
+
+        const rowComponents = () => new ActionRowBuilder<ButtonBuilder>()
             .setComponents(
-                new ButtonBuilder()
-                    .setCustomId('backward-10')
-                    .setLabel('10 <<')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('backward')
-                    .setLabel('1 <<')
-                    .setStyle(ButtonStyle.Secondary),
+                createBackward10Button(),
+                createBackwardButton(),
                 createCurrentPageButton(),
-                new ButtonBuilder()
-                    .setCustomId('forward')
-                    .setLabel('>> 1')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('forward-10')
-                    .setLabel('>> 10')
-                    .setStyle(ButtonStyle.Secondary)
+                createForwardButton(),
+                createForward10Button()
             );
 
-            
+
         const response = await interaction.reply({
             content: `${bathrooms.size} resultados encontrados`,
             embeds:
                 paginatedEmbeds[currentPage],
-            components: paginatedEmbeds.length > 1 ? [rowComponents] : undefined
+            components: paginatedEmbeds.length > 1 ? [rowComponents()] : undefined
         });
 
 
@@ -168,11 +251,10 @@ export default new Command(
             else if (i.customId === 'backward') currentPage = Math.max(0, currentPage - 1);
             else if (i.customId === 'forward') currentPage = Math.min(paginatedEmbeds.length - 1, currentPage + 1);
             else if (i.customId === 'forward-10') currentPage = Math.min(paginatedEmbeds.length - 1, currentPage + 10);
-            
-            rowComponents.components.splice(2, 1, createCurrentPageButton());
+
             await i.update({
                 embeds: paginatedEmbeds[currentPage],
-                components: [rowComponents]
+                components: [rowComponents()]
             });
         });
     }
