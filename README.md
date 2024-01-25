@@ -33,6 +33,10 @@ $ DEPLOY=true npm run start
 ```
 or use command `deploy` on your bot (it is a admin command, use then with the bot prefix)
 
+## How to use commands
+* [Commands Helper](/docs/commands-helper.md)
+* [Admin commands Helper](/docs/admin-commands-helper.md)
+
 ### Used Technologies:
 * Typescript
 * Node.JS

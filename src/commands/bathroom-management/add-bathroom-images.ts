@@ -2,41 +2,35 @@ import { SlashCommandBuilder } from 'discord.js';
 import Command from '../../classes/Command';
 import Bathroom from '../../classes/database/Bathroom';
 
-export default new Command(
-    new SlashCommandBuilder()
-        .setName('add-bathroom-images')
-        .setDescription('Adds new images to a bathroom.')
-        .addStringOption(
-            Command.commandOptions.bathroomManagement.id()
-                .setRequired(true)
-        )
-        .addAttachmentOption(
-            Command.commandOptions.bathroomManagement.image()
-                .setRequired(true)
-                .setName('image-1')
-        )
-        .addAttachmentOption(
-            Command.commandOptions.bathroomManagement.image()
-                .setRequired(false)
-                .setName('image-2')
-        )
-        .addAttachmentOption(
-            Command.commandOptions.bathroomManagement.image()
-                .setRequired(false)
-                .setName('image-3')
-        ) as SlashCommandBuilder,
+const data = new SlashCommandBuilder()
+    .setName('add-bathroom-images')
+    .setDescription('Adds new images to a bathroom.')
+    .addStringOption(
+        Command.commandOptions.bathroomManagement.id()
+            .setRequired(true)
+    ) as SlashCommandBuilder;
 
-        
+for (let i = 0; i < 20; i++) {
+    data.addAttachmentOption(
+        Command.commandOptions.bathroomManagement.image()
+            .setRequired(i === 0 ? true : false)
+            .setName(`image-${i + 1}`)
+    );
+}
+
+export default new Command(
+    data,
     async (interaction, client) => {
         // Getting options
         const bathroomId = interaction.options.get('id')!.value as string;
-        const image1Url = interaction.options.get('image-1')!.attachment.url;
-        const image2Url = interaction.options.get('image-2')?.attachment.url;
-        const image3Url = interaction.options.get('image-3')?.attachment.url;
-        const imagesUrls = [image1Url];
-        if (image2Url) imagesUrls.push(image2Url);
-        if (image3Url) imagesUrls.push(image3Url);
-        
+
+        const imagesUrls = [];
+
+        for (let i = 0; i < 20; i++) {
+            const imageUrl = interaction.options.get(`image-${i + 1}`)?.attachment.url;
+            imageUrl && imagesUrls.push(imageUrl);
+        }
+
         const oldBathroom = client.database!.bathroom.get(bathroomId);
 
         // Making verifications
@@ -47,7 +41,7 @@ export default new Command(
             interaction.channel.send(`${oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit} images will not be added because it would exceed the ${Bathroom.imagesLimit} limit`);
             imagesUrls.splice(-(oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit));
         }
-            
+
         // Editting the bathroom
 
         // New instance of Bathroom with the new images
