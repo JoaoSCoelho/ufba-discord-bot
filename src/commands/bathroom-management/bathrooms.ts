@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder, SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
 import Command from '../../classes/Command';
 import { CampusNames } from '../../classes/database/Bathroom';
 
@@ -85,7 +85,7 @@ export default new Command(
 
             return new EmbedBuilder({
                 title: `${bathroom.campus} - ${bathroom.institute} - ${bathroomFloorFormatted}`,
-                description: `🆔 **${bathroom.id}**\n🚿 Chuveiro? **${bathroom.haveShower ? 'Sim' : 'Não'}**\n📌 Campus: **${CampusNames[bathroom.campus]}**\n🏛️ Instituição: **${bathroom.institute}**\n🛗 Andar/Piso: **${bathroomFloorFormatted}**`,
+                description: `🆔 **${bathroom.id}**\n🚿 Chuveiro? **${bathroom.haveShower ? 'Sim' : 'Não'}**\n📌 Campus: **${CampusNames[bathroom.campus]}**\n🏛️ Instituto: **${bathroom.institute}**\n🛗 Andar/Piso: **${bathroomFloorFormatted}**`,
                 fields: embedFields,
                 author: {
                     name: embedAuthor.displayName,
@@ -95,10 +95,7 @@ export default new Command(
                 footer: {
                     text: `Ultima atualização em ${Intl.DateTimeFormat('pt-br', { dateStyle: 'long' }).format(bathroom.updatedAt)}`
                 },
-                thumbnail: {
-                    url: bathroom.mainImageUrl
-                },
-                color: 5,
+                color: Colors.Navy,
                 image: bathroom.mainImageUrl && { url: bathroom.mainImageUrl }
             });
         }));

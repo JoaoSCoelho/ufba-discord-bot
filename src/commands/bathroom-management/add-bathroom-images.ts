@@ -39,8 +39,11 @@ export default new Command(
         if (!oldBathroom) return interaction.reply('There is no bathroom with this ID');
         if (oldBathroom.imagesUrls.length >= Bathroom.imagesLimit) return interaction.reply('No more space for images in this bathroom');
 
-        if (oldBathroom.imagesUrls.length + imagesUrls.length > Bathroom.imagesLimit) 
+        if (oldBathroom.imagesUrls.length + imagesUrls.length > Bathroom.imagesLimit) {
             interaction.channel.send(`${oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit} images will not be added because it would exceed the ${Bathroom.imagesLimit} limit`);
+            imagesUrls.splice(-(oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit));
+        }
+            
 
         const newBathroom = new Bathroom({
             ...oldBathroom,
