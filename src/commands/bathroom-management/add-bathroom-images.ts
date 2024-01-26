@@ -10,13 +10,7 @@ const data = new SlashCommandBuilder()
             .setRequired(true)
     ) as SlashCommandBuilder;
 
-for (let i = 0; i < 20; i++) {
-    data.addAttachmentOption(
-        Command.commandOptions.bathroomManagement.image()
-            .setRequired(i === 0 ? true : false)
-            .setName(`image-${i + 1}`)
-    );
-}
+addAttachmentOptions(data);
 
 export default new Command(
     data,
@@ -24,12 +18,7 @@ export default new Command(
         // Getting options
         const bathroomId = interaction.options.get('id')!.value as string;
 
-        const imagesUrls = [];
-
-        for (let i = 0; i < 20; i++) {
-            const imageUrl = interaction.options.get(`image-${i + 1}`)?.attachment.url;
-            imageUrl && imagesUrls.push(imageUrl);
-        }
+        const imagesUrls = getImagesOptions();
 
         const oldBathroom = client.database!.bathroom.get(bathroomId);
 
@@ -56,5 +45,29 @@ export default new Command(
         await client.database!.bathroom.edit(newBathroom);
 
         await awaitingMessage.edit('Images added');
+
+
+
+
+        function getImagesOptions() {
+            const urls: string[] = [];
+
+            for (let i = 0; i < 20; i++) {
+                const imageUrl = interaction.options.get(`image-${i + 1}`)?.attachment.url;
+                imageUrl && urls.push(imageUrl);
+            }
+
+            return urls;
+        }
     }
 );
+
+function addAttachmentOptions(data: SlashCommandBuilder) {
+    for (let i = 0; i < 20; i++) {
+        data.addAttachmentOption(
+            Command.commandOptions.bathroomManagement.image()
+                .setRequired(i === 0 ? true : false)
+                .setName(`image-${i + 1}`)
+        );
+    }
+}
