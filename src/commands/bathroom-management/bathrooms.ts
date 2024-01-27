@@ -145,7 +145,7 @@ export default new Command(
                 title: `${CampusNames[bathroom.campus]} - ${bathroom.institute} - ${bathroomFloorFormatted}`,
                 description: descriptionFactory(bathroomFloorFormatted),
                 fields: fieldsFactory(),
-                author: { name: `Criado por **${embedAuthor.displayName}**`, icon_url: embedAuthor.avatarURL({ size: 64 }) },
+                author: { name: `Criado por ${embedAuthor.displayName}`, icon_url: embedAuthor.avatarURL({ size: 64 }) },
                 timestamp: bathroom.createdAt,
                 footer: { text: `Ultima atualização em ${lastUpdateFormatted}` },
                 color: colorFactory(),
