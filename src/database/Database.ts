@@ -5,13 +5,16 @@ import DbCollection from './DbCollection';
 import LocalClient from '../classes/LocalClient';
 import axios from 'axios';
 import ClassEntity from '../classes/database/Entity';
+import BathroomAvaliation from '../classes/database/BathroomAvaliation';
 
 export interface DatabaseInterface {
     bathroom: Bathroom[];
+    bathroomAvaliation: BathroomAvaliation[];
 }
 
 export default class Database extends EventEmitter {
     public bathroom: DbCollection<Bathroom>;
+    public bathroomAvaliation: DbCollection<BathroomAvaliation>;
     private canUpdate: boolean = true;
     private updatesInBuffer: boolean = false;
     private updateTimeout = 10000; // 10s
@@ -19,12 +22,14 @@ export default class Database extends EventEmitter {
     constructor(public readonly client: LocalClient) {
         super();
         this.bathroom = new DbCollection('bathroom', this);
-        this.fetch();
+        this.bathroomAvaliation = new DbCollection('bathroomAvaliation', this);
+        this.fetch().then(() => this.emit('ready'));
     }
 
     toJSON() {
         return {
-            bathroom: this.bathroom.toJSON()
+            bathroom: this.bathroom.toJSON(),
+            bathroomAvaliation: this.bathroomAvaliation.toJSON(),
         };
     }
 
@@ -47,13 +52,12 @@ export default class Database extends EventEmitter {
         const json = response.data;
 
         this.setCache(json);
-        this.emit('ready');
         if (entityName) return this[entityName as keyof Database] as unknown as DbCollection<Entity>;
     }
 
     setCache(data: DatabaseInterface) {
         // Set the bathrooms at the cache
-        data.bathroom.map(bathroomJson => {
+        data.bathroom?.map(bathroomJson => {
             const bathroom = new Bathroom({
                 ...bathroomJson,
                 createdAt: new Date(bathroomJson.createdAt),
@@ -61,6 +65,16 @@ export default class Database extends EventEmitter {
             });
 
             this.bathroom.set(bathroom.id, bathroom);
+        });
+
+        data.bathroomAvaliation?.map(bathroomAvaliationJson => {
+            const bathroomAvaliation = new BathroomAvaliation({
+                ...bathroomAvaliationJson,
+                createdAt: new Date(bathroomAvaliationJson.createdAt),
+                updatedAt: new Date(bathroomAvaliationJson.updatedAt)
+            });
+
+            this.bathroomAvaliation.set(bathroomAvaliation.id, bathroomAvaliation);
         });
     }
 

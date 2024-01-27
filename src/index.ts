@@ -8,7 +8,13 @@ import Database from './database/Database';
 config();
 
 // Instance a new Client Bot
-const client = new LocalClient({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions] });
+const client = new LocalClient({ intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.GuildEmojisAndStickers,
+] });
 
 // Map all the commands in '/commands/[type]'|'/admin_commands' directories and put it in .commands|.adminCommands of the bot
 commandHandler(client);
@@ -16,11 +22,11 @@ adminCommandHandler(client);
 
 // These event are executed when the bot goes online on discord
 client.once(Events.ClientReady, readyClient => {
+    console.log(`Bot ${readyClient.user.tag} iniciado!`);
+
     client.database = new Database(client);
 
     client.database?.on('ready', () => console.log('Database running!'));
-
-    console.log(`Bot ${readyClient.user.tag} iniciado!`);
 });
 
 // Captures when a interaction with the bot occurs

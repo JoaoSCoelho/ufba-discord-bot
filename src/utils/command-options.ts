@@ -80,5 +80,41 @@ export default {
         id: () => new SlashCommandStringOption()
             .setName('id')
             .setDescription('ID of the bathroom'),
+    },
+    bathroomAvaliationManagement: {
+        bathroomId: () => new SlashCommandStringOption()
+            .setName('bathroom-id')
+            .setDescription('The ID of the avaliated bathroom'),
+        grade: () => new SlashCommandIntegerOption()
+            .setName('grade')
+            .setDescription('The grade for the bathroom')
+            .setMinValue(0)
+            .setMaxValue(10),
+        cleaningGrade: () => new SlashCommandIntegerOption()
+            .setName('cleaning-grade')
+            .setDescription('The grade for the bathroom cleaning')
+            .setMinValue(0)
+            .setMaxValue(10),
+        hasPaperTowel: () => new SlashCommandBooleanOption()
+            .setName('has-paper-towel')
+            .setDescription('If the bathroom usually has paper towel'),
+        hasToiletPaper: () => new SlashCommandBooleanOption()
+            .setName('has-toilet-paper')
+            .setDescription('If the bathroom usually has toilet paper'),
+        hasSoap: () => new SlashCommandBooleanOption()
+            .setName('has-soap')
+            .setDescription('If the bathroom usually has soap'),
+        smellsGood: () => new SlashCommandBooleanOption()
+            .setName('smells-good')
+            .setDescription('If the bathroom smells good'),
+        observations: () => new SlashCommandStringOption()
+            .setName('observations')
+            .setDescription('What do you have to say about the bathroom?')
+            .setMinLength(10)
+            .setMaxLength(500),
+        image: () => new SlashCommandAttachmentOption()
+            .setName('image')
+            .setDescription('Image')
+        
     }
 };

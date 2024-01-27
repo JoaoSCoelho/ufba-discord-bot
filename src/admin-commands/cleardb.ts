@@ -24,6 +24,7 @@ export default new AdminCommand(
 
         if (!client.database![collectionName]) return message.reply('Collection doesn\'t exists');
         
+        // @ts-expect-error Erro bobo
         client.database![collectionName] = new DbCollection(collectionName, client.database!);
 
         await client.database?.updateInDiscord();

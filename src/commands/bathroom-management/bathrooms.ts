@@ -1,6 +1,7 @@
-import { APIEmbedField, ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder, SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
+import { APIEmbedField, ActionRowBuilder, ButtonBuilder, ButtonStyle, Collection, Colors, EmbedBuilder, SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
 import Command from '../../classes/Command';
 import Bathroom, { CampusNames, CampusValues, GenderNames, GenderValues } from '../../classes/database/Bathroom';
+import BathroomAvaliation from '../../classes/database/BathroomAvaliation';
 
 const data = new SlashCommandBuilder()
     .setName('bathrooms')
@@ -72,7 +73,7 @@ export default new Command(
 
         // Inputs on "paginatedEmbeds" constant all embeds divided in arrays: [[10_embeds], [10_embeds], ..., [remaining_embeds]]
         const paginatedEmbeds = paginatedEmbedsFactory(allEmbeds);
-        
+
 
         const response = await interaction.reply({
             content: `${bathrooms.size} resultados encontrados`,
@@ -137,13 +138,16 @@ export default new Command(
         }
 
         async function embedFactory(bathroom: Bathroom) {
+            const avaliations = client.database!.bathroomAvaliation.filter((bathroomAvaliation) => bathroomAvaliation.bathroomId === bathroom.id);
+
             const embedAuthor = await client.users.fetch(bathroom.createdBy);
             const bathroomFloorFormatted = formatFloor();
             const lastUpdateFormatted = Intl.DateTimeFormat('pt-br', { dateStyle: 'long' }).format(bathroom.updatedAt);
 
+
             return new EmbedBuilder({
                 title: `${CampusNames[bathroom.campus]} - ${bathroom.institute} - ${bathroomFloorFormatted}`,
-                description: descriptionFactory(bathroomFloorFormatted),
+                description: descriptionFactory(bathroomFloorFormatted, avaliations),
                 fields: fieldsFactory(),
                 author: { name: `Criado por ${embedAuthor.displayName}`, icon_url: embedAuthor.avatarURL({ size: 64 }) },
                 timestamp: bathroom.createdAt,
@@ -160,7 +164,7 @@ export default new Command(
                 else return `${bathroom.floor}º andar`;
             }
 
-            function descriptionFactory(bathroomFloorFormatted: string) {
+            function descriptionFactory(bathroomFloorFormatted: string, avaliations: Collection<string, BathroomAvaliation>) {
                 const id = `🆔 **\`${bathroom.id}\`**`;
                 const gender = genderFactory();
                 const haveShower = `🚿 Chuveiro? **${bathroom.haveShower ? 'Sim' : 'Não'}**`;
@@ -176,9 +180,17 @@ export default new Command(
                 const campus = `📌 Campus: **${CampusNames[bathroom.campus]}**`;
                 const institute = `🏛️ Instituto: **${bathroom.institute}**`;
                 const floor = `🛗 Andar/Piso: **${bathroomFloorFormatted}**`;
+                const avarageRating = avarageRatingFactory();
+                const avarageCleaningRating = avarageCleaningRatingFactory();
+                const usuallyHasPaperTowel = usuallyHasPaperTowelFactory();
+                const usuallyHasToiletPaper = usuallyHasToiletPaperFactory();
+                const usuallyHasSoap = usuallyHasSoapFactory();
+                const usuallySmellsGood = usuallySmellsGoodFactory();
 
-
-                return [id, gender, haveShower, hasHandDryer, cabins, urinals, campus, institute, floor]
+                return [
+                    id, gender, haveShower, hasHandDryer, cabins, urinals, campus, institute, floor, avarageRating, avarageCleaningRating,
+                    usuallyHasPaperTowel, usuallyHasToiletPaper, usuallyHasSoap, usuallySmellsGood
+                ]
                     .filter((t) => typeof t === 'string').join('\n');
 
 
@@ -188,6 +200,70 @@ export default new Command(
                     else if (bathroom.gender === 'FEMININO') return `♀️ **${GenderNames[bathroom.gender]}**`;
                     else if (bathroom.gender === 'MASCULINO') return `♂️ **${GenderNames[bathroom.gender]}**`;
                 }
+
+                function avarageRatingFactory() {
+                    if (!avaliations.size) return undefined;
+
+                    const avarageRating = avaliations.reduce((prev, curr) => prev + curr.grade, 0) / avaliations.size;
+                    return `✨ Avaliação média: ${starsFactory(avarageRating)}`;
+                }
+
+                function avarageCleaningRatingFactory() {
+                    if (!avaliations.size) return undefined;
+
+                    const avarageCleaningRating = avaliations.reduce((prev, curr) => prev + curr.cleaningGrade, 0) / avaliations.size;
+                    return `🧹 Avaliação média da limpeza: ${starsFactory(avarageCleaningRating)}`;
+                }
+
+                function usuallyHasPaperTowelFactory() {
+                    if (!avaliations.size) return undefined;
+
+                    const hasPaperTowelPercent = Number(((avaliations.filter(avaliation => avaliation.hasPaperTowel).size / avaliations.size) * 100).toFixed(1));
+                    const dontHasPaperTowelPercent = 100 - hasPaperTowelPercent;
+                    return `🧻 Costuma ter papel toalha? **👍 ${hasPaperTowelPercent}%** | **👎 ${dontHasPaperTowelPercent}%**`;
+                }
+
+                function usuallyHasToiletPaperFactory() {
+                    if (!avaliations.size) return undefined;
+
+                    const avaliationsWithHasToiletPaper = avaliations.filter(avaliation => typeof avaliation.hasToiletPaper === 'boolean');
+
+                    if (!avaliationsWithHasToiletPaper.size) return undefined;
+
+                    const hasToiletPaperPercent = Number(((avaliationsWithHasToiletPaper.filter(avaliation => avaliation.hasToiletPaper).size / avaliationsWithHasToiletPaper.size) * 100).toFixed(1));
+                    const dontHasToiletPaperPercent = 100 - hasToiletPaperPercent;
+                    return `🧻 Costuma ter papel higiênico? **👍 ${hasToiletPaperPercent}%** | **👎 ${dontHasToiletPaperPercent}%**`;
+                }
+
+                function usuallyHasSoapFactory() {
+                    if (!avaliations.size) return undefined;
+
+                    const hasSoapPercent = Number(((avaliations.filter(avaliation => avaliation.hasSoap).size / avaliations.size) * 100).toFixed(1));
+                    const dontHasSoapPercent = 100 - hasSoapPercent;
+                    return `🧼 Costuma ter sabonete? **👍 ${hasSoapPercent}%** | **👎 ${dontHasSoapPercent}%**`;
+                }
+
+                function usuallySmellsGoodFactory() {
+                    if (!avaliations.size) return undefined;
+
+                    const smellsGoodPercent = Number(((avaliations.filter(avaliation => avaliation.smellsGood).size / avaliations.size) * 100).toFixed(1));
+                    const dontSmellsGoodPercent = 100 - smellsGoodPercent;
+                    return `🧴 Costuma cheirar bem? **👍 ${smellsGoodPercent}%** | **👎 ${dontSmellsGoodPercent}%**`;
+                }
+
+                function starsFactory(grade: number) {
+                    const fullStars = parseInt((grade / 2).toString());
+                    const halfStar = grade % 2 !== 0 ? 1 : 0;
+                    const emptyStars = 5 - fullStars - halfStar;
+
+                    const fullStarEmoji = '<:' + client.emojis.cache.find((e) => e.name === 'fullstar').identifier + '>';
+                    const halfStarEmoji = '<:' + client.emojis.cache.find((e) => e.name === 'halfstar').identifier + '>';
+                    const emptyStarEmoji = '<:' + client.emojis.cache.find((e) => e.name === 'emptystar').identifier + '>';
+
+                    return fullStarEmoji.repeat(fullStars) + halfStarEmoji.repeat(halfStar) + emptyStarEmoji.repeat(emptyStars);
+                }
+
+                
             }
 
             function fieldsFactory() {
@@ -216,9 +292,9 @@ export default new Command(
             }
         }
 
-        
+
         function rowComponentsFactory() {
-            
+
             return new ActionRowBuilder<ButtonBuilder>()
                 .setComponents(
                     backward10ButtonFactory(),
@@ -237,7 +313,7 @@ export default new Command(
                     .setStyle(ButtonStyle.Secondary)
                     .setLabel(`${currentPage + 1} / ${paginatedEmbeds.length}`);
             }
-        
+
             function backward10ButtonFactory() {
                 return new ButtonBuilder()
                     .setCustomId('backward-10')
@@ -245,7 +321,7 @@ export default new Command(
                     .setStyle(ButtonStyle.Secondary)
                     .setDisabled(currentPage + 1 <= 2 ? true : false);
             }
-        
+
             function backwardButtonFactory() {
                 return new ButtonBuilder()
                     .setCustomId('backward')
@@ -253,7 +329,7 @@ export default new Command(
                     .setStyle(ButtonStyle.Secondary)
                     .setDisabled(currentPage + 1 === 1 ? true : false);
             }
-        
+
             function forwardButtonFactory() {
                 return new ButtonBuilder()
                     .setCustomId('forward')
@@ -261,7 +337,7 @@ export default new Command(
                     .setStyle(ButtonStyle.Secondary)
                     .setDisabled(currentPage + 1 === paginatedEmbeds.length);
             }
-        
+
             function forward10ButtonFactory() {
                 return new ButtonBuilder()
                     .setCustomId('forward-10')
