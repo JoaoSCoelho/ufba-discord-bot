@@ -49,9 +49,9 @@ export default new Command(
     async (interaction, client) => {
         const options = getOptions();
 
-        // if (client.database!.bathroomAvaliation.find(
-        //     (bathroomAvaliation) => bathroomAvaliation.bathroomId === options.bathroomId && bathroomAvaliation.createdBy === interaction.user.id
-        // )) return interaction.reply('Have you already reviewed this bathroom!');
+        if (client.database!.bathroomAvaliation.find(
+            (bathroomAvaliation) => bathroomAvaliation.bathroomId === options.bathroomId && bathroomAvaliation.createdBy === interaction.user.id
+        )) return interaction.reply('Have you already reviewed this bathroom!');
 
         if (!client.database!.bathroom.has(options.bathroomId)) return interaction.reply('Does not exists a bathroom with this ID');
 
