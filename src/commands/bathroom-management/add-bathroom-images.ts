@@ -3,8 +3,8 @@ import Command from '../../classes/Command';
 import Bathroom from '../../classes/database/Bathroom';
 
 const data = new SlashCommandBuilder()
-    .setName('add-bathroom-images')
-    .setDescription('Adds new images to a bathroom.')
+    .setName('adicionar-imagens-a-um-banheiro')
+    .setDescription('Adiciona novas imagens a um banheiro atravéz de seu ID.')
     .addStringOption(
         Command.commandOptions.bathroomManagement.id()
             .setDescription('Número de identificação do banheiro.')
@@ -24,11 +24,11 @@ export default new Command(
         const oldBathroom = client.database!.bathroom.get(bathroomId);
 
         // Making verifications
-        if (!oldBathroom) return interaction.reply('There is no bathroom with this ID');
-        if (oldBathroom.imagesUrls.length >= Bathroom.imagesLimit) return interaction.reply('No more space for images in this bathroom');
+        if (!oldBathroom) return interaction.reply('Não existe um banheiro com este ID!');
+        if (oldBathroom.imagesUrls.length >= Bathroom.imagesLimit) return interaction.reply('Não há mais espaço para imagens neste banheiro!');
 
         if (oldBathroom.imagesUrls.length + imagesUrls.length > Bathroom.imagesLimit) {
-            interaction.channel.send(`${oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit} images will not be added because it would exceed the ${Bathroom.imagesLimit} limit`);
+            interaction.channel.send(`${oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit} imagens não serão adicionadas pois ultrapassam o limite de ${Bathroom.imagesLimit} imagens por banheiro.`);
             imagesUrls.splice(-(oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit));
         }
 
@@ -41,11 +41,11 @@ export default new Command(
             imagesUrls: oldBathroom.imagesUrls.concat(imagesUrls)
         });
 
-        const awaitingMessage = await interaction.reply('Adding...');
+        const awaitingMessage = await interaction.reply('Adicionando...');
 
         await client.database!.bathroom.edit(newBathroom);
 
-        await awaitingMessage.edit('Images added');
+        await awaitingMessage.edit('Imagens adicionadas.');
 
 
 
@@ -54,7 +54,7 @@ export default new Command(
             const urls: string[] = [];
 
             for (let i = 0; i < 20; i++) {
-                const imageUrl = interaction.options.get(`image-${i + 1}`)?.attachment.url;
+                const imageUrl = interaction.options.get(`imagem-${i + 1}`)?.attachment.url;
                 imageUrl && urls.push(imageUrl);
             }
 
@@ -69,7 +69,7 @@ function addAttachmentOptions(data: SlashCommandBuilder) {
             Command.commandOptions.bathroomManagement.image()
                 .setDescription('Imagem do banheiro.')
                 .setRequired(i === 0 ? true : false)
-                .setName(`image-${i + 1}`)
+                .setName(`imagem-${i + 1}`)
         );
     }
 }

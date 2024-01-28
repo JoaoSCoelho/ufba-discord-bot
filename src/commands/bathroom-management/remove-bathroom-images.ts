@@ -4,8 +4,8 @@ import Bathroom from '../../classes/database/Bathroom';
 
 export default new Command(
     new SlashCommandBuilder()
-        .setName('remove-bathroom-images')
-        .setDescription('Removes some images from a specific bathroom')
+        .setName('remover-imagens-de-um-banheiro')
+        .setDescription('Remove as imagens que você quiser de um banheiro que você criou.')
         .addStringOption(
             Command.commandOptions.bathroomManagement.id()
                 .setDescription('Número de identificação do banheiro.')
@@ -24,17 +24,17 @@ export default new Command(
 
         // Make some verifications
 
-        if (!oldBathroom) return interaction.reply('There is no bathroom with this ID');
+        if (!oldBathroom) return interaction.reply('Não existe um banheiro com este ID!');
 
         if (interaction.user.id !== oldBathroom.createdBy && !client.admins.includes(interaction.user.id))
-            return interaction.reply('You don\'t have permission to edit this bathroom');
+            return interaction.reply('Você não tem permissão para editar este banheiro!');
 
         if (!oldBathroom.imagesUrls.length)
-            return interaction.reply('Bathroom without images!');
+            return interaction.reply('Este banheiro já não possui imagens!');
 
 
 
-        await interaction.reply({ content: `${oldBathroom.imagesUrls.length} images urls found`, ephemeral: true });
+        await interaction.reply({ content: `**${oldBathroom.imagesUrls.length}** imagens encontradas`, ephemeral: true });
 
 
 
@@ -47,13 +47,13 @@ export default new Command(
 
         const confirmButton = new ButtonBuilder()
             .setCustomId('confirm-button')
-            .setLabel('Delete all selected')
+            .setLabel('Deletar as selecionadas')
             .setStyle(ButtonStyle.Danger);
 
         const row = new ActionRowBuilder<ButtonBuilder>({ components: [confirmButton] });
 
         const confirmMessage = await interaction.followUp({
-            content: 'Confirm here when are selected all images',
+            content: 'Confirme aqui quando selecionar todas as imagens que deseja deletar. (Ação irrevesível)',
             ephemeral: true,
             components: [row]
         });
@@ -67,7 +67,7 @@ export default new Command(
                 confirmCollector.stop();
 
                 if (oldBathroom.imagesUrls.length === remainingUrls.length) {
-                    i.update({ content: 'None selected. Command canceled!', components: [] });
+                    i.update({ content: 'Nenhuma selecionada. Comando cancelado!', components: [] });
                     return;
                 }
 
@@ -80,7 +80,7 @@ export default new Command(
 
                 await client.database!.bathroom.edit(newBathroom);
 
-                i.update({ content: `${oldBathroom.imagesUrls.length - remainingUrls.length} images deleted!`, components: [] });
+                i.update({ content: `${oldBathroom.imagesUrls.length - remainingUrls.length} imagens deletadas!`, components: [] });
             }
         });
 
@@ -116,7 +116,7 @@ export default new Command(
             function CheckBoxFactory(selected: boolean) {
                 return new ButtonBuilder()
                     .setCustomId(`checkbox-${index}`)
-                    .setLabel(`${selected ? '✅' : '⬜'} ${selected ? 'Unselect' : 'Select'}`)
+                    .setLabel(`${selected ? '✅' : '⬜'} ${selected ? 'Desselecionar' : 'Selecionar'}`)
                     .setStyle(ButtonStyle.Danger);
             }
         }

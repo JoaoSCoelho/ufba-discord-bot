@@ -4,8 +4,8 @@ import Bathroom, { CampusValues, GenderValues } from '../../classes/database/Bat
 
 export default new Command(
     new SlashCommandBuilder()
-        .setName('edit-bathroom')
-        .setDescription('Edits a specific bathroom')
+        .setName('editar-banheiro')
+        .setDescription('Edita um banheiro que você criou pelo ID.')
         .addStringOption(
             Command.commandOptions.bathroomManagement.id()
                 .setDescription('Número de identificação do banheiro.')
@@ -75,13 +75,13 @@ export default new Command(
 
         // Making some verifications
 
-        if (!oldBathroom) return interaction.reply('There is no bathroom with this ID');
+        if (!oldBathroom) return interaction.reply('Não existe banheiro com este ID!');
 
         if (interaction.user.id !== oldBathroom.createdBy && !client.admins.includes(interaction.user.id))
-            return interaction.reply('You don\'t have permission to edit this bathroom');
+            return interaction.reply('Você não tem autorização para editar este banheiro!');
 
         if (options.mainImageUrl && !oldBathroom.imagesUrls.includes(options.mainImageUrl))
-            return interaction.reply('main-image-url is not a image from the bathroom. Use /add-bathroom-images before it');
+            return interaction.reply('url-da-imagem-principal não é uma imagem do banheiro. Use /adicionar-imagens-a-um-banheiro antes disso!');
 
 
         // Edit the bathroom
@@ -101,10 +101,10 @@ export default new Command(
             mainImageUrl: options.mainImageUrl ?? oldBathroom.mainImageUrl,
         });
 
-        const response = await interaction.reply('Editting...');
+        const response = await interaction.reply('Editando...');
 
         await client.database!.bathroom.edit(newBathroom);
 
-        response.edit('Bathroom edited.');
+        response.edit('Banheiro editado.');
     }
 );

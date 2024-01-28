@@ -4,8 +4,8 @@ import Bathroom, { CampusNames, CampusValues, GenderNames, GenderValues } from '
 import BathroomAvaliation from '../../classes/database/BathroomAvaliation';
 
 const data = new SlashCommandBuilder()
-    .setName('bathrooms')
-    .setDescription('List all the bathrooms')
+    .setName('banheiros')
+    .setDescription('Lista todos os banheiros já registrados.')
     .addStringOption(
         Command.commandOptions.bathroomManagement.id()
             .setDescription('Encontre um banheiro específico pelo seu número de identificação')
@@ -61,7 +61,7 @@ export default new Command(
         const filters = getOptions();
         const bathrooms = client.database!.bathroom.filter((bathroom) => bathroomsFilter(bathroom, filters));
 
-        if (!bathrooms.size) return interaction.reply('No bathroom found');
+        if (!bathrooms.size) return interaction.reply('Nenhum banheiro encontrado.');
 
         // calculates the quantity of pages (each page have 10 bathrooms)
         let currentPage = 0;
@@ -75,7 +75,7 @@ export default new Command(
 
 
         const response = await interaction.reply({
-            content: `${bathrooms.size} resultados encontrados`,
+            content: `**${bathrooms.size}** resultados encontrados`,
             embeds: paginatedEmbeds[currentPage],
             components: paginatedEmbeds.length > 1 ? [rowComponentsFactory()] : undefined
         });

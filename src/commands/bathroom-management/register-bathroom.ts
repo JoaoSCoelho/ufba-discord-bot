@@ -4,8 +4,8 @@ import Bathroom, { CampusValues, GenderValues } from '../../classes/database/Bat
 
 export default new Command(
     new SlashCommandBuilder()
-        .setName('new-bathroom')
-        .setDescription('Creates a new bathroom in database')
+        .setName('cadastrar-banheiro')
+        .setDescription('Registra um novo banheiro.')
         .addStringOption(
             Command.commandOptions.bathroomManagement.campus()
                 .setDescription('Escolha em qual campus está localizado este banheiro!')
@@ -79,6 +79,6 @@ export default new Command(
 
         await client.database?.bathroom.new(bathroom);
 
-        interaction.reply('Bathroom successfully created!');
+        interaction.reply('Banheiro cadastrado com sucesso!');
     }
 );

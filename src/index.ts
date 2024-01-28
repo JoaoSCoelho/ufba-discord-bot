@@ -46,9 +46,9 @@ client.on(Events.InteractionCreate, async interaction => {
     } catch (error) {
         console.error(error);
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: 'Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true });
+            await interaction.followUp({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true });
         } else {
-            await interaction.reply({ content: 'Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true });
+            await interaction.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true });
         }
     }
 });
@@ -88,7 +88,7 @@ client.on(Events.MessageCreate, async (message) => {
 		
     } catch (error) {
         console.error(error);
-        await message.reply({ content: 'Ocorreu um erro enquanto este comando estava sendo executado!' });
+        await message.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!' });
     }
 });
 

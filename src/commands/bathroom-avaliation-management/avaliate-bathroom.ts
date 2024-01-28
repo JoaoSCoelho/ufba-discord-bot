@@ -4,8 +4,8 @@ import BathroomAvaliation from '../../classes/database/BathroomAvaliation';
 
 export default new Command(
     new SlashCommandBuilder()
-        .setName('avaliate-bathroom')
-        .setDescription('Avaliates a specific bathroom by their ID')
+        .setName('avaliar-banheiro')
+        .setDescription('Avalia um banheiro específico pelo seu ID')
         .addStringOption(
             Command.commandOptions.bathroomAvaliationManagement.bathroomId()
                 .setDescription('O número de identificação do banheiro.')
@@ -57,9 +57,9 @@ export default new Command(
 
         if (client.database!.bathroomAvaliation.find(
             (bathroomAvaliation) => bathroomAvaliation.bathroomId === options.bathroomId && bathroomAvaliation.createdBy === interaction.user.id
-        )) return interaction.reply('Have you already reviewed this bathroom!');
+        )) return interaction.reply('Você já avaliou este banheiro!');
 
-        if (!client.database!.bathroom.has(options.bathroomId)) return interaction.reply('Does not exists a bathroom with this ID');
+        if (!client.database!.bathroom.has(options.bathroomId)) return interaction.reply('Não existe um banheiro com este ID!');
 
         const bathroomAvaliation = new BathroomAvaliation({
             id: Date.now().toString(),
@@ -79,7 +79,7 @@ export default new Command(
 
         await client.database!.bathroomAvaliation.new(bathroomAvaliation);
         
-        await interaction.reply('Bathroom avaliated!');
+        await interaction.reply('Banheiro avaliado!');
 
 
         function getOptions() {

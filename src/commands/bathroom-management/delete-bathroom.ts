@@ -3,8 +3,8 @@ import Command from '../../classes/Command';
 
 export default new Command(
     new SlashCommandBuilder()
-        .setName('delete-bathroom')
-        .setDescription('Deletes a specific bathroom.')
+        .setName('deletar-banheiro')
+        .setDescription('Deleta um banheiro que você criou pelo ID.')
         .addStringOption(
             Command.commandOptions.bathroomManagement.id()
                 .setDescription('Número de identificação do banheiro.')
@@ -19,9 +19,9 @@ export default new Command(
 
         // Making verifications
 
-        if (!bathroom) return interaction.reply('There is no bathroom with this ID');
+        if (!bathroom) return interaction.reply('Não existe banheiro com este ID!');
         if (bathroom.createdBy !== interaction.user.id && !client.admins.includes(interaction.user.id))
-            return interaction.reply('You don\'t have authorization to do this!');
+            return interaction.reply('Você não tem autorização para deletar este banheiro!');
 
 
 
@@ -34,13 +34,13 @@ export default new Command(
             await client.database!.bathroomAvaliation.remove(bathroomAvaliation.id);
         }))
             .catch((err) => {
-                console.error(`The user ${interaction.user.tag} tried to use /delete-bathroom command and a error ocurred when the avaliation were being deleted:`, err);
+                console.error(`The user ${interaction.user.tag} tried to use /deletar-banheiro command and a error ocurred when the avaliation were being deleted:`, err);
             });
 
 
         // Removing the bathroom
         await client.database!.bathroom.remove(bathroomId);
 
-        await interaction.reply('Bathroom removed');
+        await interaction.reply('Banheiro deletado.');
     }
 );
