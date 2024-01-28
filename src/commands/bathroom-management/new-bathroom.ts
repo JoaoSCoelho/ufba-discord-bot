@@ -6,46 +6,50 @@ export default new Command(
     new SlashCommandBuilder()
         .setName('new-bathroom')
         .setDescription('Creates a new bathroom in database')
-        .setDefaultMemberPermissions(8)
         .addStringOption(
             Command.commandOptions.bathroomManagement.campus()
+                .setDescription('Escolha em qual campus está localizado este banheiro!')
                 .setRequired(true)
         )
         .addStringOption(
             Command.commandOptions.bathroomManagement.institute()
+                .setDescription('Em qual instituto da UFBA está localizado o banheiro?')
                 .setRequired(true)
         )
         .addIntegerOption(
             Command.commandOptions.bathroomManagement.floor()
+                .setDescription('Em que andar/piso do prédio está o banheiro? (0 para térreo) (valores negativos para subsolo)')
                 .setRequired(true)
         )
         .addBooleanOption(
             Command.commandOptions.bathroomManagement.haveShower()
+                .setDescription('Tem espaço para banhos neste banheiro?')
                 .setRequired(true)
         )
         .addBooleanOption(
             Command.commandOptions.bathroomManagement.hasHandDryer()
+                .setDescription('Tem secador de mãos neste banheiro?')
                 .setRequired(true)
         )
         .addStringOption(
             Command.commandOptions.bathroomManagement.gender()
-                .setRequired(false)
+                .setDescription('Este é um banheiro Masculino, Feminino ou Unissex')
         )
         .addIntegerOption(
             Command.commandOptions.bathroomManagement.cabins()
-                .setRequired(false)
+                .setDescription('Quantas cabines tem neste banheiro?')
         )
         .addIntegerOption(
             Command.commandOptions.bathroomManagement.urinals()
-                .setRequired(false)
+                .setDescription('Quantos mictórios tem neste banheiro? (se aplicável)')
         )
         .addStringOption(
             Command.commandOptions.bathroomManagement.localization()
-                .setRequired(false)
+                .setDescription('Dê uma descrição de como chegar a este banheiro.')
         )
         .addAttachmentOption(
             Command.commandOptions.bathroomManagement.image()
-                .setRequired(false)
+                .setDescription('Uma imagem do banheiro')
         ) as SlashCommandBuilder,
 
 
@@ -59,17 +63,17 @@ export default new Command(
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 campus: interaction.options.get('campus')!.value as CampusValues,
-                floor: interaction.options.get('floor')!.value as number,
-                haveShower: interaction.options.get('have-shower')!.value as boolean,
+                floor: interaction.options.get('andar')!.value as number,
+                haveShower: interaction.options.get('tem-chuveiro')!.value as boolean,
                 createdBy: interaction.user.id,
-                hasHandDryer: interaction.options.get('has-hand-dryer')!.value as boolean,
-                institute: interaction.options.get('institute')!.value as string,
-                gender: interaction.options.get('gender')?.value as GenderValues | undefined,
-                cabins: interaction.options.get('cabins')?.value as number | undefined,
-                urinals: interaction.options.get('urinals')?.value as number | undefined,
-                localization: interaction.options.get('localization')?.value as string | undefined,
-                imagesUrls: interaction.options.get('image') ? [interaction.options.get('image')?.attachment.url] : undefined,
-                mainImageUrl: interaction.options.get('image')?.attachment.url,
+                hasHandDryer: interaction.options.get('tem-secador-de-maos')!.value as boolean,
+                institute: interaction.options.get('instituto')!.value as string,
+                gender: interaction.options.get('genero')?.value as GenderValues | undefined,
+                cabins: interaction.options.get('cabines')?.value as number | undefined,
+                urinals: interaction.options.get('mictorios')?.value as number | undefined,
+                localization: interaction.options.get('localizacao')?.value as string | undefined,
+                imagesUrls: interaction.options.get('imagem') ? [interaction.options.get('imagem')?.attachment.url] : undefined,
+                mainImageUrl: interaction.options.get('imagem')?.attachment.url,
             }
         );
 

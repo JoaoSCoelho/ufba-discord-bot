@@ -8,6 +8,7 @@ export default new Command(
         .setDescription('Removes some images from a specific bathroom')
         .addStringOption(
             Command.commandOptions.bathroomManagement.id()
+                .setDescription('Número de identificação do banheiro.')
                 .setRequired(true)
         ) as SlashCommandBuilder,
 

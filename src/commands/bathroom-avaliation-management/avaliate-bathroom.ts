@@ -8,39 +8,45 @@ export default new Command(
         .setDescription('Avaliates a specific bathroom by their ID')
         .addStringOption(
             Command.commandOptions.bathroomAvaliationManagement.bathroomId()
+                .setDescription('O número de identificação do banheiro.')
                 .setRequired(true)
         )
         .addIntegerOption(
             Command.commandOptions.bathroomAvaliationManagement.grade()
+                .setDescription('Que nota você da para este banheiro? (0 a 10)')
                 .setRequired(true)
         )
         .addIntegerOption(
             Command.commandOptions.bathroomAvaliationManagement.cleaningGrade()
+                .setDescription('Que nota você da para a limpeza deste banheiro? (0 a 10)')
                 .setRequired(true)
         )
         .addBooleanOption(
             Command.commandOptions.bathroomAvaliationManagement.hasPaperTowel()
+                .setDescription('Este banheiro costuma ter papel toalha?')
                 .setRequired(true)
         )
         .addBooleanOption(
             Command.commandOptions.bathroomAvaliationManagement.hasSoap()
+                .setDescription('Este banheiro costuma ter sabonete?')
                 .setRequired(true)
         )
         .addBooleanOption(
             Command.commandOptions.bathroomAvaliationManagement.smellsGood()
+                .setDescription('Este banheiro tem um cheiro agradável?')
                 .setRequired(true)
         )
         .addStringOption(
             Command.commandOptions.bathroomAvaliationManagement.observations()
-                .setRequired(false)
+                .setDescription('Comente sobre sua experiência com este banheiro.')
         )
         .addAttachmentOption(
             Command.commandOptions.bathroomAvaliationManagement.image()
-                .setRequired(false)
+                .setDescription('Se quiser, pode adicionar uma imagem que descreva sua avaliação.')
         )
         .addBooleanOption(
             Command.commandOptions.bathroomAvaliationManagement.hasToiletPaper()
-                .setRequired(false)
+                .setDescription('Este banheiro costuma ter papel higiênico?')
         ) as SlashCommandBuilder,
 
 
@@ -78,15 +84,15 @@ export default new Command(
 
         function getOptions() {
             return {
-                bathroomId: interaction.options.get('bathroom-id')!.value as string,
-                grade: interaction.options.get('grade')!.value as number,
-                cleaningGrade: interaction.options.get('cleaning-grade')!.value as number,
-                hasPaperTowel: interaction.options.get('has-paper-towel')!.value as boolean,
-                hasToiletPaper: interaction.options.get('has-toilet-paper')?.value as boolean | undefined,
-                hasSoap: interaction.options.get('has-soap')!.value as boolean,
-                smellsGood: interaction.options.get('smells-good')!.value as boolean,
-                observations: interaction.options.get('observations')?.value as string | undefined,
-                imageUrl: interaction.options.get('image')?.attachment.url as string | undefined,
+                bathroomId: interaction.options.get('id-do-banheiro')!.value as string,
+                grade: interaction.options.get('nota')!.value as number,
+                cleaningGrade: interaction.options.get('nota-da-limpeza')!.value as number,
+                hasPaperTowel: interaction.options.get('tem-papel-toalha')!.value as boolean,
+                hasToiletPaper: interaction.options.get('tem-papel-higienico')?.value as boolean | undefined,
+                hasSoap: interaction.options.get('tem-sabonete')!.value as boolean,
+                smellsGood: interaction.options.get('cheira-bem')!.value as boolean,
+                observations: interaction.options.get('comentarios')?.value as string | undefined,
+                imageUrl: interaction.options.get('imagem')?.attachment.url as string | undefined,
             };
         }
     }

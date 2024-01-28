@@ -7,6 +7,7 @@ const data = new SlashCommandBuilder()
     .setDescription('Adds new images to a bathroom.')
     .addStringOption(
         Command.commandOptions.bathroomManagement.id()
+            .setDescription('Número de identificação do banheiro.')
             .setRequired(true)
     ) as SlashCommandBuilder;
 
@@ -66,6 +67,7 @@ function addAttachmentOptions(data: SlashCommandBuilder) {
     for (let i = 0; i < 20; i++) {
         data.addAttachmentOption(
             Command.commandOptions.bathroomManagement.image()
+                .setDescription('Imagem do banheiro.')
                 .setRequired(i === 0 ? true : false)
                 .setName(`image-${i + 1}`)
         );

@@ -30,24 +30,19 @@ export default {
                     name: CampusNames.CAMACARI,
                     value: 'CAMACARI'
                 },
-            )
-            .setDescription('Escolha em qual campus está localizado este banheiro!'),
+            ),
         institute: () => new SlashCommandStringOption()
-            .setName('institute')
-            .setDescription('Em qual instituto da UFBA está localizado o banheiro?')
-            .setMinLength(3),
+            .setName('instituto')
+            .setMinLength(3)
+            .setMaxLength(50),
         floor: () => new SlashCommandIntegerOption()
-            .setName('floor')
-            .setDescription('Em que andar/piso do prédio está o banheiro? (0 para térreo) (valores negativos para subsolo)'),
+            .setName('andar'),
         haveShower: () => new SlashCommandBooleanOption()
-            .setName('have-shower')
-            .setDescription('Tem espaço para banhos neste banheiro?'),
+            .setName('tem-chuveiro'),
         hasHandDryer: () => new SlashCommandBooleanOption()
-            .setName('has-hand-dryer')
-            .setDescription('Tem secador de mãos neste banheiro?'),
+            .setName('tem-secador-de-maos'),
         gender: () => new SlashCommandStringOption()
-            .setName('gender')
-            .setDescription('masculino, feminino ou unissex')
+            .setName('genero')
             .setChoices(
                 {
                     name: GenderNames.MASCULINO,
@@ -63,58 +58,45 @@ export default {
                 },
             ),
         cabins: () => new SlashCommandIntegerOption()
-            .setName('cabins')
-            .setDescription('Quantidade de cabines no banheiro')
+            .setName('cabines')
             .setMinValue(0),
         urinals: () => new SlashCommandIntegerOption()
-            .setName('urinals')
-            .setDescription('Quantidade de mictórios no banheiro. (se aplicável)')
+            .setName('mictorios')
             .setMinValue(0),
         localization: () => new SlashCommandStringOption()
-            .setName('localization')
-            .setDescription('Dê uma descrição de como chegar a este banheiro')
-            .setMinLength(10),
+            .setName('localizacao')
+            .setMinLength(10)
+            .setMaxLength(512),
         image: () => new SlashCommandAttachmentOption()
-            .setName('image')
-            .setDescription('Se tiver, forneça-nos imagens do banheiro'),
+            .setName('imagem'),
         id: () => new SlashCommandStringOption()
-            .setName('id')
-            .setDescription('ID of the bathroom'),
+            .setName('id'),
     },
     bathroomAvaliationManagement: {
         bathroomId: () => new SlashCommandStringOption()
-            .setName('bathroom-id')
-            .setDescription('The ID of the avaliated bathroom'),
+            .setName('id-do-banheiro'),
         grade: () => new SlashCommandIntegerOption()
-            .setName('grade')
-            .setDescription('The grade for the bathroom')
+            .setName('nota')
             .setMinValue(0)
             .setMaxValue(10),
         cleaningGrade: () => new SlashCommandIntegerOption()
-            .setName('cleaning-grade')
-            .setDescription('The grade for the bathroom cleaning')
+            .setName('nota-da-limpeza')
             .setMinValue(0)
             .setMaxValue(10),
         hasPaperTowel: () => new SlashCommandBooleanOption()
-            .setName('has-paper-towel')
-            .setDescription('If the bathroom usually has paper towel'),
+            .setName('tem-papel-toalha'),
         hasToiletPaper: () => new SlashCommandBooleanOption()
-            .setName('has-toilet-paper')
-            .setDescription('If the bathroom usually has toilet paper'),
+            .setName('tem-papel-higienico'),
         hasSoap: () => new SlashCommandBooleanOption()
-            .setName('has-soap')
-            .setDescription('If the bathroom usually has soap'),
+            .setName('tem-sabonete'),
         smellsGood: () => new SlashCommandBooleanOption()
-            .setName('smells-good')
-            .setDescription('If the bathroom smells good'),
+            .setName('cheira-bem'),
         observations: () => new SlashCommandStringOption()
-            .setName('observations')
-            .setDescription('What do you have to say about the bathroom?')
+            .setName('comentarios')
             .setMinLength(10)
             .setMaxLength(500),
         image: () => new SlashCommandAttachmentOption()
-            .setName('image')
-            .setDescription('Image')
+            .setName('imagem')
         
     }
 };

@@ -8,49 +8,49 @@ export default new Command(
         .setDescription('Edits a specific bathroom')
         .addStringOption(
             Command.commandOptions.bathroomManagement.id()
+                .setDescription('Número de identificação do banheiro.')
                 .setRequired(true)
         )
         .addStringOption(
             Command.commandOptions.bathroomManagement.campus()
-                .setRequired(false)
+                .setDescription('Escolha em qual campus está localizado este banheiro!')
         )
         .addStringOption(
             Command.commandOptions.bathroomManagement.institute()
-                .setRequired(false)
+                .setDescription('Em qual instituto da UFBA está localizado o banheiro?')
         )
         .addIntegerOption(
             Command.commandOptions.bathroomManagement.floor()
-                .setRequired(false)
+                .setDescription('Em que andar/piso do prédio está o banheiro? (0 para térreo) (valores negativos para subsolo)')
         )
         .addBooleanOption(
             Command.commandOptions.bathroomManagement.haveShower()
-                .setRequired(false)
+                .setDescription('Tem espaço para banhos neste banheiro?')
         )
         .addBooleanOption(
             Command.commandOptions.bathroomManagement.hasHandDryer()
-                .setRequired(false)
+                .setDescription('Tem secador de mãos neste banheiro?')
         )
         .addStringOption(
             Command.commandOptions.bathroomManagement.gender()
-                .setRequired(false)
+                .setDescription('Este é um banheiro Masculino, Feminino ou Unissex')
         )
         .addIntegerOption(
             Command.commandOptions.bathroomManagement.cabins()
-                .setRequired(false)
+                .setDescription('Quantas cabines tem neste banheiro?')
         )
         .addIntegerOption(
             Command.commandOptions.bathroomManagement.urinals()
-                .setRequired(false)
+                .setDescription('Quantos mictórios tem neste banheiro? (se aplicável)')
         )
         .addStringOption(
             Command.commandOptions.bathroomManagement.localization()
-                .setRequired(false)
+                .setDescription('Dê uma descrição de como chegar a este banheiro.')
         ) 
         .addStringOption(
             new SlashCommandStringOption()
-                .setName('main-image-url')
-                .setDescription('The banner image-url of the bathroom')
-                .setRequired(false)
+                .setName('url-da-imagem-principal')
+                .setDescription('O URL da imagem principal do banheiro.')
         ) as SlashCommandBuilder,
 
 
@@ -60,15 +60,15 @@ export default new Command(
         const options = {
             id: interaction.options.get('id')!.value as string,
             campus: interaction.options.get('campus')?.value as CampusValues | undefined,
-            institute: interaction.options.get('institute')?.value as string | undefined,
-            floor: interaction.options.get('floor')?.value as number | undefined,
-            haveShower: interaction.options.get('have-shower')?.value as boolean | undefined,
-            hasHandDryer: interaction.options.get('has-hand-dryer')?.value as boolean | undefined,
-            gender: interaction.options.get('gender')?.value as GenderValues | undefined,
-            cabins: interaction.options.get('cabins')?.value as number | undefined,
-            urinals: interaction.options.get('urinals')?.value as number | undefined,
-            localization: interaction.options.get('localization')?.value as string | undefined,
-            mainImageUrl: interaction.options.get('main-image-url')?.value as string | undefined,
+            institute: interaction.options.get('instituto')?.value as string | undefined,
+            floor: interaction.options.get('andar')?.value as number | undefined,
+            haveShower: interaction.options.get('tem-chuveiro')?.value as boolean | undefined,
+            hasHandDryer: interaction.options.get('tem-secador-de-maos')?.value as boolean | undefined,
+            gender: interaction.options.get('genero')?.value as GenderValues | undefined,
+            cabins: interaction.options.get('cabines')?.value as number | undefined,
+            urinals: interaction.options.get('mictorios')?.value as number | undefined,
+            localization: interaction.options.get('localizacao')?.value as string | undefined,
+            mainImageUrl: interaction.options.get('url-da-imagem-principal')?.value as string | undefined,
         };
 
         const oldBathroom = client.database!.bathroom.get(options.id);

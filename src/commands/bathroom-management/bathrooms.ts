@@ -8,51 +8,50 @@ const data = new SlashCommandBuilder()
     .setDescription('List all the bathrooms')
     .addStringOption(
         Command.commandOptions.bathroomManagement.id()
-            .setRequired(false)
+            .setDescription('Encontre um banheiro específico pelo seu número de identificação')
     )
     .addStringOption(
         Command.commandOptions.bathroomManagement.campus()
-            .setRequired(false)
+            .setDescription('Filtre apenas banheiros de um campus específico.')
     )
     .addStringOption(
         Command.commandOptions.bathroomManagement.institute()
-            .setRequired(false)
+            .setDescription('Filtre apenas banheiros de um instituto específico.')
     )
     .addIntegerOption(
         Command.commandOptions.bathroomManagement.floor()
-            .setRequired(false)
+            .setDescription('Encontre apenas banheiros que estejam em um andar específico.')
     )
     .addBooleanOption(
         Command.commandOptions.bathroomManagement.haveShower()
-            .setRequired(false)
+            .setDescription('Encontre apenas banheiros que tenham chuveiro.')
     )
     .addBooleanOption(
         Command.commandOptions.bathroomManagement.hasHandDryer()
-            .setRequired(false)
+            .setDescription('Encontre apenas banheiros que tenham secador para mãos.')
     )
     .addStringOption(
         Command.commandOptions.bathroomManagement.gender()
-            .setRequired(false)
+            .setDescription('Encontre apenas banheiros de um gênero específico.')
     )
     .addIntegerOption(
         Command.commandOptions.bathroomManagement.cabins()
-            .setRequired(false)
+            .setDescription('Encontre banheiros que possuam uma quantidade específica de cabines.')
+
     )
     .addIntegerOption(
         Command.commandOptions.bathroomManagement.urinals()
-            .setRequired(false)
+            .setDescription('Encontre banheiros que possuam uma quantidade específica de mictórios.')
     )
     .addUserOption(
         new SlashCommandUserOption()
-            .setName('created-by')
-            .setDescription('Quem registrou este banheiro?')
-            .setRequired(false)
+            .setName('criador')
+            .setDescription('Encontra banheiros criados por um usuário específico.')
     )
     .addBooleanOption(
         new SlashCommandBooleanOption()
-            .setName('have-image')
-            .setDescription('Apenas com imagem')
-            .setRequired(false)
+            .setName('tem-imagem')
+            .setDescription('Filtra apenas banheiros que tenham imagens.')
     ) as SlashCommandBuilder;
 
 
@@ -110,15 +109,15 @@ export default new Command(
             return {
                 id: interaction.options.get('id')?.value as string | undefined,
                 campus: interaction.options.get('campus')?.value as CampusValues | undefined,
-                institute: interaction.options.get('institute')?.value as string | undefined,
-                floor: interaction.options.get('floor')?.value as number | undefined,
-                haveShower: interaction.options.get('have-shower')?.value as boolean | undefined,
-                hasHandDryer: interaction.options.get('has-hand-dryer')?.value as boolean | undefined,
-                gender: interaction.options.get('gender')?.value as GenderValues | undefined,
-                cabins: interaction.options.get('cabins')?.value as number | undefined,
-                urinals: interaction.options.get('urinals')?.value as number | undefined,
-                createdBy: interaction.options.get('created-by')?.value as string | undefined,
-                haveImage: interaction.options.get('have-image')?.value as boolean | undefined,
+                institute: interaction.options.get('instituto')?.value as string | undefined,
+                floor: interaction.options.get('andar')?.value as number | undefined,
+                haveShower: interaction.options.get('tem-chuveiro')?.value as boolean | undefined,
+                hasHandDryer: interaction.options.get('tem-secador-de-maos')?.value as boolean | undefined,
+                gender: interaction.options.get('genero')?.value as GenderValues | undefined,
+                cabins: interaction.options.get('cabines')?.value as number | undefined,
+                urinals: interaction.options.get('mictorios')?.value as number | undefined,
+                createdBy: interaction.options.get('criador')?.value as string | undefined,
+                haveImage: interaction.options.get('tem-imagem')?.value as boolean | undefined,
             };
         }
 

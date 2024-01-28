@@ -7,6 +7,7 @@ export default new Command(
         .setDescription('Deletes a specific bathroom.')
         .addStringOption(
             Command.commandOptions.bathroomManagement.id()
+                .setDescription('Número de identificação do banheiro.')
                 .setRequired(true)
         ) as SlashCommandBuilder,
 
