@@ -1,7 +1,27 @@
-import { APIEmbedField, ActionRowBuilder, ButtonBuilder, ButtonStyle, Collection, Colors, EmbedBuilder, SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
+import { 
+    APIEmbedField, 
+    ActionRowBuilder, 
+    ButtonBuilder, 
+    ButtonStyle, 
+    Collection, 
+    Colors, 
+    EmbedBuilder, 
+    SelectMenuBuilder, 
+    SlashCommandBooleanOption, 
+    SlashCommandBuilder, 
+    SlashCommandUserOption, 
+    StringSelectMenuBuilder, 
+    StringSelectMenuOptionBuilder
+} from 'discord.js';
 import Command from '../../classes/Command';
 import Bathroom, { CampusNames, CampusValues, GenderNames, GenderValues } from '../../classes/database/Bathroom';
 import BathroomAvaliation from '../../classes/database/BathroomAvaliation';
+
+type BathroomWithAvaliations = Bathroom & {
+    avaliations: Collection<string, BathroomAvaliation>
+    avarageGrade: number,
+    avarageCleaningGrade: number,
+}
 
 const data = new SlashCommandBuilder()
     .setName('banheiros')
@@ -58,27 +78,45 @@ const data = new SlashCommandBuilder()
 export default new Command(
     data,
     async (interaction, client) => {
+        enum OrderByTypes {
+            'createdAt'='date',
+            'updatedAt'='date',
+            'campus'='string',
+            'institute'='string',
+            'avarageGrade'='number',
+            'avarageCleaningGrade'='number',
+        }
+
+        let currentPage = 0;
+        let embedsPerPage = 5;
+        let orderBy: 'createdAt' | 'updatedAt' | 'campus' | 'institute' | 'avarageGrade' | 'avarageCleaningGrade' = 'createdAt';
+        let order: 'ascending' | 'descending' = 'descending';
+
         const filters = getOptions();
-        const bathrooms = client.database!.bathroom.filter((bathroom) => bathroomsFilter(bathroom, filters));
+
+        let bathrooms = client.database!.bathroom
+            .filter(bathroomsFilter)
+            .mapValues((bathroom) => {
+                const avaliations = client.database!.bathroomAvaliation.filter((bathroomAvaliation) => bathroomAvaliation.bathroomId === bathroom.id);
+                return ({
+                    ...bathroom, 
+                    avaliations,
+                    avarageGrade: getAvarageRating(avaliations, 'grade'),
+                    avarageCleaningGrade: getAvarageRating(avaliations, 'cleaningGrade')
+                }) as BathroomWithAvaliations;
+            })
+            .sort(bathroomsSorter);
 
         if (!bathrooms.size) return interaction.reply('Nenhum banheiro encontrado.');
 
-        // calculates the quantity of pages (each page have 10 bathrooms)
-        let currentPage = 0;
-
-        // Creates a embed for each bathroom in database
-        const allEmbeds = await Promise.all(bathrooms.map((bathroom) => embedFactory(bathroom)));
-
+        // calculates the quantity of pages 
+        
 
         // Inputs on "paginatedEmbeds" constant all embeds divided in arrays: [[10_embeds], [10_embeds], ..., [remaining_embeds]]
-        const paginatedEmbeds = paginatedEmbedsFactory(allEmbeds);
+        let paginatedEmbeds = await paginatedEmbedsFactory();
 
 
-        const response = await interaction.reply({
-            content: `**${bathrooms.size}** resultados encontrados`,
-            embeds: paginatedEmbeds[currentPage],
-            components: paginatedEmbeds.length > 1 ? [rowComponentsFactory()] : undefined
-        });
+        const response = await interaction.reply(messagePayloadFactory());
 
 
         // Collects the buttons interactions and changes the currentPage
@@ -93,11 +131,22 @@ export default new Command(
             else if (i.customId === 'backward') currentPage = Math.max(0, currentPage - 1);
             else if (i.customId === 'forward') currentPage = Math.min(paginatedEmbeds.length - 1, currentPage + 1);
             else if (i.customId === 'forward-10') currentPage = Math.min(paginatedEmbeds.length - 1, currentPage + 10);
+            else if (i.customId === 'items-per-page') {
+                if (!i.isStringSelectMenu()) return;
+                embedsPerPage = Number(i.values[0]);
+                paginatedEmbeds = await paginatedEmbedsFactory();
+            } 
+            else if (i.customId === 'order-by' || i.customId === 'order') {
+                if (!i.isStringSelectMenu()) return;
+                
+                if (i.customId === 'order-by') orderBy = i.values[0] as typeof orderBy;
+                else if (i.customId === 'order') order = i.values[0] as typeof order;
+                
+                bathrooms = bathrooms.sort(bathroomsSorter);
+                paginatedEmbeds = await paginatedEmbedsFactory();
+            }
 
-            await i.update({
-                embeds: paginatedEmbeds[currentPage],
-                components: [rowComponentsFactory()]
-            });
+            await i.update(messagePayloadFactory());
         });
 
 
@@ -121,7 +170,12 @@ export default new Command(
             };
         }
 
-        function bathroomsFilter(bathroom: Bathroom, filters: ReturnType<typeof getOptions>) {
+        function getAvarageRating(avaliations: Collection<string, BathroomAvaliation>, property: 'grade' | 'cleaningGrade') {
+            if (!avaliations.size) return -1;
+            return avaliations.reduce((prev, curr) => prev + curr[property], 0) / avaliations.size;
+        }
+
+        function bathroomsFilter(bathroom: Bathroom) {
             return (filters.id ? bathroom.id === filters.id : true) &&
                 (filters.campus ? bathroom.campus === filters.campus : true) &&
                 (filters.institute ? bathroom.institute === filters.institute : true) &&
@@ -136,8 +190,32 @@ export default new Command(
 
         }
 
-        async function embedFactory(bathroom: Bathroom) {
-            const avaliations = client.database!.bathroomAvaliation.filter((bathroomAvaliation) => bathroomAvaliation.bathroomId === bathroom.id);
+        function bathroomsSorter(first: BathroomWithAvaliations, second: BathroomWithAvaliations)  {
+            if (OrderByTypes[orderBy] === 'date') {
+                const firstTimestamp = new Date(first[orderBy]).getTime();
+                const secondTimestamp = new Date(second[orderBy]).getTime();
+
+                if (order === 'ascending') return firstTimestamp - secondTimestamp;
+                else if (order === 'descending') return secondTimestamp - firstTimestamp;
+            }
+            else if (OrderByTypes[orderBy] === 'string') {
+                const firstString = (first[orderBy] as string).toUpperCase(); // ignore upper and lowercase
+                const secondString = (second[orderBy] as string).toUpperCase(); // ignore upper and lowercase
+
+                if (firstString < secondString && order === 'ascending') return -1;
+                else if (firstString < secondString && order === 'descending') return 1;
+                else if (firstString > secondString && order === 'ascending') return 1;
+                else if (firstString > secondString && order === 'descending') return -1;
+                else return 0;
+            } 
+            else if (OrderByTypes[orderBy] === 'number') {
+                if (order === 'ascending') return (first[orderBy] as number) - (second[orderBy] as number);
+                else if (order === 'descending') return (second[orderBy] as number) - (first[orderBy] as number);
+            }
+        }
+
+        async function embedFactory(bathroom: Bathroom & { avaliations: Collection<string, BathroomAvaliation> }) {
+            const avaliations = bathroom.avaliations;
 
             const embedAuthor = await client.users.fetch(bathroom.createdBy);
             const bathroomFloorFormatted = formatFloor();
@@ -146,7 +224,7 @@ export default new Command(
 
             return new EmbedBuilder({
                 title: `${CampusNames[bathroom.campus]} - ${bathroom.institute} - ${bathroomFloorFormatted}`,
-                description: descriptionFactory(bathroomFloorFormatted, avaliations),
+                description: descriptionFactory(),
                 fields: fieldsFactory(),
                 author: { name: `Criado por ${embedAuthor.displayName}`, icon_url: embedAuthor.avatarURL({ size: 64 }) },
                 timestamp: bathroom.createdAt,
@@ -163,7 +241,7 @@ export default new Command(
                 else return `${bathroom.floor}º andar`;
             }
 
-            function descriptionFactory(bathroomFloorFormatted: string, avaliations: Collection<string, BathroomAvaliation>) {
+            function descriptionFactory() {
                 const id = `🆔 **\`${bathroom.id}\`**`;
                 const gender = genderFactory();
                 const haveShower = `🚿 Chuveiro? **${bathroom.haveShower ? 'Sim' : 'Não'}**`;
@@ -203,14 +281,14 @@ export default new Command(
                 function avarageRatingFactory() {
                     if (!avaliations.size) return undefined;
 
-                    const avarageRating = avaliations.reduce((prev, curr) => prev + curr.grade, 0) / avaliations.size;
+                    const avarageRating = getAvarageRating(avaliations, 'grade');
                     return `✨ Avaliação média: ${starsFactory(avarageRating)}`;
                 }
 
                 function avarageCleaningRatingFactory() {
                     if (!avaliations.size) return undefined;
 
-                    const avarageCleaningRating = avaliations.reduce((prev, curr) => prev + curr.cleaningGrade, 0) / avaliations.size;
+                    const avarageCleaningRating = getAvarageRating(avaliations, 'cleaningGrade');
                     return `🧹 Avaliação média da limpeza: ${starsFactory(avarageCleaningRating)}`;
                 }
 
@@ -261,8 +339,6 @@ export default new Command(
 
                     return fullStarEmoji.repeat(fullStars) + halfStarEmoji.repeat(halfStar) + emptyStarEmoji.repeat(emptyStars);
                 }
-
-                
             }
 
             function fieldsFactory() {
@@ -291,8 +367,7 @@ export default new Command(
             }
         }
 
-
-        function rowComponentsFactory() {
+        function rowPaginationComponentsFactory() {
 
             return new ActionRowBuilder<ButtonBuilder>()
                 .setComponents(
@@ -346,14 +421,145 @@ export default new Command(
             }
         }
 
-        function paginatedEmbedsFactory(embeds: EmbedBuilder[]) {
+        function rowItemsPerPageComponentsFactory() {
+
+            return new ActionRowBuilder<SelectMenuBuilder>()
+                .setComponents(itemsPerPageSelectMenuFactory());
+
+
+            function itemsPerPageSelectMenuFactory() {
+                return new StringSelectMenuBuilder()
+                    .setCustomId('items-per-page')
+                    .setPlaceholder('Banheiros por página')
+                    .setOptions(
+                        new StringSelectMenuOptionBuilder()
+                            .setDescription('Exibe um único banheiro por página')
+                            .setLabel('1')
+                            .setValue('1')
+                            .setDefault(embedsPerPage === 1),
+                        new StringSelectMenuOptionBuilder()
+                            .setDescription('Exibe 5 banheiros por página')
+                            .setLabel('5')
+                            .setValue('5')
+                            .setDefault(embedsPerPage === 5),
+                        new StringSelectMenuOptionBuilder()
+                            .setDescription('Exibe 10 banheiros por página')
+                            .setLabel('10')
+                            .setValue('10')
+                            .setDefault(embedsPerPage === 10)
+                    );
+            }
+        }
+
+        function rowOrderByComponentsFactory() {
+            return new ActionRowBuilder<SelectMenuBuilder>()
+                .setComponents(
+                    orderBySelectMenuFactory()
+                );
+    
+            function orderBySelectMenuFactory() {
+                return new StringSelectMenuBuilder()
+                    .setCustomId('order-by')
+                    .setPlaceholder('Ordenar por...')
+                    .setOptions(
+                        new StringSelectMenuOptionBuilder()
+                            .setDescription('Ordenar por data de criação')
+                            .setEmoji('🗓️')
+                            .setLabel('Data de criação')
+                            .setValue('createdAt')
+                            .setDefault(orderBy === 'createdAt'),
+                        new StringSelectMenuOptionBuilder()
+                            .setDescription('Ordenar por última atualização')
+                            .setEmoji('🗓️')
+                            .setLabel('Data de atualização')
+                            .setValue('updatedAt')
+                            .setDefault(orderBy === 'updatedAt'),
+                        new StringSelectMenuOptionBuilder()
+                            .setDescription('Ordenar por campus')
+                            .setEmoji('🅰️')
+                            .setLabel('Campus')
+                            .setValue('campus')
+                            .setDefault(orderBy === 'campus'),
+                        new StringSelectMenuOptionBuilder()
+                            .setDescription('Ordenar por instituto')
+                            .setEmoji('🅰️')
+                            .setLabel('Instituto')
+                            .setValue('institute')
+                            .setDefault(orderBy === 'institute'),
+                        new StringSelectMenuOptionBuilder()
+                            .setDescription('Ordenar por avaliação média')
+                            .setEmoji('⭐')
+                            .setLabel('Avaliação')
+                            .setValue('avarageGrade')
+                            .setDefault(orderBy === 'avarageGrade'),
+                        new StringSelectMenuOptionBuilder()
+                            .setDescription('Ordenar por avaliação média da limpeza')
+                            .setEmoji('⭐')
+                            .setLabel('Avaliação da limpeza')
+                            .setValue('avarageCleaningGrade')
+                            .setDefault(orderBy === 'avarageCleaningGrade')
+                    );
+            }
+        }
+
+        function rowOrderComponentsFactory() {
+            return new ActionRowBuilder<SelectMenuBuilder>()
+                .setComponents(
+                    orderSelectMenuFactory()
+                );
+    
+            function orderSelectMenuFactory() {
+                const ascendingOption = new StringSelectMenuOptionBuilder()
+                    .setEmoji('⬆️')
+                    .setDefault(order === 'ascending')
+                    .setValue('ascending');
+                const descendingOption = new StringSelectMenuOptionBuilder()
+                    .setEmoji('⬇️')
+                    .setDefault(order === 'descending')
+                    .setValue('descending');
+    
+                if (OrderByTypes[orderBy] === 'date') {
+                    ascendingOption.setLabel('Mais antigos');
+                    ascendingOption.setDescription('Ordenar por mais antigos primeiro');
+                    descendingOption.setLabel('Mais recentes');
+                    descendingOption.setDescription('Ordenar por mais recentes primeiro');
+                } else if (OrderByTypes[orderBy] === 'string') {
+                    ascendingOption.setLabel('A-Z');
+                    ascendingOption.setDescription('Ordenar em ordem alfabética');
+                    descendingOption.setLabel('Z-A');
+                    descendingOption.setDescription('Ordenar em ordem alfabética invertida');
+                } else if (OrderByTypes[orderBy] === 'number') {
+                    ascendingOption.setLabel('Crescente');
+                    ascendingOption.setDescription('Ordenar do menor para o maior');
+                    descendingOption.setLabel('Decrescente');
+                    descendingOption.setDescription('Ordenar do maior para o menor');
+                }
+
+                return new StringSelectMenuBuilder()
+                    .setCustomId('order')
+                    .setPlaceholder('Ordenar')
+                    .setOptions(ascendingOption, descendingOption);
+            }
+        }
+
+        async function paginatedEmbedsFactory() {
             const paginated: EmbedBuilder[][] = [];
-            const qtdPages = Math.ceil(bathrooms.size / 10);
+            const qtdPages = Math.ceil(bathrooms.size / embedsPerPage);
+            // Creates a embed for each bathroom in database
+            const allEmbeds = await Promise.all(bathrooms.map(embedFactory));
 
             for (let i = 0; i < qtdPages; i++) {
-                paginated.push(embeds.slice(0 + (i * 10), 10 + (i * 10)));
+                paginated.push(allEmbeds.slice(0 + (i * embedsPerPage), embedsPerPage + (i * embedsPerPage)));
             }
             return paginated;
+        }
+
+        function messagePayloadFactory() {
+            return {
+                content: `**${bathrooms.size}** resultados encontrados`,
+                embeds: paginatedEmbeds[currentPage],
+                components: [rowPaginationComponentsFactory(), rowItemsPerPageComponentsFactory(), rowOrderByComponentsFactory(), rowOrderComponentsFactory()]
+            };
         }
     }
 );

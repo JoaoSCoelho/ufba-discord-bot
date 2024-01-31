@@ -9,7 +9,7 @@ export default new AdminCommand(
     async (message, client, params, words) => {
         const collectionName = (params.collection || words[0]) as keyof DatabaseInterface;
 
-        const confirmationMessage = await message.reply(`You should clear ${collectionName} collection?`);
+        const confirmationMessage = await message.reply(`Tem certeza que deseja limpar a coleção **${collectionName}**?`);
 
         await confirmationMessage.react('✅');
 
@@ -22,13 +22,13 @@ export default new AdminCommand(
 
         if (reacted.size === 0) return message.reply('Ação finalizada!');
 
-        if (!client.database![collectionName]) return message.reply('Collection doesn\'t exists');
+        if (!client.database![collectionName]) return message.reply('Coleção não existe!');
         
         // @ts-expect-error Erro bobo
         client.database![collectionName] = new DbCollection(collectionName, client.database!);
 
         await client.database?.updateInDiscord();
 
-        return message.reply('Collection cleaned!');
+        return message.reply('Coleção limpa!');
     }
 );
