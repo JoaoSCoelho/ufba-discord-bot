@@ -27,9 +27,9 @@ export default class Bathroom extends Entity {
     public readonly gender?: GenderValues; 
     public readonly cabins?: number;
     public readonly urinals?: number;
-    public localization?: string;
-    public mainImageUrl?: string;
-    public imagesUrls: string[];
+    public readonly localization?: string;
+    public readonly mainImageUrl?: string;
+    public readonly imagesUrls: string[];
     
     constructor(
         data: {
@@ -66,5 +66,5 @@ export default class Bathroom extends Entity {
         this.imagesUrls = data.imagesUrls || [];
     }
 
-    static imagesLimit = 25;
+    static imagesLimit = 20;
 }

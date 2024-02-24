@@ -92,7 +92,7 @@ export default new Command(
                 hasSoap: interaction.options.get('tem-sabonete')!.value as boolean,
                 smellsGood: interaction.options.get('cheira-bem')!.value as boolean,
                 observations: interaction.options.get('comentarios')?.value as string | undefined,
-                imageUrl: interaction.options.get('imagem')?.attachment.url as string | undefined,
+                imageUrl: interaction.options.get('imagem')?.attachment!.url as string | undefined,
             };
         }
     }

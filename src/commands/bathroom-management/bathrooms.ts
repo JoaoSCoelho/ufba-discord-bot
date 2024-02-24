@@ -1,10 +1,8 @@
 import { 
-    APIEmbedField, 
     ActionRowBuilder, 
     ButtonBuilder, 
     ButtonStyle, 
-    Collection, 
-    Colors, 
+    Collection,  
     EmbedBuilder, 
     SelectMenuBuilder, 
     SlashCommandBooleanOption, 
@@ -14,8 +12,10 @@ import {
     StringSelectMenuOptionBuilder
 } from 'discord.js';
 import Command from '../../classes/Command';
-import Bathroom, { CampusNames, CampusValues, GenderNames, GenderValues } from '../../classes/database/Bathroom';
+import Bathroom, { CampusValues, GenderValues } from '../../classes/database/Bathroom';
 import BathroomAvaliation from '../../classes/database/BathroomAvaliation';
+import getBathroomAvarageRating from '../../shared/getBathroomAvarageRating';
+import bathroomEmbedFactory from '../../shared/bathroomEmbedFactory';
 
 type BathroomWithAvaliations = Bathroom & {
     avaliations: Collection<string, BathroomAvaliation>
@@ -101,8 +101,8 @@ export default new Command(
                 return ({
                     ...bathroom, 
                     avaliations,
-                    avarageGrade: getAvarageRating(avaliations, 'grade'),
-                    avarageCleaningGrade: getAvarageRating(avaliations, 'cleaningGrade')
+                    avarageGrade: getBathroomAvarageRating(avaliations, 'grade'),
+                    avarageCleaningGrade: getBathroomAvarageRating(avaliations, 'cleaningGrade')
                 }) as BathroomWithAvaliations;
             })
             .sort(bathroomsSorter);
@@ -170,11 +170,6 @@ export default new Command(
             };
         }
 
-        function getAvarageRating(avaliations: Collection<string, BathroomAvaliation>, property: 'grade' | 'cleaningGrade') {
-            if (!avaliations.size) return -1;
-            return avaliations.reduce((prev, curr) => prev + curr[property], 0) / avaliations.size;
-        }
-
         function bathroomsFilter(bathroom: Bathroom) {
             return (filters.id ? bathroom.id === filters.id : true) &&
                 (filters.campus ? bathroom.campus === filters.campus : true) &&
@@ -212,159 +207,7 @@ export default new Command(
                 if (order === 'ascending') return (first[orderBy] as number) - (second[orderBy] as number);
                 else if (order === 'descending') return (second[orderBy] as number) - (first[orderBy] as number);
             }
-        }
-
-        async function embedFactory(bathroom: Bathroom & { avaliations: Collection<string, BathroomAvaliation> }) {
-            const avaliations = bathroom.avaliations;
-
-            const embedAuthor = await client.users.fetch(bathroom.createdBy);
-            const bathroomFloorFormatted = formatFloor();
-            const lastUpdateFormatted = Intl.DateTimeFormat('pt-br', { dateStyle: 'long' }).format(bathroom.updatedAt);
-
-
-            return new EmbedBuilder({
-                title: `${CampusNames[bathroom.campus]} - ${bathroom.institute} - ${bathroomFloorFormatted}`,
-                description: descriptionFactory(),
-                fields: fieldsFactory(),
-                author: { name: `Criado por ${embedAuthor.displayName}`, icon_url: embedAuthor.avatarURL({ size: 64 }) },
-                timestamp: bathroom.createdAt,
-                footer: { text: `Ultima atualização em ${lastUpdateFormatted}` },
-                color: colorFactory(),
-                image: bathroom.mainImageUrl && { url: bathroom.mainImageUrl }
-            });
-
-
-
-            function formatFloor() {
-                if (bathroom.floor === 0) return 'Térreo';
-                else if (bathroom.floor < 0) return `${Math.abs(bathroom.floor)}º piso subsolo.`;
-                else return `${bathroom.floor}º andar`;
-            }
-
-            function descriptionFactory() {
-                const id = `🆔 **\`${bathroom.id}\`**`;
-                const gender = genderFactory();
-                const haveShower = `🚿 Chuveiro? **${bathroom.haveShower ? 'Sim' : 'Não'}**`;
-                const hasHandDryer = typeof bathroom.hasHandDryer === 'boolean' ?
-                    `🖐️ Secador de mãos? **${bathroom.hasHandDryer ? 'Sim' : 'Não'}**` :
-                    undefined;
-                const cabins = typeof bathroom.cabins === 'number' ?
-                    `🚽 Quantidade de cabines: **${bathroom.cabins}**` :
-                    undefined;
-                const urinals = (typeof bathroom.urinals === 'number' && bathroom.gender !== 'FEMININO') ?
-                    `🔫 Quantidade de mictórios: **${bathroom.urinals}**` :
-                    undefined;
-                const campus = `📌 Campus: **${CampusNames[bathroom.campus]}**`;
-                const institute = `🏛️ Instituto: **${bathroom.institute}**`;
-                const floor = `🛗 Andar/Piso: **${bathroomFloorFormatted}**`;
-                const avarageRating = avarageRatingFactory();
-                const avarageCleaningRating = avarageCleaningRatingFactory();
-                const usuallyHasPaperTowel = usuallyHasPaperTowelFactory();
-                const usuallyHasToiletPaper = usuallyHasToiletPaperFactory();
-                const usuallyHasSoap = usuallyHasSoapFactory();
-                const usuallySmellsGood = usuallySmellsGoodFactory();
-
-                return [
-                    id, gender, haveShower, hasHandDryer, cabins, urinals, campus, institute, floor, avarageRating, avarageCleaningRating,
-                    usuallyHasPaperTowel, usuallyHasToiletPaper, usuallyHasSoap, usuallySmellsGood
-                ]
-                    .filter((t) => typeof t === 'string').join('\n');
-
-
-
-                function genderFactory(): string | undefined {
-                    if (bathroom.gender === 'UNISSEX') return `🚾 **${GenderNames[bathroom.gender]}**`;
-                    else if (bathroom.gender === 'FEMININO') return `♀️ **${GenderNames[bathroom.gender]}**`;
-                    else if (bathroom.gender === 'MASCULINO') return `♂️ **${GenderNames[bathroom.gender]}**`;
-                }
-
-                function avarageRatingFactory() {
-                    if (!avaliations.size) return undefined;
-
-                    const avarageRating = getAvarageRating(avaliations, 'grade');
-                    return `✨ Avaliação média: ${starsFactory(avarageRating)}`;
-                }
-
-                function avarageCleaningRatingFactory() {
-                    if (!avaliations.size) return undefined;
-
-                    const avarageCleaningRating = getAvarageRating(avaliations, 'cleaningGrade');
-                    return `🧹 Avaliação média da limpeza: ${starsFactory(avarageCleaningRating)}`;
-                }
-
-                function usuallyHasPaperTowelFactory() {
-                    if (!avaliations.size) return undefined;
-
-                    const hasPaperTowelPercent = Number(((avaliations.filter(avaliation => avaliation.hasPaperTowel).size / avaliations.size) * 100).toFixed(1));
-                    const dontHasPaperTowelPercent = 100 - hasPaperTowelPercent;
-                    return `🧻 Costuma ter papel toalha? **👍 ${hasPaperTowelPercent}%** | **👎 ${dontHasPaperTowelPercent}%**`;
-                }
-
-                function usuallyHasToiletPaperFactory() {
-                    if (!avaliations.size) return undefined;
-
-                    const avaliationsWithHasToiletPaper = avaliations.filter(avaliation => typeof avaliation.hasToiletPaper === 'boolean');
-
-                    if (!avaliationsWithHasToiletPaper.size) return undefined;
-
-                    const hasToiletPaperPercent = Number(((avaliationsWithHasToiletPaper.filter(avaliation => avaliation.hasToiletPaper).size / avaliationsWithHasToiletPaper.size) * 100).toFixed(1));
-                    const dontHasToiletPaperPercent = 100 - hasToiletPaperPercent;
-                    return `🧻 Costuma ter papel higiênico? **👍 ${hasToiletPaperPercent}%** | **👎 ${dontHasToiletPaperPercent}%**`;
-                }
-
-                function usuallyHasSoapFactory() {
-                    if (!avaliations.size) return undefined;
-
-                    const hasSoapPercent = Number(((avaliations.filter(avaliation => avaliation.hasSoap).size / avaliations.size) * 100).toFixed(1));
-                    const dontHasSoapPercent = 100 - hasSoapPercent;
-                    return `🧼 Costuma ter sabonete? **👍 ${hasSoapPercent}%** | **👎 ${dontHasSoapPercent}%**`;
-                }
-
-                function usuallySmellsGoodFactory() {
-                    if (!avaliations.size) return undefined;
-
-                    const smellsGoodPercent = Number(((avaliations.filter(avaliation => avaliation.smellsGood).size / avaliations.size) * 100).toFixed(1));
-                    const dontSmellsGoodPercent = 100 - smellsGoodPercent;
-                    return `🧴 Costuma cheirar bem? **👍 ${smellsGoodPercent}%** | **👎 ${dontSmellsGoodPercent}%**`;
-                }
-
-                function starsFactory(grade: number) {
-                    const fullStars = parseInt((grade / 2).toString());
-                    const halfStar = grade % 2 !== 0 ? 1 : 0;
-                    const emptyStars = 5 - fullStars - halfStar;
-
-                    const fullStarEmoji = '<:' + client.emojis.cache.find((e) => e.name === 'fullstar').identifier + '>';
-                    const halfStarEmoji = '<:' + client.emojis.cache.find((e) => e.name === 'halfstar').identifier + '>';
-                    const emptyStarEmoji = '<:' + client.emojis.cache.find((e) => e.name === 'emptystar').identifier + '>';
-
-                    return fullStarEmoji.repeat(fullStars) + halfStarEmoji.repeat(halfStar) + emptyStarEmoji.repeat(emptyStars);
-                }
-            }
-
-            function fieldsFactory() {
-                const fields: APIEmbedField[] = [];
-                if (bathroom.localization)
-                    fields.push({
-                        name: '🗺️ Onde fica?',
-                        value: bathroom.localization
-                    });
-                if (bathroom.imagesUrls.length > 1)
-                    fields.push({
-                        name: '📸 Imagens',
-                        value: bathroom.imagesUrls.reduce( // Put all images urls until 1024 characters, the ramaining will be substituted by a emoji
-                            (prev, curr) => prev.length + curr.length > 1024 - (bathroom.imagesUrls.length * 4) ? `${prev} 🖼️` : `${prev} ${curr}`,
-                            ''
-                        ),
-                    });
-
-                return fields;
-            }
-
-            function colorFactory() {
-                if (bathroom.gender === 'MASCULINO') return Colors.Blue;
-                else if (bathroom.gender === 'FEMININO') return Colors.LuminousVividPink;
-                else return Colors.DarkGrey;
-            }
+            return 0;
         }
 
         function rowPaginationComponentsFactory() {
@@ -546,7 +389,7 @@ export default new Command(
             const paginated: EmbedBuilder[][] = [];
             const qtdPages = Math.ceil(bathrooms.size / embedsPerPage);
             // Creates a embed for each bathroom in database
-            const allEmbeds = await Promise.all(bathrooms.map(embedFactory));
+            const allEmbeds = await Promise.all(bathrooms.map((bathroom) => bathroomEmbedFactory(client, bathroom)));
 
             for (let i = 0; i < qtdPages; i++) {
                 paginated.push(allEmbeds.slice(0 + (i * embedsPerPage), embedsPerPage + (i * embedsPerPage)));

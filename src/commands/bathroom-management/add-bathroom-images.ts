@@ -28,7 +28,7 @@ export default new Command(
         if (oldBathroom.imagesUrls.length >= Bathroom.imagesLimit) return interaction.reply('Não há mais espaço para imagens neste banheiro!');
 
         if (oldBathroom.imagesUrls.length + imagesUrls.length > Bathroom.imagesLimit) {
-            interaction.channel.send(`${oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit} imagens não serão adicionadas pois ultrapassam o limite de ${Bathroom.imagesLimit} imagens por banheiro.`);
+            interaction.channel!.send(`${oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit} imagens não serão adicionadas pois ultrapassam o limite de ${Bathroom.imagesLimit} imagens por banheiro.`);
             imagesUrls.splice(-(oldBathroom.imagesUrls.length + imagesUrls.length - Bathroom.imagesLimit));
         }
 
@@ -53,8 +53,8 @@ export default new Command(
         function getImagesOptions() {
             const urls: string[] = [];
 
-            for (let i = 0; i < 20; i++) {
-                const imageUrl = interaction.options.get(`imagem-${i + 1}`)?.attachment.url;
+            for (let i = 0; i < Bathroom.imagesLimit; i++) {
+                const imageUrl = interaction.options.get(`imagem-${i + 1}`)?.attachment!.url;
                 imageUrl && urls.push(imageUrl);
             }
 
@@ -64,7 +64,7 @@ export default new Command(
 );
 
 function addAttachmentOptions(data: SlashCommandBuilder) {
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < Bathroom.imagesLimit; i++) {
         data.addAttachmentOption(
             Command.commandOptions.bathroomManagement.image()
                 .setDescription('Imagem do banheiro.')

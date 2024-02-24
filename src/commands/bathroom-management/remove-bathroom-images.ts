@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CollectedInteraction, InteractionCollector, MessageCollectorOptionsParams, MessageComponentType, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageCollectorOptionsParams, MessageComponentType, SlashCommandBuilder } from 'discord.js';
 import Command from '../../classes/Command';
 import Bathroom from '../../classes/database/Bathroom';
 
@@ -41,7 +41,7 @@ export default new Command(
         let remainingUrls = oldBathroom.imagesUrls;
 
         // Sends each image with two buttons
-        const imagesResponseCollectors: InteractionCollector<CollectedInteraction>[] = 
+        const imagesResponseCollectors = 
             await Promise.all(oldBathroom.imagesUrls.map(controlImageSelection));
 
 
@@ -75,7 +75,7 @@ export default new Command(
                     ...oldBathroom,
                     updatedAt: new Date(),
                     imagesUrls: remainingUrls,
-                    mainImageUrl: remainingUrls.includes(oldBathroom.mainImageUrl) ? undefined : oldBathroom.mainImageUrl,
+                    mainImageUrl: remainingUrls.includes(oldBathroom.mainImageUrl!) ? undefined : oldBathroom.mainImageUrl,
                 });
 
                 await client.database!.bathroom.edit(newBathroom);

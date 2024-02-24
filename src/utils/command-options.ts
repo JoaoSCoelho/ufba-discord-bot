@@ -36,7 +36,9 @@ export default {
             .setMinLength(3)
             .setMaxLength(50),
         floor: () => new SlashCommandIntegerOption()
-            .setName('andar'),
+            .setName('andar')
+            .setMaxValue(163)
+            .setMinValue(-2400),
         haveShower: () => new SlashCommandBooleanOption()
             .setName('tem-chuveiro'),
         hasHandDryer: () => new SlashCommandBooleanOption()
@@ -59,10 +61,12 @@ export default {
             ),
         cabins: () => new SlashCommandIntegerOption()
             .setName('cabines')
-            .setMinValue(0),
+            .setMinValue(0)
+            .setMaxValue(1000),
         urinals: () => new SlashCommandIntegerOption()
             .setName('mictorios')
-            .setMinValue(0),
+            .setMinValue(0)
+            .setMaxValue(1000),
         localization: () => new SlashCommandStringOption()
             .setName('localizacao')
             .setMinLength(10)
