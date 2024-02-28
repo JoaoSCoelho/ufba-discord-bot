@@ -3,6 +3,8 @@ import { config } from 'dotenv';
 import LocalClient from './classes/LocalClient';
 import commandHandler, { adminCommandHandler } from './command-handler';
 import Database from './database/Database';
+import Member from './classes/database/Member';
+import scoreSystem from './score-system';
 
 // Set the environment variables from '.env' file
 config();
@@ -14,6 +16,7 @@ const client = new LocalClient({ intents: [
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMessageReactions,
     GatewayIntentBits.GuildEmojisAndStickers,
+    GatewayIntentBits.GuildMembers,
 ] });
 
 // Map all the commands in '/commands/[type]'|'/admin_commands' directories and put it in .commands|.adminCommands of the bot
@@ -91,6 +94,70 @@ client.on(Events.MessageCreate, async (message) => {
         await message.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!' });
     }
 });
+
+client.on(Events.MessageCreate, async (message) => {
+    // Filter only guild messages
+    if (!message.inGuild()) return;
+    if (message.author.id === client.user!.id) return;
+
+    await scoreSystem(client, message);
+});
+
+
+
+client.on(Events.GuildCreate, async (guild) => {
+    if (!client.database) return;
+
+    guild.members.cache.forEach((guildMember) => {
+        const alreadyHasTheMember = !!client.database!.member.find((member) => 
+            member.discordId === guildMember.id && member.discordGuildId === guild.id
+        );
+
+        if (alreadyHasTheMember) return;
+
+
+
+        const member = new Member({
+            id: Date.now().toString(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            discordId: guildMember.id,
+            discordGuildId: guild.id,
+        });
+        
+        client.database!.member.new(member);
+    });
+});
+
+client.on(Events.GuildDelete, (guild) => {
+    if (!client.database) return;
+
+    client.database!.member.filter((member) => {
+        return member.discordGuildId === guild.id;
+    }).forEach((member) => client.database!.member.remove(member.id));
+});
+
+client.on(Events.GuildMemberAdd, (guildMember) => {
+    if (!client.database) return;
+
+    const alreadyHasTheMember = client.database.member.find((member) => 
+        member.discordGuildId === guildMember.guild.id && member.discordId === guildMember.id
+    );
+
+    if (alreadyHasTheMember) return;
+
+    const member = new Member({
+        id: Date.now().toString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        discordId: guildMember.id,
+        discordGuildId: guildMember.guild.id,
+    });
+
+    client.database.member.new(member);
+});
+
+
 
 function getParamsAsAObject(regexGen: () => RegExp, string: string) {
     const params: Record<string, string> = {};

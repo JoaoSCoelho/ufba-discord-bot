@@ -6,15 +6,18 @@ import LocalClient from '../classes/LocalClient';
 import axios from 'axios';
 import ClassEntity from '../classes/database/Entity';
 import BathroomAvaliation from '../classes/database/BathroomAvaliation';
+import Member from '../classes/database/Member';
 
 export interface DatabaseInterface {
     bathroom: Bathroom[];
     bathroomAvaliation: BathroomAvaliation[];
+    member: Member[];
 }
 
 export default class Database extends EventEmitter {
     public bathroom: DbCollection<Bathroom>;
     public bathroomAvaliation: DbCollection<BathroomAvaliation>;
+    public member: DbCollection<Member>;
     private canUpdate: boolean = true;
     private updatesInBuffer: boolean = false;
     private updateTimeout = 10000; // 10s
@@ -23,6 +26,7 @@ export default class Database extends EventEmitter {
         super();
         this.bathroom = new DbCollection('bathroom', this);
         this.bathroomAvaliation = new DbCollection('bathroomAvaliation', this);
+        this.member = new DbCollection('member', this);
         this.fetch().then(() => this.emit('ready'));
     }
 
@@ -30,6 +34,7 @@ export default class Database extends EventEmitter {
         return {
             bathroom: this.bathroom.toJSON(),
             bathroomAvaliation: this.bathroomAvaliation.toJSON(),
+            member: this.member.toJSON(),
         };
     }
 
@@ -75,6 +80,16 @@ export default class Database extends EventEmitter {
             });
 
             this.bathroomAvaliation.set(bathroomAvaliation.id, bathroomAvaliation);
+        });
+
+        data.member?.map(memberJson => {
+            const member = new Member({
+                ...memberJson,
+                createdAt: new Date(memberJson.createdAt),
+                updatedAt: new Date(memberJson.updatedAt)
+            });
+
+            this.member.set(member.id, member);
         });
     }
 
