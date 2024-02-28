@@ -12,15 +12,8 @@ export default new Command(
 
         if (!member) return interaction.reply('Você não possui pontuação neste servidor!');
 
-        // @ts-expect-error erro
-        const levelIndex = levels.reduce((prev, curr, currIndex) => {
-            if (typeof prev === 'number') return prev as number;
+        const levelIndex = levels.findIndex(({ targetScore }) => targetScore > member.score);
 
-            if (member.score >= prev.targetScore && member.score < curr.targetScore) return currIndex - 1;
-
-            return curr;
-        }) as number;
-
-        interaction.reply(`Você tem \`${member.score}\` pontos e seu nível atual é **Nível ${levelIndex + 1}**`);
+        interaction.reply(`Você tem \`${member.score}\` pontos e seu nível atual é **Nível ${levelIndex}**`);
     }
 );
