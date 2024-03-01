@@ -5,9 +5,18 @@ import commandHandler, { adminCommandHandler } from './command-handler';
 import Database from './database/Database';
 import Member from './classes/database/Member';
 import scoreSystem from './score-system';
+import LogSystem from './classes/LogSystem';
+
+export const log = new LogSystem();
+
+log.loadingh('Setando variáveis de ambiente');
 
 // Set the environment variables from '.env' file
 config();
+
+log.successh('Variáveis de ambiente setadas');
+
+log.loadingh('Instanciando novo client');
 
 // Instance a new Client Bot
 const client = new LocalClient({ intents: [
@@ -19,9 +28,20 @@ const client = new LocalClient({ intents: [
     GatewayIntentBits.GuildMembers,
 ] });
 
-// Map all the commands in '/commands/[type]'|'/admin_commands' directories and put it in .commands|.adminCommands of the bot
+log.successh('Client instanciado');
+
+// Map all the commands in '/commands/[type]'|'/admin_commands' directories and put it in .commands|.adminCommands of the client
+// Mapeia todos os comandos das pastas '/commands/[type]' e '/admin_commands' e coloca isso na propriedade '.commands' e '.adminCommands' do client
+log.loadingh('Cadastrando comandos no client');
+
 commandHandler(client);
+
+log.successh('Comandos cadastrados');
+log.loadingh('Cadastrando comandos de admin no client');
+
 adminCommandHandler(client);
+
+log.successh('Comandos de admin cadastrados');
 
 // These event are executed when the bot goes online on discord
 client.once(Events.ClientReady, readyClient => {
@@ -29,7 +49,7 @@ client.once(Events.ClientReady, readyClient => {
 
     client.database = new Database(client);
 
-    client.database?.on('ready', () => console.log('Database running!'));
+    client.database!.on('ready', () => console.log('Database running!'));
 });
 
 // Captures when a interaction with the bot occurs
