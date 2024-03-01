@@ -220,10 +220,10 @@ export default class LogSystem {
 
                 /** `PT`: Envia no canal do Discord fornecido a mensagem de log */
                 const sendLogMessage = (channel: TextChannel | undefined) => {
-                    const chunkContent = chunk.length <= 1950 ? chunk : stripAnsi(chunk as string);
+                    const chunkContent = chunk.length <= 1950 ? (chunk as string) : stripAnsi(chunk as string);
 
                     channel?.send({
-                        content: `\`\`\`ansi\n${chunkContent.slice(-1950)}\n\`\`\``,
+                        content: `\`\`\`ansi\n${(chunkContent.length > 1950 ? chunk : chunkContent).slice(0, 1950)}\n\`\`\``,
                         files: chunk.length > 1950 ?
                             [
                                 new AttachmentBuilder(
