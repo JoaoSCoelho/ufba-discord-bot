@@ -6,6 +6,12 @@ import util from 'util';
 import LocalClient from './LocalClient';
 import { AttachmentBuilder, ChannelType, TextChannel } from 'discord.js';
 
+
+type LogType = 'I' | 'W' | 'E' | 'S' | 'L' | 'O';
+
+
+
+
 configInspectDefaultOptions();
 
 /** `PT`: Guarda a função original `process.stdout.write` */
@@ -43,6 +49,22 @@ export default class LogSystem {
     clientReady(client: LocalClient) {
         this.client = client;
     }
+
+
+
+
+    /** `PT`: Retorna um resultado chalk com a cor usada no `logSystem.info` */
+    infoColor(...text: unknown[]) { return chalk[this.getChalkMethod('I')](...text); }
+    /** `PT`: Retorna um resultado chalk com a cor usada no `logSystem.warn` */
+    warnColor(...text: unknown[]) { return chalk[this.getChalkMethod('W')](...text); }
+    /** `PT`: Retorna um resultado chalk com a cor usada no `logSystem.error` */
+    errorColor(...text: unknown[]) { return chalk[this.getChalkMethod('E')](...text); }
+    /** `PT`: Retorna um resultado chalk com a cor usada no `logSystem.success` */
+    successColor(...text: unknown[]) { return chalk[this.getChalkMethod('S')](...text); }
+    /** `PT`: Retorna um resultado chalk com a cor usada no `logSystem.loading` */
+    loadingColor(...text: unknown[]) { return chalk[this.getChalkMethod('L')](...text); }
+    /** `PT`: Retorna um resultado chalk com a cor usada no `logSystem.other` */
+    otherColor(...text: unknown[]) { return chalk[this.getChalkMethod('O')](...text); }
 
 
 
@@ -85,7 +107,7 @@ export default class LogSystem {
 
 
     /** This method creates a new log in the log file in addition to `console.log()` in the provided content. */
-    log<Type extends 'I' | 'W' | 'E' | 'S' | 'L' | 'O'>(
+    log<Type extends LogType>(
         /** The type of log being passed:
          * 
          *      'I' for Info; 'W' for Warn; 'E' for Error; 'S' for Success; 'L' for 'Loading'; 'O' for Other
@@ -121,9 +143,9 @@ export default class LogSystem {
 
 
 
-        const typeName: 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS' | 'LOADING...' | 'OTHER' = getTypeName(type);
-        const chalkMethod: 'cyan' | 'red' | 'yellow' | 'green' | 'blue' | 'inverse' = getChalkMethod(type);
-        const consoleMethod: 'info' | 'warn' | 'error' | 'log' = getConsoleMethod(type);
+        const typeName = this.getTypeName(type);
+        const chalkMethod = this.getChalkMethod(type);
+        const consoleMethod = this.getConsoleMethod(type);
 
 
 
@@ -165,6 +187,19 @@ export default class LogSystem {
         /** `PT`: Escreve nos arquivos de log, e se disponível nos canais do discord, o conteúdo `chunk` e retorna um novo `chunk` */
         function writeLogs(this: LogSystem, chunk: string | Uint8Array) {
             if (typeof chunk === 'string') {
+                // `PT`: Faz a colorização de todas as ocorrências `#(abcde...)` ou `#c(abcde...)` com um `chalk[chalkMethod](abcde...)`
+                chunk = chunk.replace(/\\#(d|i|w|e|s|l|o)?\((.+)\)/g, '%%%DNC%%%($1)($2)%%%DNC%%%'); // @example `log.other('\#(something here...)')` will be logged as `\#(something here...)`
+                chunk = chunk.replace(/#\((.+)\)/g, chalk[chalkMethod]('$1'));
+                chunk = chunk.replace(/#d\((.+)\)/g, chalk[this.getChalkMethod('D')]('$1'));
+                chunk = chunk.replace(/#i\((.+)\)/g, chalk[this.getChalkMethod('I')]('$1'));
+                chunk = chunk.replace(/#w\((.+)\)/g, chalk[this.getChalkMethod('W')]('$1'));// @example `log.warn('#i(something here...)')` will be logged as `[36msomething here...[39m`
+                chunk = chunk.replace(/#e\((.+)\)/g, chalk[this.getChalkMethod('E')]('$1'));
+                chunk = chunk.replace(/#s\((.+)\)/g, chalk[this.getChalkMethod('S')]('$1'));
+                chunk = chunk.replace(/#l\((.+)\)/g, chalk[this.getChalkMethod('L')]('$1'));
+                chunk = chunk.replace(/#o\((.+)\)/g, chalk[this.getChalkMethod('O')]('$1'));
+                chunk = chunk.replace(/%%%DNC%%%\((d|i|w|e|s|l|o)?\)\((.+)\)%%%DNC%%%/g, '#$1($2)');
+
+
                 // `PT`: Da um nível de identação para qualquer conteúdo do chunk
                 chunk = chunk.replace(/\n(.)/g, '\n    $1');
                 chunk = chunk.replace(/\r(.)/g, '\r    $1');
@@ -211,7 +246,7 @@ export default class LogSystem {
 
 
 
-                
+
                 // `PT`: Obtem os canais de log padrão e envia o log como mensagem
                 !terminalHidden && this.getLogChannel().then(sendLogMessage);
                 this.getLogChannel(true).then(sendLogMessage);
@@ -219,35 +254,10 @@ export default class LogSystem {
 
             return chunk;
         }
-
-        function getTypeName(type: Type) {
-            if (type === 'I') return 'INFO';
-            else if (type === 'E') return 'ERROR';
-            else if (type === 'W') return 'WARN';
-            else if (type === 'S') return 'SUCCESS';
-            else if (type === 'L') return 'LOADING...';
-            else if (type === 'O') return 'OTHER';
-            return 'INFO';
-        }
-        function getChalkMethod(type: Type) {
-            if (type === 'I') return 'cyan';
-            else if (type === 'E') return 'red';
-            else if (type === 'W') return 'yellow';
-            else if (type === 'S') return 'green';
-            else if (type === 'L') return 'blue';
-            else if (type === 'O') return 'inverse';
-            return 'cyan';
-        }
-        function getConsoleMethod(type: Type) {
-            if (type === 'I') return 'info';
-            else if (type === 'E') return 'error';
-            else if (type === 'W') return 'warn';
-            else if (type === 'S') return 'log';
-            else if (type === 'L') return 'log';
-            else if (type === 'O') return 'log';
-            return 'info';
-        }
     }
+
+
+
 
     /** @param full If `true`, the full log channel will be returned */
     async getLogChannel(full?: boolean) {
@@ -257,6 +267,38 @@ export default class LogSystem {
         if (!logChannel?.isTextBased() || logChannel.type !== ChannelType.GuildText) throw new Error((full ? 'Full ' : '') + 'Log channel is not a TextChannel');
 
         return logChannel;
+    }
+
+
+
+
+    getTypeName<Type extends LogType>(type: Type) {
+        if (type === 'I') return 'INFO';
+        else if (type === 'E') return 'ERROR';
+        else if (type === 'W') return 'WARN';
+        else if (type === 'S') return 'SUCCESS';
+        else if (type === 'L') return 'LOADING...';
+        else if (type === 'O') return 'OTHER';
+        return 'INFO';
+    }
+    getChalkMethod<Type extends LogType | 'D'>(type: Type) {
+        if (type === 'D') return 'reset';
+        else if (type === 'I') return 'cyan';
+        else if (type === 'E') return 'red';
+        else if (type === 'W') return 'yellow';
+        else if (type === 'S') return 'green';
+        else if (type === 'L') return 'blue';
+        else if (type === 'O') return 'inverse';
+        return 'cyan';
+    }
+    getConsoleMethod<Type extends LogType>(type: Type) {
+        if (type === 'I') return 'info';
+        else if (type === 'E') return 'error';
+        else if (type === 'W') return 'warn';
+        else if (type === 'S') return 'log';
+        else if (type === 'L') return 'log';
+        else if (type === 'O') return 'log';
+        return 'info';
     }
 }
 
