@@ -38,21 +38,25 @@ client.once(Events.ClientReady, readyClient => {
 });
 
 // Captures when a interaction with the bot occurs
-client.on(Events.InteractionCreate, async interaction => {
-    // Filter only chatinput commands
-    if (!interaction.isChatInputCommand()) return;
+client.on(Events.InteractionCreate, async (interaction) => {
+    // Filter only chatinput commands in guild
+    if (!interaction.isChatInputCommand() || !interaction.inGuild()) return;
+
+    log.infoh(`#(@${interaction.user.tag})# usou o comando #(/${interaction.commandName})# no canal #(@${interaction.channel?.name ?? interaction.channelId})# do servidor #(${interaction.guild?.name ?? interaction.guildId})#`);
 
     const command = client.commands.get(interaction.commandName);
 
     if (!command) {
-        console.error(`No command matching ${interaction.commandName} was found.`);
+        log.error(`Não foi encontrado o comando /#(${interaction.commandName}) na lista de comandos do bot`);
         return;
     }
+
 
     try {
         await command.execute(interaction, client);
     } catch (error) {
-        console.error(error);
+        log.error(`Aconteceu um erro na execução do comando /#(${interaction.commandName})# pelo usuário #(@${interaction.user.tag})#, no canal #(@${interaction.channel?.name ?? interaction.channelId})# do servidor #(${interaction.guild?.name ?? interaction.guildId})#`, error);
+
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true });
         } else {
@@ -63,11 +67,25 @@ client.on(Events.InteractionCreate, async interaction => {
 
 // Captures when a new message is sent
 client.on(Events.MessageCreate, async (message) => {
+
+
+    // Computes message to scoreSystem if is a message in guild and isn't a bot
+    if (message.inGuild() && !message.author.bot) await scoreSystem(client, message);
+
+
+
+
+
+    // Computes the message to an admin command
+
     // Filter only messages of bot admins
     if (!client.admins.includes(message.author.id)) return;
     
     // Filter only messages that can be a admin command
     if (!message.content.startsWith(client.prefix)) return;
+
+
+
 
     // Removes the prefix of the message
     const prefixRemovedMessageContent = message.content.slice(client.prefix.length);
@@ -82,6 +100,15 @@ client.on(Events.MessageCreate, async (message) => {
 
     const params = getParamsAsAObject(() => /-(\w+)="([^"]+)"/g, commandMessage);
 
+
+
+
+    log.infoh(
+        `O admin #(@${message.author.tag})# usou o comando de admin #(${client.prefix}${calledCommand})#, no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})# do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`, 
+        ...(Object.values(params).length ? ['\nParâmetros:', params] : []), 
+        ...(words.length ? ['\nArgumentos:', words] : [])
+    );
+
     const command = client.adminCommands.get(calledCommand);
 
     if (!command) return;
@@ -95,25 +122,19 @@ client.on(Events.MessageCreate, async (message) => {
         );
 		
     } catch (error) {
-        console.error(error);
+        log.error(`Aconteceu um erro na execução do comando /#(${client.prefix}${calledCommand})# pelo admin #(@${message.author.tag})#, no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})# do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`, error);
         await message.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!' });
     }
 });
 
-client.on(Events.MessageCreate, async (message) => {
-    // Filter only guild messages
-    if (!message.inGuild()) return;
-    if (message.author.id === client.user!.id) return;
-
-    await scoreSystem(client, message);
-});
-
-
-
+// Captures when the client enter on a guild
 client.on(Events.GuildCreate, async (guild) => {
+    log.info(`O bot acabou de entrar no servidor "#(${guild.name})#" - #(${guild.id})#`);
+
     if (!client.database) return;
 
-    guild.members.cache.forEach((guildMember) => {
+    // `PT`: Mapeia todos os membros do servidor para o banco de dados do bot
+    await Promise.all(guild.members.cache.map(async (guildMember) => {
         const alreadyHasTheMember = !!client.database!.member.find((member) => 
             member.discordId === guildMember.id && member.discordGuildId === guild.id
         );
@@ -121,6 +142,7 @@ client.on(Events.GuildCreate, async (guild) => {
         if (alreadyHasTheMember) return;
 
 
+        log.loadingh(`Adicionando membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# ao banco de dados`);
 
         const member = new Member({
             id: Date.now().toString(),
@@ -130,26 +152,47 @@ client.on(Events.GuildCreate, async (guild) => {
             discordGuildId: guild.id,
         });
         
-        client.database!.member.new(member);
-    });
+        await client.database!.member.new(member);
+        log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# adicionado ao banco de dados`);
+    }));
+
+    log.success(`Membros do servidor #(${guild.name})# adicionados ao banco.`);
 });
 
-client.on(Events.GuildDelete, (guild) => {
+// Captures when the client get out of a guild
+client.on(Events.GuildDelete, async (guild) => {
     if (!client.database) return;
 
-    client.database!.member.filter((member) => {
-        return member.discordGuildId === guild.id;
-    }).forEach((member) => client.database!.member.remove(member.id));
+    log.info(`O bot acabou de sair do servidor "#(${guild.name || guild.id})#"`);
+
+    // Removes all members with this guild.id
+    await Promise.all(client.database!.member
+        .filter((member) =>  member.discordGuildId === guild.id)
+        .map(async (member) => {
+            log.loadingh(`Removing member #(${member.id})# from server #(${guild.name || guild.id})#, from database`);
+
+            await client.database!.member.remove(member.id);
+
+            log.success(`Member #(${member.id})# from server #(${guild.name || guild.id})#, successfully removed from database`);
+        }));
+
+    log.success(`All members from server #(${guild.name || guild.id})# removed from database`);
 });
 
-client.on(Events.GuildMemberAdd, (guildMember) => {
+client.on(Events.GuildMemberAdd, async (guildMember) => {
     if (!client.database) return;
 
-    const alreadyHasTheMember = client.database.member.find((member) => 
+    log.infoh(`O membro #(@${guildMember.user.tag})# foi adicionado ao servidor #(${guildMember.guild.name})#`);
+
+    /** `true` if the member has already on database */
+    const alreadyHasTheMember = !!client.database.member.find((member) => 
         member.discordGuildId === guildMember.guild.id && member.discordId === guildMember.id
     );
 
     if (alreadyHasTheMember) return;
+
+
+    log.loadingh(`Adicionando membro #(@${guildMember.user.tag})# do servidor #(${guildMember.guild.name})# ao banco de dados`);
 
     const member = new Member({
         id: Date.now().toString(),
@@ -159,11 +202,12 @@ client.on(Events.GuildMemberAdd, (guildMember) => {
         discordGuildId: guildMember.guild.id,
     });
 
-    client.database.member.new(member);
+    await client.database.member.new(member);
+    log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guildMember.guild.name})# adicionado ao banco de dados`);
 });
 
 
-
+/** `PT`: A partir de uma RegExp com dois match groups, transforma a string em um objeto: { [key: $1]: $2 } */
 function getParamsAsAObject(regexGen: () => RegExp, string: string) {
     const params: Record<string, string> = {};
 
