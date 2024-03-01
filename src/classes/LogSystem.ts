@@ -187,17 +187,15 @@ export default class LogSystem {
         /** `PT`: Escreve nos arquivos de log, e se disponível nos canais do discord, o conteúdo `chunk` e retorna um novo `chunk` */
         function writeLogs(this: LogSystem, chunk: string | Uint8Array) {
             if (typeof chunk === 'string') {
+
                 // `PT`: Faz a colorização de todas as ocorrências `#(abcde...)` ou `#c(abcde...)` com um `chalk[chalkMethod](abcde...)`
-                chunk = chunk.replace(/\\#(d|i|w|e|s|l|o)?\((.+)\)/g, '%%%DNC%%%($1)($2)%%%DNC%%%'); // @example `log.other('\#(something here...)')` will be logged as `\#(something here...)`
-                chunk = chunk.replace(/#\((.+)\)/g, chalk[chalkMethod]('$1'));
-                chunk = chunk.replace(/#d\((.+)\)/g, chalk[this.getChalkMethod('D')]('$1'));
-                chunk = chunk.replace(/#i\((.+)\)/g, chalk[this.getChalkMethod('I')]('$1'));
-                chunk = chunk.replace(/#w\((.+)\)/g, chalk[this.getChalkMethod('W')]('$1'));// @example `log.warn('#i(something here...)')` will be logged as `[36msomething here...[39m`
-                chunk = chunk.replace(/#e\((.+)\)/g, chalk[this.getChalkMethod('E')]('$1'));
-                chunk = chunk.replace(/#s\((.+)\)/g, chalk[this.getChalkMethod('S')]('$1'));
-                chunk = chunk.replace(/#l\((.+)\)/g, chalk[this.getChalkMethod('L')]('$1'));
-                chunk = chunk.replace(/#o\((.+)\)/g, chalk[this.getChalkMethod('O')]('$1'));
-                chunk = chunk.replace(/%%%DNC%%%\((d|i|w|e|s|l|o)?\)\((.+)\)%%%DNC%%%/g, '#$1($2)');
+                let oldChunk = '';
+                while (oldChunk !== chunk) {
+                    oldChunk = chunk;
+
+                    chunk = chunk
+                        .replace(/(?<!\\)#(d|i|w|e|s|l|o)?\((((?<!\)#).(?!(?:#(d|i|w|e|s|l|o)?\()))+)\)#/g, (_match, a, b) => chalk[a ? this.getChalkMethod(a) : chalkMethod](b));
+                }
 
 
                 // `PT`: Da um nível de identação para qualquer conteúdo do chunk
