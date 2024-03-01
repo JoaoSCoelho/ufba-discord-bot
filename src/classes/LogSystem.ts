@@ -306,9 +306,7 @@ export default class LogSystem {
 
 /** `PT`: Altera algumas configurações default do `console.log()` */
 function configInspectDefaultOptions() {
-    util.inspect.defaultOptions.depth = null;
-    util.inspect.defaultOptions.maxArrayLength = null;
-    util.inspect.defaultOptions.maxStringLength = null;
+    util.inspect.defaultOptions.depth = 7;
+    util.inspect.defaultOptions.maxArrayLength = 500;
     util.inspect.defaultOptions.numericSeparator = true;
-    util.inspect.defaultOptions.showProxy = true;
 }
