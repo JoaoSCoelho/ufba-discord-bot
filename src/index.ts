@@ -1,5 +1,6 @@
+import './configEnv';
+
 import { Events, GatewayIntentBits } from 'discord.js';
-import { config } from 'dotenv';
 import LocalClient from './classes/LocalClient';
 import commandHandler, { adminCommandHandler } from './command-handler';
 import Database from './database/Database';
@@ -9,15 +10,6 @@ import LogSystem from './classes/LogSystem';
 import chalk from 'chalk';
 
 export const log = new LogSystem();
-
-log.loadingh('Setando variáveis de ambiente');
-
-// Set the environment variables from '.env' file
-config();
-
-log.successh('Variáveis de ambiente setadas');
-
-log.loadingh('Instanciando novo client');
 
 // Instance a new Client Bot
 const client = new LocalClient({ intents: [
@@ -29,20 +21,11 @@ const client = new LocalClient({ intents: [
     GatewayIntentBits.GuildMembers,
 ] });
 
-log.successh('Client instanciado');
-
 // Map all the commands in '/commands/[type]'|'/admin_commands' directories and put it in .commands|.adminCommands of the client
 // Mapeia todos os comandos das pastas '/commands/[type]' e '/admin_commands' e coloca isso na propriedade '.commands' e '.adminCommands' do client
-log.loadingh('Cadastrando comandos no client');
-
 commandHandler(client);
-
-log.successh('Comandos cadastrados');
-log.loadingh('Cadastrando comandos de admin no client');
-
 adminCommandHandler(client);
 
-log.successh('Comandos de admin cadastrados');
 
 // These event are executed when the bot goes online on discord
 client.once(Events.ClientReady, readyClient => {
