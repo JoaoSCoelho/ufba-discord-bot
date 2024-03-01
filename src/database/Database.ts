@@ -1,4 +1,4 @@
-import { AttachmentBuilder } from 'discord.js';
+import { AttachmentBuilder, ChannelType } from 'discord.js';
 import { EventEmitter } from 'node:events';
 import Bathroom from '../classes/database/Bathroom';
 import DbCollection from './DbCollection';
@@ -40,7 +40,7 @@ export default class Database extends EventEmitter {
 
     async getDbChannel() {
         const dbChannel = await this.client.channels.fetch(process.env.DATABASE_CHANNEL_ID!);
-        if (!dbChannel?.isTextBased()) throw new Error('Database channel is not a TextChannel');
+        if (!dbChannel?.isTextBased() || dbChannel.type !== ChannelType.GuildText) throw new Error('Database channel is not a TextChannel');
 
         return dbChannel;
     }

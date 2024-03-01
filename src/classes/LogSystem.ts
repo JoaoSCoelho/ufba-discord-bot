@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import stripAnsi from 'strip-ansi';
 import util from 'util';
 import LocalClient from './LocalClient';
+import { AttachmentBuilder, ChannelType, TextChannel } from 'discord.js';
 
 configInspectDefaultOptions();
 
@@ -15,6 +16,9 @@ const originalStderrWrite = process.stderr.write.bind(process.stderr);
 export default class LogSystem {
     /** `PT`: Informa se é o primeiro log do processo atual. Essa variável vai receber `false` assim que qualquer função de log for acionada */
     private firstOfProcess = true;
+
+    /** `PT`: Informa se é o primeiro log do processo atual desde que o client está disponível. Essa variável vai receber `false` assim que qualquer função de log for acionada com o client disponível */
+    private firstOfProcessForClient = true;
 
 
     /** 
@@ -33,64 +37,52 @@ export default class LogSystem {
         this.executionDate = `${new Date().getDate().toString().padStart(2, '0')}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${new Date().getFullYear()}--${new Date().getHours().toString().padStart(2, '0')}-${new Date().getMinutes().toString().padStart(2, '0')}-${new Date().getSeconds().toString().padStart(2, '0')}`;
     }
 
+
+
     /** `PT`: Quando executada, seta um client no `LogSystem` e permite que o `client` envie logs em algum canal apropriado */
     clientReady(client: LocalClient) {
         this.client = client;
     }
 
-    /** @param data - The data to be logged */
-    info(...data: any[]) {
-        this.log('I', false, ...data); 
-    }
-    /** @param data - The data to be logged */
-    infoh(...data: any[]) {
-        this.log('I', true, ...data); 
-    }
 
-    /** @param data - The data to be logged */
-    warn(...data: any[]) {
-        this.log('W', false, ...data); 
-    }
-    /** @param data - The data to be logged */
-    warnh(...data: any[]) {
-        this.log('W', true, ...data); 
-    }
 
-    /** @param data - The data to be logged */
-    error(...data: any[]) {
-        this.log('E', false, ...data); 
-    }
-    /** @param data - The data to be logged */
-    errorh(...data: any[]) {
-        this.log('E', true, ...data); 
-    }
 
-    /** @param data - The data to be logged */
-    success(...data: any[]) {
-        this.log('S', false, ...data); 
-    }
-    /** @param data - The data to be logged */
-    successh(...data: any[]) {
-        this.log('S', true, ...data); 
-    }
 
-    /** @param data - The data to be logged */
-    loading(...data: any[]) {
-        this.log('L', false, ...data); 
-    }
-    /** @param data - The data to be logged */
-    loadingh(...data: any[]) {
-        this.log('L', true, ...data); 
-    }
+    /** `PT`: Cria um log com template informativo @param data - The data to be logged */
+    info(...data: any[]) { this.log('I', false, ...data); }
+    /** `PT`: Cria um log com template informativo. *Não é mostrado no terminal do processo. @param data - The data to be logged */
+    infoh(...data: any[]) { this.log('I', true, ...data); }
 
-    /** @param data - The data to be logged */
-    other(...data: any[]) {
-        this.log('O', false, ...data); 
-    }
-    /** @param data - The data to be logged */
-    otherh(...data: any[]) {
-        this.log('O', true, ...data); 
-    }
+    /** `PT`: Cria um log com template de aviso. @param data - The data to be logged */
+    warn(...data: any[]) { this.log('W', false, ...data); }
+    /** `PT`: Cria um log com template de aviso. *Não é mostrado no terminal do processo. @param data - The data to be logged */
+    warnh(...data: any[]) { this.log('W', true, ...data); }
+
+    /** `PT`: Cria um log com template de erro. @param data - The data to be logged */
+    error(...data: any[]) { this.log('E', false, ...data); }
+    /** `PT`: Cria um log com template de erro. *Não é mostrado no terminal do processo. @param data - The data to be logged */
+    errorh(...data: any[]) { this.log('E', true, ...data); }
+
+    /** `PT`: Cria um log com template de sucesso. @param data - The data to be logged */
+    success(...data: any[]) { this.log('S', false, ...data); }
+    /** `PT`: Cria um log com template de sucesso. *Não é mostrado no terminal do processo. @param data - The data to be logged */
+    successh(...data: any[]) { this.log('S', true, ...data); }
+
+    /** `PT`: Cria um log com template de carregamento. @param data - The data to be logged */
+    loading(...data: any[]) { this.log('L', false, ...data); }
+    /** `PT`: Cria um log com template de carregamento. *Não é mostrado no terminal do processo. @param data - The data to be logged */
+    loadingh(...data: any[]) { this.log('L', true, ...data); }
+
+    /** `PT`: Cria um log com template genérico. @param data - The data to be logged */
+    other(...data: any[]) { this.log('O', false, ...data); }
+    /** `PT`: Cria um log com template genérico. *Não é mostrado no terminal do processo. @param data - The data to be logged */
+    otherh(...data: any[]) { this.log('O', true, ...data); }
+
+
+
+
+
+
 
     /** This method creates a new log in the log file in addition to `console.log()` in the provided content. */
     log<Type extends 'I' | 'W' | 'E' | 'S' | 'L' | 'O'>(
@@ -106,7 +98,10 @@ export default class LogSystem {
     ) {
         const currentDate = new Date();
         const logMoment = Intl.DateTimeFormat('pt-br', { dateStyle: 'short', timeStyle: 'medium' }).format(currentDate) + ':' + currentDate.getMilliseconds();
-    
+
+
+
+
         // `PT`: Se for o primeiro log do processo, os arquivos de log são zerados e a variável `firstOfProcess` é atribuida como `false`
         if (this.firstOfProcess) {
             fs.mkdirSync('logs', { recursive: true });
@@ -114,11 +109,26 @@ export default class LogSystem {
             fs.writeFileSync('log-ansi.txt', '');
             this.firstOfProcess = false;
         }
-    
+        if (this.firstOfProcessForClient && this.client) {
+            const sendNewSetOfLogsMessage = (channel: TextChannel | undefined) => channel?.send(`# Novo conjunto de logs: ${this.executionDate}`);
+
+            this.getLogChannel().then(sendNewSetOfLogsMessage);
+            this.getLogChannel(true).then(sendNewSetOfLogsMessage);
+            this.firstOfProcessForClient = false;
+        }
+
+
+
+
+
         const typeName: 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS' | 'LOADING...' | 'OTHER' = getTypeName(type);
         const chalkMethod: 'cyan' | 'red' | 'yellow' | 'green' | 'blue' | 'inverse' = getChalkMethod(type);
         const consoleMethod: 'info' | 'warn' | 'error' | 'log' = getConsoleMethod(type);
-    
+
+
+
+
+
         // `PT`: Sobrescreve as funções `write` das saídas `stdout` e `stderr` do processo
         // @ts-expect-error some error
         process.stdout.write = (chunk, encoding, callback) => {
@@ -130,33 +140,86 @@ export default class LogSystem {
             chunk = writeLogs.bind(this)(chunk);
             return terminalHidden ? undefined : originalStderrWrite(chunk, encoding, callback);
         };
-    
+
+
+
+
         console[consoleMethod](`${chalk[chalkMethod]('>')}${type === 'L' ? ` [${chalk[chalkMethod]('↻')}]` : ''} [${chalk[chalkMethod](typeName)}] [${chalk[chalkMethod](logMoment)}]:`, ...data);
-    
+
+
+
+
+
         process.stdout.write = originalStdoutWrite;
         process.stderr.write = originalStderrWrite;
-    
-        /** `PT`: Escreve nos arquivos de log o conteúdo `chunk` e retorna um novo `chunk` */
+
+
+
+
+
+
+
+
+
+
+        /** `PT`: Escreve nos arquivos de log, e se disponível nos canais do discord, o conteúdo `chunk` e retorna um novo `chunk` */
         function writeLogs(this: LogSystem, chunk: string | Uint8Array) {
             if (typeof chunk === 'string') {
                 // `PT`: Da um nível de identação para qualquer conteúdo do chunk
                 chunk = chunk.replace(/\n(.)/g, '\n    $1');
                 chunk = chunk.replace(/\r(.)/g, '\r    $1');
-    
+
+                /** `PT`: Um array com todas as quebras de linhas encontradas no `chunk` */
                 const chunkLineWraps = (chunk as string).match(/(\n|\r)/g) ?? [];
-    
+
                 // `PT`: Se o chunk tiver mais de 4 quebras de linha, uma linhas é adicionada ao final
                 if (chunkLineWraps.length > 4) chunk = chunk + `[${chalk[chalkMethod]('----------------------------------------------------------')}]\n`;
-    
+
+
+
+                // `PT`: Escreve nos arquivos de log
                 fs.appendFileSync('log.txt', stripAnsi(chunk));
                 fs.appendFileSync('log-ansi.txt', chunk);
                 fs.writeFileSync(`logs/log-${this.executionDate}.txt`, fs.readFileSync('log.txt'));
                 fs.writeFileSync(`logs/log-ansi-${this.executionDate}.txt`, fs.readFileSync('log-ansi.txt'));
+
+
+
+                /** `PT`: Envia no canal do Discord fornecido a mensagem de log */
+                const sendLogMessage = (channel: TextChannel | undefined) => {
+                    const chunkContent = chunk.length <= 1950 ? chunk : stripAnsi(chunk as string);
+
+                    channel?.send({
+                        content: `\`\`\`ansi\n${chunkContent.slice(-1950)}\n\`\`\``,
+                        files: chunk.length > 1950 ?
+                            [
+                                new AttachmentBuilder(
+                                    Buffer.from(chunk).length < 25 * 1000 * 1000 ?
+                                        Buffer.from(chunk) :
+                                        Buffer.from('LOG TOO LARGE!' /* + ' LOG FILE WILL BE SENT BY EMAIL' */),
+                                    { name: `log-${Date.now()}.txt` }
+                                ),
+                                new AttachmentBuilder(
+                                    Buffer.from(stripAnsi(chunk as string)).length < 25 * 1000 * 1000 ?
+                                        Buffer.from(stripAnsi(chunk as string)) :
+                                        Buffer.from('LOG TOO LARGE!' /* + ' LOG FILE WILL BE SENT BY EMAIL' */),
+                                    { name: `log-${Date.now()}.txt` }
+                                ),
+                            ] : undefined
+                    }).catch(() => 0);
+                };
+
+
+
+                
+                // `PT`: Obtem os canais de log padrão e envia o log como mensagem
+                !terminalHidden && this.getLogChannel().then(sendLogMessage);
+                this.getLogChannel(true).then(sendLogMessage);
             }
-    
+
             return chunk;
         }
-    
+
         function getTypeName(type: Type) {
             if (type === 'I') return 'INFO';
             else if (type === 'E') return 'ERROR';
@@ -184,6 +247,16 @@ export default class LogSystem {
             else if (type === 'O') return 'log';
             return 'info';
         }
+    }
+
+    /** @param full If `true`, the full log channel will be returned */
+    async getLogChannel(full?: boolean) {
+        if (!this.client) return;
+
+        const logChannel = await this.client.channels.fetch(process.env[full ? 'FULL_LOG_CHANNEL_ID' : 'LOG_CHANNEL_ID']!);
+        if (!logChannel?.isTextBased() || logChannel.type !== ChannelType.GuildText) throw new Error((full ? 'Full ' : '') + 'Log channel is not a TextChannel');
+
+        return logChannel;
     }
 }
 

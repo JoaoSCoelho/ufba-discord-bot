@@ -9,6 +9,8 @@
     CLIENT_ID=bot_id
     GUILD_ID=discord_bot_development_server_id
     DATABASE_CHANNEL_ID=bot_database_channel_id
+    LOG_CHANNEL_ID=bot_log_channel_id
+    FULL_LOG_CHANNEL_ID=bot_full_log_channel_id
     BOT_ADMINS=a_comma-separated_and_space-free_list_of_discord_users_who_will_have_full_access_to_all_bot_commands
     PREFIX=the_prefix_of_admin_commands // Default is _
     ```

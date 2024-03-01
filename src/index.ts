@@ -6,6 +6,7 @@ import Database from './database/Database';
 import Member from './classes/database/Member';
 import scoreSystem from './score-system';
 import LogSystem from './classes/LogSystem';
+import chalk from 'chalk';
 
 export const log = new LogSystem();
 
@@ -45,11 +46,12 @@ log.successh('Comandos de admin cadastrados');
 
 // These event are executed when the bot goes online on discord
 client.once(Events.ClientReady, readyClient => {
-    console.log(`Bot ${readyClient.user.tag} iniciado!`);
+    log.success(`Bot ${chalk.cyan(`@${readyClient.user.tag}`)} iniciado`);
 
+    log.clientReady(client);
     client.database = new Database(client);
 
-    client.database!.on('ready', () => console.log('Database running!'));
+    client.database!.on('ready', () => log.success('Banco de dados pronto'));
 });
 
 // Captures when a interaction with the bot occurs
