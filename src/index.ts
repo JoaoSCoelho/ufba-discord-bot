@@ -29,12 +29,12 @@ adminCommandHandler(client);
 
 // These event are executed when the bot goes online on discord
 client.once(Events.ClientReady, readyClient => {
-    log.success(`Bot ${chalk.cyan(`@${readyClient.user.tag}`)} iniciado`);
+    log.info(`Bot ${chalk.cyan(`@${readyClient.user.tag}`)} iniciado`);
 
     log.clientReady(client);
     client.database = new Database(client);
 
-    client.database!.on('ready', () => log.success('Banco de dados pronto'));
+    client.database!.on('ready', () => log.info('Banco de dados pronto'));
 });
 
 // Captures when a interaction with the bot occurs
@@ -105,15 +105,18 @@ client.on(Events.MessageCreate, async (message) => {
 
 
 
+    
+
+    const command = client.adminCommands.get(calledCommand);
+
+    if (!command) return;
+
     log.infoh(
         `O admin #(@${message.author.tag})# usou o comando de admin #(${client.prefix}${calledCommand})#, no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})# do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`, 
         ...(Object.values(params).length ? ['\nParâmetros:', params] : []), 
         ...(words.length ? ['\nArgumentos:', words] : [])
     );
 
-    const command = client.adminCommands.get(calledCommand);
-
-    if (!command) return;
 
     try {
         await command.execute(
@@ -135,6 +138,8 @@ client.on(Events.GuildCreate, async (guild) => {
 
     if (!client.database) return;
 
+    let addedMembersCount = 0;
+    let errorOnAddingMemberCount = 0;
     // `PT`: Mapeia todos os membros do servidor para o banco de dados do bot
     await Promise.all(guild.members.cache.map(async (guildMember) => {
         const alreadyHasTheMember = !!client.database!.member.find((member) => 
@@ -144,7 +149,6 @@ client.on(Events.GuildCreate, async (guild) => {
         if (alreadyHasTheMember) return;
 
 
-        log.loadingh(`Adicionando membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# ao banco de dados`);
 
         const member = new Member({
             id: Date.now().toString(),
@@ -155,11 +159,17 @@ client.on(Events.GuildCreate, async (guild) => {
         });
         
         await client.database!.member.new(member)
-            .then(() => log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# adicionado ao banco de dados`))
-            .catch((error) => log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# ao banco de dados\n#(Erro)#:`, error, '\n#(Membro)#:', member));
+            .then(() => {
+                log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# adicionado ao banco de dados`);
+                addedMembersCount++;
+            })
+            .catch((error) => {
+                log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# ao banco de dados\n#(Erro)#:`, error, '\n#(Membro)#:', member);
+                errorOnAddingMemberCount++;
+            });
     }));
 
-    log.success(`Membros do servidor #(${guild.name})# adicionados ao banco.`);
+    log.info(`#(${addedMembersCount})# membros do servidor #(${guild.name})# adicionados ao banco. #(${errorOnAddingMemberCount})# membros tiveram erro ao serem adicionados ao banco.`);
 });
 
 // Captures when the client get out of a guild
@@ -172,14 +182,12 @@ client.on(Events.GuildDelete, async (guild) => {
     await Promise.all(client.database!.member
         .filter((member) =>  member.discordGuildId === guild.id)
         .map(async (member) => {
-            log.loadingh(`Removing member #(${member.id})# from server #(${guild.name || guild.id})#, from database`);
-
             await client.database!.member.remove(member.id)
                 .then(() => log.success(`Member #(${member.id})# from server #(${guild.name || guild.id})#, successfully removed from database`))
                 .catch((error) => log.error(`Erro ao remover membro #(${member.id})# do servidor #(${guild.name || guild.id})#\n#(Erro)#:`, error));
         }));
 
-    log.success(`All members from server #(${guild.name || guild.id})# removed from database`);
+    log.info(`Members from server #(${guild.name || guild.id})# removed from database`);
 });
 
 client.on(Events.GuildMemberAdd, async (guildMember) => {
@@ -194,8 +202,6 @@ client.on(Events.GuildMemberAdd, async (guildMember) => {
 
     if (alreadyHasTheMember) return;
 
-
-    log.loadingh(`Adicionando membro #(@${guildMember.user.tag})# do servidor #(${guildMember.guild.name})# ao banco de dados`);
 
     const member = new Member({
         id: Date.now().toString(),
