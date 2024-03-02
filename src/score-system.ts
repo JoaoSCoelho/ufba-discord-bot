@@ -80,7 +80,7 @@ export default async function scoreSystem(client: LocalClient, message: Message<
     // `PT`: Vai passando pelos nívels em `levels` até encontrar o nível que o usuário alcançou (se ele alcançou), e enviar a mensagem
     levels.forEach(({ targetScore }, index) => {
         if (dbMemberScore < targetScore && member.score >= targetScore) {
-            log.info(`O membro #(@${message.member?.user.tag ?? message.author.id})# do servidor #(${message.guild.name})# passou para o nível #(${index + 1})#`);
+            log.infoh(`O membro #(@${message.member?.user.tag ?? message.author.id})# do servidor #(${message.guild.name})# passou para o nível #(${index + 1})#`);
 
             if (!message.guild.members.me?.permissionsIn(message.channel).has(PermissionsBitField.Flags.SendMessages)) return;
 
