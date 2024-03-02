@@ -12,7 +12,6 @@ const commandsToDeploy: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
 /** `PT`: Seta em `client.commands` e na constante `commands` todos os comandos da pasta `/commands` */
 export default async function commandHandler(client: LocalClient) {
-    log.loadingh('Cadastrando comandos no client');
 
     /** `PT`: O caminho da pasta `/commands` */
     const foldersPath = path.join(__dirname, 'commands');
@@ -21,7 +20,6 @@ export default async function commandHandler(client: LocalClient) {
 
     /** `PT`: Para cada pasta em `/commands` um novo loop é iniciado para obter os arquivos */
     for (const folder of commandsFolder) {
-        log.loadingh(`Cadastrando comandos da pasta "#(${folder})#"`);
 
         /** `PT`: O caminho da pasta `/commands/[folder]` */
         const commandsPath = path.join(foldersPath, folder);
@@ -30,8 +28,6 @@ export default async function commandHandler(client: LocalClient) {
 
 
         for (const file of commandFiles) {
-            log.loadingh(`Cadastrando comando do arquivo "#(${file})#"`);
-
             const filePath = path.join(commandsPath, file);
             const command: Command = (await import(filePath))?.default;
 
@@ -39,35 +35,32 @@ export default async function commandHandler(client: LocalClient) {
             if ('data' in command && 'execute' in command) {
                 client.commands.set(command.data.name, command);
 
-                log.successh(`Comando #(${command.data.name})# (#(${file})#) cadastrado com sucesso`);
+                log.successh(`Comando #(${command.data.name})# (#(${folder}/${file})#) cadastrado com sucesso`);
 
 
 
                 if (shouldDeploy) {
                     commandsToDeploy.push(command.data.toJSON());
 
-                    log.info(`Comando #(${command.data.name})# (#(${file})#) cadastrado para deploy`);
+                    log.info(`Comando #(${command.data.name})# (#(${folder}/${file})#) cadastrado para deploy`);
                 }
             } else {
-                log.warn(`O comando em #(${(filePath)})# não possui as propriedades necessárias "#(data)#" e "#(execute)#".`);
+                log.warn(`O comando em (#(${folder}/${file})#) não possui as propriedades necessárias "#(data)#" e "#(execute)#".`);
             }
         }
     }
 
-    log.successh('Comandos cadastrados');
+    log.successh(`#(${client.commands.size})# comandos cadastrados com sucesso`);
 
     shouldDeploy && deployCommands(commandsToDeploy);
 }
 
 export async function adminCommandHandler(client: LocalClient) {
-    log.loadingh('Cadastrando comandos de admin no client');
-
 
     const commandsPath = path.join(__dirname, 'admin-commands');
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
 
     for (const file of commandFiles) {
-        log.loadingh(`Cadastrando comando de admin do arquivo "#(${file})#"`);
 
         const filePath = path.join(commandsPath, file);
         const command: AdminCommand = (await import(filePath))?.default;
@@ -76,18 +69,16 @@ export async function adminCommandHandler(client: LocalClient) {
         if ('data' in command && 'execute' in command) {
             client.adminCommands.set(command.data.name, command);
 
-            log.successh(`Comando #(${command.data.name})# (#(${file})#) cadastrado com sucesso`);
+            log.successh(`Comando de admin #(${command.data.name})# (#(${file})#) cadastrado com sucesso`);
         } else {
-            log.warn(`O comando de admin em #(${(filePath)})# não possui as propriedades necessárias "#(data)#" e "#(execute)#".`);
+            log.warn(`O comando de admin em #(${(file)})# não possui as propriedades necessárias "#(data)#" e "#(execute)#".`);
         }
     }
 
-    log.successh('Comandos de admin cadastrados');
+    log.successh(`#(${client.adminCommands.size})# comandos de admin cadastrados com sucesso`);
 }
 
 export async function deployCommands(commands: RESTPostAPIChatInputApplicationCommandsJSONBody[]) {
-    log.loading('Fazendo deploy dos comandos no discord');
-
     const rest = new REST().setToken(process.env.TOKEN!);
 
 
@@ -101,7 +92,7 @@ export async function deployCommands(commands: RESTPostAPIChatInputApplicationCo
             { body: commands },
         ) as Command[];
 
-        log.success(`Successfully reloaded #(${data.length})# application (/) commands.\n${commands.map((command, index) => `#(${index + 1}º)# ${command.name}`).join('\n')}`);
+        log.success(`Successfully reloaded #(${data.length})# application (/) commands.\n${commands.map((command, index) => `#(${index + 1}º)# ${command.name}`).join(' | ')}`);
     } catch (error) {
         // And of course, make sure you catch and log any errors!
         log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord', error);
