@@ -21,12 +21,23 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
 
         if (this.has(entity.id)) throw new Error('Has already a entity with this ID');
 
-        this.set(entity.id, entity);
 
-        await this.database.write(this.entityName, entity)
-            .then(() => log.info(`Um novo registro, ${chalk.bold('ID')}: #(${entity.id})#, foi adicionado à coleção #(${this.entityName})#`))
+        this.set(entity.id, entity);
+        log.infoh(`Um novo registro, ${chalk.bold('ID')}: #(${entity.id})#, foi adicionado à coleção #(${this.entityName})#`);
+
+
+        
+        this.database.emit('entityCreate', this.entityName, entity);
+
+
+
+        await this.database.globalUpdateSystem()
+            .then((status) => {
+                if (status === 'updated') log.infoh(`O novo registro, ${chalk.bold('ID')}: #(${entity.id})#, foi globalmente incorporado`);
+                else if (status === 'buffer') log.infoh(`O novo registro, ${chalk.bold('ID')}: #(${entity.id})#, está na fila para ser globalmente incorporado`);
+            })
             .catch ((error) => {
-                log.error(`Erro ao escrever no banco de dados. ${chalk.bold('ID')}: #(${entity.id})#`, error);
+                log.error(`Erro ao usar ${chalk.bold.gray('globalUpdateSystem')} ao criar entidade ${chalk.bold('ID')}: #(${entity.id})#`, error);
                 throw error;
             });
     }
@@ -38,12 +49,21 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
 
         if (!this.has(newEntity.id)) throw new Error('There is no entity with this ID');
 
-        this.set(newEntity.id, newEntity);
 
-        await this.database.edit(this.entityName, newEntity)
-            .then(() => log.info(`O registro ${chalk.bold('ID')}: #(${newEntity.id})# da coleção #(${this.entityName})# foi editado`))
+        this.set(newEntity.id, newEntity);
+        log.infoh(`O registro ${chalk.bold('ID')}: #(${newEntity.id})# da coleção #(${this.entityName})# foi editado`);
+
+
+        this.database.emit('entityUpdate', this.entityName, newEntity);
+
+
+        await this.database.globalUpdateSystem()
+            .then((status) => {
+                if (status === 'updated') log.infoh(`O registro, ${chalk.bold('ID')}: #(${newEntity.id})#, foi globalmente atualizado`);
+                else if (status === 'buffer') log.infoh(`O registro, ${chalk.bold('ID')}: #(${newEntity.id})#, está na fila para ser globalmente atualizado`);
+            })
             .catch ((error) => {
-                log.error(`Erro ao editar no banco de dados. ${chalk.bold('ID')}: #(${newEntity.id})#`, error);
+                log.error(`Erro ao usar ${chalk.bold.gray('globalUpdateSystem')} ao editar entidade ${chalk.bold('ID')}: #(${newEntity.id})#`, error);
                 throw error;
             });
     }
@@ -53,12 +73,22 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
     async remove(entityId: string) {
         if (!this.has(entityId)) throw new Error('There is not entity with this ID');
 
-        this.delete(entityId);
+        const deletedEntity = this.get(entityId)!;
 
-        await this.database.remove(this.entityName, entityId)
-            .then(() => log.info(`O registro ${chalk.bold('ID')}: #(${entityId})# da coleção #(${this.entityName})# foi removido`))
+        this.delete(entityId);
+        log.infoh(`O registro ${chalk.bold('ID')}: #(${entityId})# da coleção #(${this.entityName})# foi removido`);
+
+
+        this.database.emit('entityDelete', this.entityName, deletedEntity);
+
+
+        await this.database.globalUpdateSystem()
+            .then((status) => {
+                if (status === 'updated') log.infoh(`O registro, ${chalk.bold('ID')}: #(${entityId})#, foi globalmente removido`);
+                else if (status === 'buffer') log.infoh(`O registro, ${chalk.bold('ID')}: #(${entityId})#, está na fila para ser globalmente removido`);
+            })
             .catch ((error) => {
-                log.error(`Erro ao remover do banco de dados. ${chalk.bold('ID')}: #(${entityId})#`, error);
+                log.error(`Erro ao usar ${chalk.bold.gray('globalUpdateSystem')} ao editar entidade ${chalk.bold('ID')}: #(${entityId})#`, error);
                 throw error;
             });
     }
