@@ -275,7 +275,7 @@ export default class LogSystem {
 
 
     /** @param full If `true`, the full log channel will be returned */
-    async getLogChannel(full?: boolean) {
+    private async getLogChannel(full?: boolean) {
         if (!this.client) return;
 
         const logChannel = await this.client.channels.fetch(process.env[full ? 'FULL_LOG_CHANNEL_ID' : 'LOG_CHANNEL_ID']!);
@@ -287,16 +287,16 @@ export default class LogSystem {
 
 
 
-    getTypeName<Type extends LogType>(type: Type) {
-        if (type === 'I') return 'INFO';
-        else if (type === 'E') return 'ERROR';
-        else if (type === 'W') return 'WARN';
-        else if (type === 'S') return 'SUCCESS';
-        else if (type === 'L') return 'LOADING';
-        else if (type === 'O') return 'OTHER';
+    private getTypeName<Type extends LogType>(type: Type) {
+        if (type === 'I') return 'ⓘ';
+        else if (type === 'E') return 'ⓧ';
+        else if (type === 'W') return '⚠';
+        else if (type === 'S') return '✓';
+        else if (type === 'L') return '↻';
+        else if (type === 'O') return '㏒';
         return 'INFO';
     }
-    getChalkMethod<Type extends LogType | 'D'>(type: Type) {
+    private getChalkMethod<Type extends LogType | 'D'>(type: Type) {
         if (type === 'D') return 'reset';
         else if (type === 'I') return 'cyan';
         else if (type === 'E') return 'red';
@@ -306,7 +306,7 @@ export default class LogSystem {
         else if (type === 'O') return 'inverse';
         return 'cyan';
     }
-    getConsoleMethod<Type extends LogType>(type: Type) {
+    private getConsoleMethod<Type extends LogType>(type: Type) {
         if (type === 'I') return 'info';
         else if (type === 'E') return 'error';
         else if (type === 'W') return 'warn';
