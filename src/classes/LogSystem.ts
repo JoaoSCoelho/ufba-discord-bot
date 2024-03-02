@@ -159,7 +159,7 @@ export default class LogSystem {
         };
         // @ts-expect-error some error
         process.stderr.write = (chunk, encoding, callback) => {
-            chunk = writeLogs.bind(this)(chunk);
+            chunk = writeLogs.bind(this)(chunk, true);
             return terminalHidden ? undefined : originalStderrWrite(chunk, encoding, callback);
         };
 
@@ -185,7 +185,7 @@ export default class LogSystem {
 
 
         /** `PT`: Escreve nos arquivos de log, e se disponível nos canais do discord, o conteúdo `chunk` e retorna um novo `chunk` */
-        function writeLogs(this: LogSystem, chunk: string | Uint8Array) {
+        function writeLogs(this: LogSystem, chunk: string | Uint8Array, stderr?: boolean) {
             if (typeof chunk === 'string') {
 
                 // `PT`: Faz a colorização de todas as ocorrências `#(abcde...)` ou `#c(abcde...)` com um `chalk[chalkMethod](abcde...)`
@@ -223,7 +223,7 @@ export default class LogSystem {
                     const chunkContent = chunk.length <= 1950 ? (chunk as string) : stripAnsi(chunk as string);
 
                     channel?.send({
-                        content: `\`\`\`ansi\n${(chunkContent.length > 1950 ? chunk : chunkContent).slice(0, 1950)}\n\`\`\``,
+                        content: `${(stderr && this.client?.admins.map((adminId) => `<@${adminId}>`).join(' ')) || ''}\`\`\`ansi\n${(chunkContent.length > 1950 ? chunk : chunkContent).slice(0, 1950)}\n\`\`\``,
                         files: chunk.length > 1950 ?
                             [
                                 new AttachmentBuilder(
