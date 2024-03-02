@@ -44,7 +44,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     log.infoh(`#(@${interaction.user.tag})# usou o comando #(/${interaction.commandName})# no canal #(@${interaction.channel?.name ?? interaction.channelId})# do servidor #(${interaction.guild?.name ?? interaction.guildId})#`);
 
-    const command = client.commands.get(interaction.commandName);
+    const command = client.commands.get(interaction.commandName) ?? client.commands.find((command) => command.documentation?.aliases?.includes(interaction.commandName));
 
     if (!command) {
         log.error(`Não foi encontrado o comando /#(${interaction.commandName}) na lista de comandos do bot`);

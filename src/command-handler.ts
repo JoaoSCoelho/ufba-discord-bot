@@ -39,10 +39,16 @@ export default async function commandHandler(client: LocalClient) {
 
 
 
+
+
                 if (shouldDeploy) {
                     commandsToDeploy.push(command.data.toJSON());
-
                     log.info(`Comando #(${command.data.name})# (#(${folder}/${file})#) cadastrado para deploy`);
+
+                    command.documentation?.aliases?.forEach((alias) => {
+                        commandsToDeploy.push({ ...command.data.toJSON(), name: alias });
+                        log.info(`Comando #(${alias})# (#(${folder}/${file})#) cadastrado para deploy`);
+                    });
                 }
             } else {
                 log.warn(`O comando em (#(${folder}/${file})#) não possui as propriedades necessárias "#(data)#" e "#(execute)#".`);
