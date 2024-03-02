@@ -4,7 +4,19 @@ import Bathroom, { CampusNames, GenderNames } from '../classes/database/Bathroom
 import BathroomAvaliation from '../classes/database/BathroomAvaliation';
 import getBathroomAvarageRating from './getBathroomAvarageRating';
 
-export default async function bathroomEmbedFactory(client: LocalClient, bathroom: { [T in keyof Bathroom]: Bathroom[T] | null } & { avaliations: Collection<string, BathroomAvaliation> }) {
+/** 
+ * `PT`: Retorna uma EmbedBuilder com informações do banheiro fornecido
+ * @param bathroom `PT`: Tem todos os dados de um Bathroom. Se um parâmetro for "null", o campo é preenchido com underlines
+ * @param bathroom[].avaliations `PT`: Conjunto de avaliações que cada banheiro possui.
+ */
+export default async function bathroomEmbedFactory(
+    client: LocalClient,
+    bathroom: {
+        [T in keyof Bathroom]: Bathroom[T] | null
+    } & {
+        /** `PT`:Conjunto de avaliações que cada banheiro possui. */
+        avaliations: Collection<string, BathroomAvaliation>
+    }) {
     const avaliations = bathroom.avaliations;
 
     const embedAuthor = bathroom.createdBy ? await client.users.fetch(bathroom.createdBy) : null;
@@ -17,9 +29,10 @@ export default async function bathroomEmbedFactory(client: LocalClient, bathroom
         title: `${campusName} - ${instituteName} - ${bathroomFloorFormatted}`,
         description: descriptionFactory(),
         fields: fieldsFactory(),
-        author: { 
-            name: `Criado por ${embedAuthor ? embedAuthor.displayName : '_______'}`, 
-            icon_url: embedAuthor?.avatarURL({ size: 64 }) ?? undefined },
+        author: {
+            name: `Criado por ${embedAuthor ? embedAuthor.displayName : '_______'}`,
+            icon_url: embedAuthor?.avatarURL({ size: 64 }) ?? undefined
+        },
         timestamp: bathroom.createdAt?.toString(),
         footer: bathroom.updatedAt ? { text: `Ultima atualização em ${lastUpdateFormatted}` } : undefined,
         color: colorFactory(),
@@ -28,6 +41,7 @@ export default async function bathroomEmbedFactory(client: LocalClient, bathroom
 
 
 
+    /** `PT`: Retorna uma string bem formatada dependendo do valor do campo `floor` do `bathroom` */
     function formatFloor() {
         if (bathroom.floor === 0) return 'Térreo';
         else if (bathroom.floor! < 0) return `${Math.abs(bathroom.floor!)}º piso subsolo.`;
@@ -139,14 +153,14 @@ export default async function bathroomEmbedFactory(client: LocalClient, bathroom
         if (bathroom.localization !== undefined)
             fields.push({
                 name: '🗺️ Onde fica?',
-                value: bathroom.localization !== null ? 
-                    bathroom.localization : 
+                value: bathroom.localization !== null ?
+                    bathroom.localization :
                     '\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\n\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\n\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_'
             });
         if (bathroom.imagesUrls === null || bathroom.imagesUrls.length > 0)
             fields.push({
                 name: '📸 Imagens',
-                value: bathroom.imagesUrls !== null ? 
+                value: bathroom.imagesUrls !== null ?
                     bathroom.imagesUrls.reduce( // Put all images urls until 1024 characters, the ramaining will be substituted by a emoji
                         (prev, curr) => prev.length + curr.length > 1024 - (bathroom.imagesUrls!.length * 4) ? `${prev} 🖼️` : `${prev} ${curr}`,
                         ''
