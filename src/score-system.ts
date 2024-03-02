@@ -62,6 +62,7 @@ export default async function scoreSystem(client: LocalClient, message: Message<
 
         const newMemberData = {
             ...dbMember,
+            updatedAt: new Date(),
             score: dbMember.score + 3,
         };
 
