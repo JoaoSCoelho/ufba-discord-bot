@@ -8,7 +8,7 @@ import ClassEntity from '../classes/database/Entity';
 import BathroomAvaliation from '../classes/database/BathroomAvaliation';
 import Member from '../classes/database/Member';
 import { log } from '..';
-import prettyBytes from 'pretty-bytes';
+import prettyBytes from '../utils/prettyBytes';
 
 export interface DatabaseInterface {
     bathroom: Bathroom[];
@@ -98,7 +98,7 @@ export default class Database extends EventEmitter {
 
 
         this.setCache(json, entityName ? [entityName] : undefined);
-
+        log.success('Database successfully fetched');
 
         if (entityName) return this[entityName as keyof DatabaseInterface] as unknown as DbCollection<Entity>;
     }
