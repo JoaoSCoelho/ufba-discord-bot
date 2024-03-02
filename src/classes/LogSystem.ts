@@ -294,7 +294,7 @@ export default class LogSystem {
         else if (type === 'S') return '✓';
         else if (type === 'L') return '↻';
         else if (type === 'O') return '㏒';
-        return 'INFO';
+        return 'ⓘ';
     }
     private getChalkMethod<Type extends LogType | 'D'>(type: Type) {
         if (type === 'D') return 'reset';
