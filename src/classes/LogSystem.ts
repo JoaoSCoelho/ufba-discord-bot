@@ -119,7 +119,7 @@ export default class LogSystem {
         ...data: any[]
     ) {
         const currentDate = new Date();
-        const logMoment = Intl.DateTimeFormat('pt-br', { dateStyle: 'short', timeStyle: 'medium' }).format(currentDate) + ':' + currentDate.getMilliseconds().toString().padStart(3, '0');
+        const logMoment = Intl.DateTimeFormat('pt-br', { dateStyle: 'short', timeStyle: 'medium' }).format(currentDate).replace(', ', '-') + ':' + currentDate.getMilliseconds().toString().padStart(3, '0');
 
 
 
@@ -177,7 +177,7 @@ export default class LogSystem {
             try {
                 const stacks = /src\\([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename))?.trim() ?? '')?.[1];
                 
-                return this(`${chalk[chalkMethod]('>')}${type === 'L' ? ` [${chalk[chalkMethod]('↻')}]` : ''} [${chalk[chalkMethod](typeName)}] [${chalk[chalkMethod](logMoment)}] [${chalk[chalkMethod](stacks)}]:`, ...data);
+                return this(`${chalk[chalkMethod]('>')} [${chalk[chalkMethod](typeName)}] [${chalk[chalkMethod](logMoment)}] [${chalk[chalkMethod](stacks)}]:`, ...data);
             } catch (err) {
                 return this(...data);
             }
@@ -292,7 +292,7 @@ export default class LogSystem {
         else if (type === 'E') return 'ERROR';
         else if (type === 'W') return 'WARN';
         else if (type === 'S') return 'SUCCESS';
-        else if (type === 'L') return 'LOADING...';
+        else if (type === 'L') return 'LOADING';
         else if (type === 'O') return 'OTHER';
         return 'INFO';
     }
