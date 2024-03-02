@@ -64,7 +64,7 @@ export default async function scoreSystem(client: LocalClient, message: Message<
         };
 
         await client.database.member.edit(newMemberData)
-            .then(() => log.successh(`Membro #(@${message.member!.user.tag})# do servidor #(${message.guild.name})# recebeu 3 pontos de score e possui agora #(${newMemberData.score})# ao total`))
+            .then(() => log.successh(`Membro #(@${message.member!.user.tag})# do servidor #(${message.guild.name})# recebeu #(3)# pontos de score e possui agora #(${newMemberData.score})# ao total`))
             .catch((error) => log.error(`Erro ao adicionar score ao membro #(@${message.member!.user.tag})# do servidor #(${message.guild.name})#\n#(Data)#:`, newMemberData, '\n#(Erro)#:', error));
     }
 
