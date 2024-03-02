@@ -165,8 +165,25 @@ export default class LogSystem {
 
 
 
+        function lineLogger(this: typeof console[typeof consoleMethod], ...data: unknown[]) {
+            let err: Error;
 
-        console[consoleMethod](`${chalk[chalkMethod]('>')}${type === 'L' ? ` [${chalk[chalkMethod]('↻')}]` : ''} [${chalk[chalkMethod](typeName)}] [${chalk[chalkMethod](logMoment)}]:`, ...data);
+            try {
+                throw new Error();
+            } catch (error) {
+                err = error as Error;
+            }
+
+            try {
+                const stacks = /src\\([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename))?.trim() ?? '')?.[1];
+                
+                return this(`${chalk[chalkMethod]('>')}${type === 'L' ? ` [${chalk[chalkMethod]('↻')}]` : ''} [${chalk[chalkMethod](typeName)}] [${chalk[chalkMethod](logMoment)}] [${chalk[chalkMethod](stacks)}]:`, ...data);
+            } catch (err) {
+                return this(...data);
+            }
+        }
+
+        lineLogger.bind(console[consoleMethod])(...data);
 
 
 
