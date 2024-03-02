@@ -70,7 +70,9 @@ client.on(Events.MessageCreate, async (message) => {
 
 
     // Computes message to scoreSystem if is a message in guild and isn't a bot
-    if (message.inGuild() && !message.author.bot) await scoreSystem(client, message);
+    if (message.inGuild() && !message.author.bot) 
+        scoreSystem(client, message)
+            .catch((error) => log.error(`Ocorreu um erro ao executar ${chalk.bold.gray('scoreSystem')} para a mensagem enviada por #(@${message.author.tag})# no servidor #(${message.guild.name})#\n#(Conteúdo)#:`, message.content, '\n#(Erro)#:', error, '\n#(Arquivos)#:', message.attachments, '\n#(Message)#:', message));
 
 
 
@@ -152,8 +154,9 @@ client.on(Events.GuildCreate, async (guild) => {
             discordGuildId: guild.id,
         });
         
-        await client.database!.member.new(member);
-        log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# adicionado ao banco de dados`);
+        await client.database!.member.new(member)
+            .then(() => log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# adicionado ao banco de dados`))
+            .catch((error) => log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# ao banco de dados\n#(Erro)#:`, error, '\n#(Membro)#:', member));
     }));
 
     log.success(`Membros do servidor #(${guild.name})# adicionados ao banco.`);
@@ -171,9 +174,9 @@ client.on(Events.GuildDelete, async (guild) => {
         .map(async (member) => {
             log.loadingh(`Removing member #(${member.id})# from server #(${guild.name || guild.id})#, from database`);
 
-            await client.database!.member.remove(member.id);
-
-            log.success(`Member #(${member.id})# from server #(${guild.name || guild.id})#, successfully removed from database`);
+            await client.database!.member.remove(member.id)
+                .then(() => log.success(`Member #(${member.id})# from server #(${guild.name || guild.id})#, successfully removed from database`))
+                .catch((error) => log.error(`Erro ao remover membro #(${member.id})# do servidor #(${guild.name || guild.id})#\n#(Erro)#:`, error));
         }));
 
     log.success(`All members from server #(${guild.name || guild.id})# removed from database`);
@@ -202,8 +205,9 @@ client.on(Events.GuildMemberAdd, async (guildMember) => {
         discordGuildId: guildMember.guild.id,
     });
 
-    await client.database.member.new(member);
-    log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guildMember.guild.name})# adicionado ao banco de dados`);
+    await client.database.member.new(member)
+        .then(() => log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guildMember.guild.name})# adicionado ao banco de dados`))
+        .catch((error) => log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})# do servidor #(${guildMember.guild.name})# ao banco de dados`, error));
 });
 
 

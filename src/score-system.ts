@@ -1,6 +1,7 @@
-import { Message } from 'discord.js';
+import { Message, PermissionsBitField } from 'discord.js';
 import LocalClient from './classes/LocalClient';
 import Member from './classes/database/Member';
+import { log } from '.';
 
 export const levels = [
     { targetScore: 100 },
@@ -28,6 +29,7 @@ export const levels = [
     { targetScore: 100_000_000_000_000 },
 ];
 
+/** Computes a new pontuation to a member when he sent a message */
 export default async function scoreSystem(client: LocalClient, message: Message<true>) {
     if (!client.database) return;
     if (!message.member) return;
@@ -35,9 +37,13 @@ export default async function scoreSystem(client: LocalClient, message: Message<
     // Filter only significative messages
     if (message.content.length < 3) return;
 
-    const oldMember = client.database.member.find((member) => member.discordId === message.member!.id && member.discordGuildId === message.guild.id)!;;
 
-    if (!oldMember) {
+    /** The database member that match with the message member */
+    const dbMember = client.database.member.find((member) => member.discordId === message.member!.id && member.discordGuildId === message.guild.id);
+
+    if (!dbMember) {
+        log.loadingh(`Adicionando membro #(@${message.member.user.tag})# do servidor #(${message.guild.name})# ao banco de dados`);
+
         const newMember = new Member({
             id: Date.now().toString(),
             createdAt: new Date(),
@@ -47,19 +53,41 @@ export default async function scoreSystem(client: LocalClient, message: Message<
             score: 3
         });
         
-        await client.database.member.new(newMember);
+        await client.database.member.new(newMember)
+            .then(() => log.successh(`Membro #(@${message.member!.user.tag})# do servidor #(${message.guild.name})# adicionado ao banco de dados com score`))
+            .catch((error) => log.error(`Erro ao adicionar membro #(@${message.member!.user.tag})# do servidor #(${message.guild.name})# ao banco de dados\n#(Membro)#:`, newMember, '\n#(Error)#:', error));
     } else {
-        await client.database.member.edit({
-            ...oldMember,
-            score: oldMember.score + 3,
-        });
+        log.loadingh(`Adicionando score ao membro #(@${message.member.user.tag})# do servidor #(${message.guild.name})#`);
+
+
+        const newMemberData = {
+            ...dbMember,
+            score: dbMember.score + 3,
+        };
+
+        await client.database.member.edit(newMemberData)
+            .then(() => log.successh(`Membro #(@${message.member!.user.tag})# do servidor #(${message.guild.name})# recebeu 3 pontos de score`))
+            .catch((error) => log.error('Erro ao editar score do membro #(@${message.member!.user.tag})# do servidor #(${message.guild.name})#\n#(Data)#:', newMemberData, '\n#(Erro)#:', error));
     }
 
-    const oldMemberScore = oldMember?.score ?? 0;
+
+
+
+
+
+    const dbMemberScore = dbMember?.score ?? 0;
     const member = client.database.member.find((member) => member.discordId === message.member!.id && member.discordGuildId === message.guild.id)!;
 
+
+    // `PT`: Vai passando pelos nívels em `levels` até encontrar o nível que o usuário alcançou (se ele alcançou), e enviar a mensagem
     levels.forEach(({ targetScore }, index) => {
-        if (oldMemberScore < targetScore && member.score >= targetScore) 
-            message.reply(`Parabéns ${message.member}, você passou para o level ${index + 1}`).catch(() => 0);
+        if (dbMemberScore < targetScore && member.score >= targetScore) {
+            if (!message.guild.members.me?.permissionsIn(message.channel).has(PermissionsBitField.Flags.SendMessages)) return;
+
+            const messageContent = `Parabéns ${message.member}, você passou para o level ${index + 1}`;
+
+            message.reply(messageContent)
+                .catch((error) => log.error(`Erro ao enviar resposta "#(${messageContent})#" para o usuário #(@${message.author.tag})# no canal #(#${message.channel.name})# no servidor #(${message.guild.name})#\n#(Erro)#:`, error));
+        }
     });
 } 
