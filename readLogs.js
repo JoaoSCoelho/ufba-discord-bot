@@ -1,0 +1,1 @@
+require('fs').readFileSync('log-ansi.txt', { encoding: 'utf8' }).split(/\n|\r/g).forEach((logLine) => console.log(logLine));

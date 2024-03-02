@@ -119,7 +119,7 @@ export default class LogSystem {
         ...data: any[]
     ) {
         const currentDate = new Date();
-        const logMoment = Intl.DateTimeFormat('pt-br', { dateStyle: 'short', timeStyle: 'medium' }).format(currentDate) + ':' + currentDate.getMilliseconds();
+        const logMoment = Intl.DateTimeFormat('pt-br', { dateStyle: 'short', timeStyle: 'medium' }).format(currentDate) + ':' + currentDate.getMilliseconds().toString().padStart(3, '0');
 
 
 
