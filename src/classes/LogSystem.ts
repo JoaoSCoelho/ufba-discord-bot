@@ -257,7 +257,7 @@ export default class LogSystem {
                                     Buffer.from(chunk).length < 25 * 1000 * 1000 ?
                                         Buffer.from(chunk) :
                                         Buffer.from('LOG TOO LARGE!' /* + ' LOG FILE WILL BE SENT BY EMAIL' */),
-                                    { name: `log-${Date.now()}.txt` }
+                                    { name: `log-${Date.now()}.ansi` }
                                 ),
                                 new AttachmentBuilder(
                                     Buffer.from(stripAnsi(chunk as string)).length < 25 * 1000 * 1000 ?
@@ -348,5 +348,4 @@ export default class LogSystem {
 function configInspectDefaultOptions() {
     util.inspect.defaultOptions.depth = 7;
     util.inspect.defaultOptions.maxArrayLength = 500;
-    util.inspect.defaultOptions.numericSeparator = true;
 }
