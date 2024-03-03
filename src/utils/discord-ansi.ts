@@ -305,6 +305,10 @@ export class Ansi {
         return this.print();
     }
 
+    getBlueCode() {
+        return '\u001b[0;34m';
+    }
+
     /**
      * set the font color to magenta fg 35
      */

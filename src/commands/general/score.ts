@@ -19,6 +19,8 @@ export default new Command(
 
         if (!interaction.inGuild()) return;
 
+        await interaction.deferReply();
+
 
         // `PT`: Pega o membro passado na opção member ou, caso não haja, o autor da interação
         const targetMemberId = interaction.options.get('membro')?.user!.id ?? interaction.user.id;
@@ -27,12 +29,12 @@ export default new Command(
             .catch((error) => {
                 if (isObject(error) && error.message === 'Unknown Member') return undefined;
 
-                log.error(`Erro ao dar fetch em membro de ID: #(${targetMemberId})# enquanto executava o comando score usado por #(@${interaction.user.tag})# no servidor #(${interaction.guild?.name ?? interaction.guildId})#\n#(Opções usadas)#:`, interaction.options.data, '\n#(Erro)#:', error);
+                log.error(`Erro ao dar fetch em membro de ID: #(${targetMemberId})# enquanto executava o comando /#(score)# usado por #(@${interaction.user.tag})# no servidor #(${interaction.guild?.name ?? interaction.guildId})#\n#(Opções usadas)#:`, interaction.options.data, '\n#(Erro)#:', error);
                 throw error;
             });
 
 
-        if (!guildMember) return await interaction.reply(`Não foi encontrado um membro com o id \`${targetMemberId}\` no servidor`);
+        if (!guildMember) return await interaction.followUp(`Não foi encontrado um membro com o id \`${targetMemberId}\` no servidor`);
 
 
         /** The Database `Member` thats match with `guildMember` */
@@ -41,7 +43,7 @@ export default new Command(
         });
 
 
-        if (!member) return await interaction.reply(`${guildMember} não possui pontuação neste servidor!`);
+        if (!member) return await interaction.followUp(`${guildMember} não possui pontuação neste servidor!`);
 
 
         /** The currentLevel that the member is at */
@@ -78,7 +80,7 @@ export default new Command(
             '```'
         ];
 
-        await interaction.reply(messageContentLines.join('\n'));
+        await interaction.followUp(messageContentLines.join('\n'));
     },
 
     {
