@@ -13,24 +13,28 @@ export default new Command(
                 .setName('membro')
                 .setDescription('Um membro do servidor ao qual você deseja saber a posição no ranking'),
         ) as SlashCommandBuilder,
+
+
     async (interaction, client) => {
         if (!interaction.inGuild()) return;
 
         await interaction.deferReply();
 
 
-        
+        /** Collection of `Member` from this guild */
         const guildMembers = client.database!.member.filter((member) => member.discordGuildId === interaction.guildId);
+        /** Array of `Member` ordered by score ascending */
         const sortedMembers = guildMembers.sort((memberA, memberB) => memberB.score - memberA.score).toJSON();
 
+        /** User to know the position */
         const targetUser = interaction.options.get('membro')?.user ?? interaction.user;
-        const userIndexInRanking = sortedMembers.findIndex((member) => member.discordId === targetUser.id);
-        const userPositionInRanking = userIndexInRanking + 1;
+        /** The position in ranking of the `targetUser` */
+        const userPositionInRanking = sortedMembers.findIndex((member) => member.discordId === targetUser.id) + 1;
 
         const top15Members = sortedMembers.slice(0, 15);
 
 
-
+        /** Array of formatted lines of rank (using discord ansi codes) */
         const rankingLines = await Promise.all(top15Members.map(async (member, index) => {
             const discordMember = await client.guilds.cache.get(interaction.guildId)?.members.fetch(member.discordId)
                 .catch((error) => {
@@ -39,6 +43,7 @@ export default new Command(
                     log.error(`Erro ao dar fetch em membro de ID: #(${member.discordId})# enquanto executava o comando /#(ranking)# usado por #(@${interaction.user.tag})# no servidor #(${interaction.guild?.name ?? interaction.guildId})#\n#(Opções usadas)#:`, interaction.options.data, '\n#(Erro)#:', error);
                     throw error;
                 });
+                
 
             /** If the `discordMember.id` is equal to `targetUser.id`, so a ansi code is saved on var, else a empty string is saved on var */ 
             const ansiColorCode = discordMember?.id === targetUser.id ? discordAnsi.getBlueCode() as `\u001b[${number};${number}m` : '';
