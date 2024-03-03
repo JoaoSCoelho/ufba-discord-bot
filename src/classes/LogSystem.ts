@@ -128,7 +128,7 @@ export default class LogSystem {
         if (this.firstOfProcess) {
             fs.mkdirSync('logs', { recursive: true });
             fs.writeFileSync('log.txt', '');
-            fs.writeFileSync('log-ansi.txt', '');
+            fs.writeFileSync('log.ansi', '');
             this.firstOfProcess = false;
         }
         if (this.firstOfProcessForClient && this.client) {
@@ -188,9 +188,19 @@ export default class LogSystem {
 
 
 
+        // @ts-expect-error some error
+        process.stdout.write = (chunk, encoding, callback) => {
+            writeLogFiles.bind(this)(chunk);
 
-        process.stdout.write = originalStdoutWrite;
-        process.stderr.write = originalStderrWrite;
+            return originalStdoutWrite(chunk, encoding, callback);
+        };
+
+        // @ts-expect-error some error
+        process.stderr.write = (chunk, encoding, callback) => {
+            writeLogFiles.bind(this)(chunk);
+
+            return originalStderrWrite(chunk, encoding, callback);
+        };
 
 
 
@@ -229,9 +239,9 @@ export default class LogSystem {
 
                 // `PT`: Escreve nos arquivos de log
                 fs.appendFileSync('log.txt', stripAnsi(chunk));
-                fs.appendFileSync('log-ansi.txt', chunk);
+                fs.appendFileSync('log.ansi', chunk);
                 fs.writeFileSync(`logs/log-${this.executionDate}.txt`, fs.readFileSync('log.txt'));
-                fs.writeFileSync(`logs/log-ansi-${this.executionDate}.txt`, fs.readFileSync('log-ansi.txt'));
+                fs.writeFileSync(`logs/log-${this.executionDate}.ansi`, fs.readFileSync('log.ansi'));
 
 
 
@@ -268,6 +278,19 @@ export default class LogSystem {
             }
 
             return chunk;
+        }
+
+
+
+        /** `PT`: Escreve nos arquivos de log apenas */
+        function writeLogFiles(this: LogSystem, chunk: string | Uint8Array) {
+            if (typeof chunk === 'string') {
+                // `PT`: Escreve nos arquivos de log
+                fs.appendFileSync('log.txt', stripAnsi(chunk));
+                fs.appendFileSync('log.ansi', chunk);
+                fs.writeFileSync(`logs/log-${this.executionDate}.txt`, fs.readFileSync('log.txt'));
+                fs.writeFileSync(`logs/log-${this.executionDate}.ansi`, fs.readFileSync('log.ansi'));
+            }
         }
     }
 
