@@ -221,7 +221,7 @@ export default class LogSystem {
                     oldChunk = chunk;
 
                     chunk = chunk
-                        .replace(/(?<!\\)#(d|i|w|e|s|l|o)?\((((?<!\)#).(?!(?:#(d|i|w|e|s|l|o)?\()))+)\)#/g, (_match, a, b) => chalk[a ? this.getChalkMethod(a) : chalkMethod](b));
+                        .replace(/(?<!\\)#(d|i|w|e|s|l|o|g)?\((((?<!\)#).(?!(?:#(d|i|w|e|s|l|o|g)?\()))+)\)#/g, (_match, a, b, ) => chalk[a ? this.getChalkMethod(a.toUpperCase()) : chalkMethod](b));
                 }
 
 
@@ -319,7 +319,7 @@ export default class LogSystem {
         else if (type === 'O') return '㏒';
         return 'ⓘ';
     }
-    private getChalkMethod<Type extends LogType | 'D'>(type: Type) {
+    private getChalkMethod<Type extends LogType | 'D' | 'G'>(type: Type) {
         if (type === 'D') return 'reset';
         else if (type === 'I') return 'cyan';
         else if (type === 'E') return 'red';
@@ -327,6 +327,7 @@ export default class LogSystem {
         else if (type === 'S') return 'green';
         else if (type === 'L') return 'blue';
         else if (type === 'O') return 'inverse';
+        else if (type === 'G') return 'gray';
         return 'cyan';
     }
     private getConsoleMethod<Type extends LogType>(type: Type) {
