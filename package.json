@@ -21,6 +21,7 @@
   },
   "scripts": {
     "dev": "ts-node-dev src",
+    "devT": "ts-node-dev -T src",
     "start": "ts-node src"
   }
 }
