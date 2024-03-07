@@ -42,7 +42,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // Filter only chatinput commands in guild
     if (!interaction.isChatInputCommand() || !interaction.inGuild()) return;
 
-    log.infoh(`#(@${interaction.user.tag})# usou o comando #(/${interaction.commandName})# no canal #(@${interaction.channel?.name ?? interaction.channelId})# do servidor #(${interaction.guild?.name ?? interaction.guildId})#`);
+    log.infoh(`#(@${interaction.user.tag})# usou o comando #(/${interaction.commandName})# no canal #(#${interaction.channel?.name ?? interaction.channelId})# do servidor #(${interaction.guild?.name ?? interaction.guildId})#`);
 
     const command = client.commands.get(interaction.commandName) ?? client.commands.find((command) => command.documentation?.aliases?.includes(interaction.commandName));
 
