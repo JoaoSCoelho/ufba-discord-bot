@@ -297,12 +297,12 @@ export default class Form extends EventEmitter {
 
             const questionComponents = [
                 rowSelectMenuFactory(select),
+                ...(!cleanButton.hidden ? [this.rowCleanButtonFactory(cleanButton.customId, cleanButton.label)] : []),
                 this.rowNavigateBetweenQuestionsFactory(
                     prevQuestionButton.hidden ? undefined : prevQuestionButton,
                     nextQuestionButton.hidden ? undefined : nextQuestionButton,
                     finishFormButton.hidden ? undefined : finishFormButton
                 ),
-                ...(!cleanButton.hidden ? [this.rowCleanButtonFactory(cleanButton.customId, cleanButton.label)] : [])
             ];
 
 
@@ -590,12 +590,12 @@ export default class Form extends EventEmitter {
             // Making the question message and his components
 
             const questionComponents = [
+                ...(!cleanButton.hidden ? [this.rowCleanButtonFactory(cleanButton.customId, cleanButton.label)] : []),
                 this.rowNavigateBetweenQuestionsFactory(
                     prevQuestionButton.hidden ? undefined : prevQuestionButton,
                     nextQuestionButton.hidden ? undefined : nextQuestionButton,
                     finishFormButton.hidden ? undefined : finishFormButton
                 ),
-                ...(!cleanButton.hidden ? [this.rowCleanButtonFactory(cleanButton.customId, cleanButton.label)] : [])
             ];
 
 
@@ -893,40 +893,299 @@ export default class Form extends EventEmitter {
             return (collectedIntegerAsString ? Number(collectedIntegerAsString) : undefined) as Req extends true ? number : (number | undefined);
         },
 
-        async Boolean<Req extends boolean>(this: Form, options: BooleanQuestionOptions<Req>/* {
-            truthyButton, falsyButton, confirmButtonCustomId, baseContent, idle, required, confirmWithoutSelectingMessage,
-            undefinedButton, onSelect, onConfirm,
-        }: {
-            baseContent: string,
-            confirmButtonCustomId: string,
-            truthyButton: {
-                customId: string,
-                label?: string,
-            }
-            falsyButton: {
-                customId: string,
-                label?: string
-            },
-            idle?: number,
-            required?: Req,
-            confirmWithoutSelectingMessage?: string,
-            onSelect?: (selected: Req extends true ? boolean : (boolean | undefined), interaction: ButtonInteraction<CacheType>) => unknown,
-            onConfirm?: (selected: Req extends true ? boolean : (boolean | undefined)) => unknown,
-        } & (Req extends true ? { undefinedButton?: undefined } : {
-            undefinedButton: {
-                customId: string,
-                label?: string,
-            }
-        }) */) {
-            options;
-            return false as boolean | undefined;
-            // const definedTruthyButtonLabel = truthyButton.label ?? 'Sim';
-            // const definedFalsyButtonLabel = falsyButton.label ?? 'Não';
-            // const definedUndefinedButtonLabel = undefinedButton?.label ?? 'Desmarcar';
-            // const definedBaseContent = required ? `\\* ${baseContent}` : `(opcional) ${baseContent}`;
+        async Boolean<Req extends boolean>(
+            this: Form,
+            options: BooleanQuestionOptions<Req>
+        ) {
+            const thisQuestion = this.questions.get(options.name) as Question<'Boolean'> | undefined;
 
-            // let selectedValue: boolean | undefined;
+            if (!thisQuestion) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
+            type Returned = Req extends true ? boolean : (boolean | undefined)
+
+
+            // Defining defaults
+
+            const placeholder = options.placeholder ?? '';
+
+            const truthyButton: BaseButtonDataOption = {
+                customId: options.truthyButton?.customId ?? `truthy-button-${Date.now()}`,
+                label: options.truthyButton?.label ?? 'Sim',
+                hidden: options.truthyButton?.hidden ?? false
+            };
+
+            const falsyButton: BaseButtonDataOption = {
+                customId: options.falsyButton?.customId ?? `falsy-button-${Date.now()}`,
+                label: options.falsyButton?.label ?? 'Não',
+                hidden: options.falsyButton?.hidden ?? false
+            };
+
+            /** Add markers to `options.message` to user know if is a required question or no. Add markdown prefix to display as a title */
+            const formattedMessage =
+                (options.required ? `## \\* ${options.message}` : `## (opcional) ${options.message}`) +
+                (options.infoMessage ? `\n> ${options.infoMessage}` : '') +
+                (options.warnMessage ? `\n\`\`\`ansi\n${discordAnsi.red()(options.warnMessage)}\n\`\`\`` : '') +
+                `\n\`\`\`ansi\n${typeof thisQuestion.response === 'boolean' ? thisQuestion.response ? truthyButton.label : falsyButton.label : discordAnsi.gray()(placeholder)}\n\`\`\``;
+
+
+            const cleanButton: BaseButtonDataOption = {
+                label: options.cleanButton?.label ?? 'Limpar',
+                customId: options.cleanButton?.customId ?? `clean-button-${Date.now()}`,
+                hidden: options.cleanButton?.hidden ?? (!options.cleanButton)
+            };
+
+            const prevQuestionButton: BaseButtonDataOption = {
+                customId: options.prevQuestionButton?.customId ?? `prev-question-button-${Date.now()}`,
+                label: options.prevQuestionButton?.label ?? 'Anterior',
+                hidden: !!options.prevQuestionButton?.hidden
+            };
+
+            const nextQuestionButton: BaseButtonDataOption = {
+                customId: options.nextQuestionButton?.customId ?? `next-question-button-${Date.now()}`,
+                label: options.nextQuestionButton?.label ?? 'Próximo',
+                hidden: !!options.nextQuestionButton?.hidden
+            };
+
+            const finishFormButton: BaseButtonDataOption = {
+                customId: options.finishFormButton?.customId ?? `finish-form-button-${Date.now()}`,
+                label: options.finishFormButton?.label ?? 'Finalizar',
+                hidden: options.finishFormButton?.hidden ?? false
+            };
+
+
+            const maxIdleTime = options.collectorIdle ?? 30_000;
+
+            
+            const onChange: OmitThisParameter<Required<typeof options>['onChange']> =
+                options.onChange?.bind(this) ?? defaultOnChange.bind(this) as OmitThisParameter<Required<typeof options>['onChange']>;
+            const onCleanButtonClick: OmitThisParameter<Required<typeof options>['onCleanButtonClick']> =
+                options.onCleanButtonClick?.bind(this) ?? defaultOnCleanButtonClick.bind(this);
+            const onChangeQuestionButtonClick: OmitThisParameter<Required<typeof options>['onChangeQuestionButtonClick']> =
+                options.onChangeQuestionButtonClick?.bind(this) ?? defaultOnChangeQuestionButtonClick.bind(this);
+            const onFinishFormButtonClick: OmitThisParameter<Required<typeof options>['onFinishFormButtonClick']> =
+                options.onFinishFormButtonClick?.bind(this) ?? defaultOnFinishFormButtonClick.bind(this);
+
+
+
+
+            // Making the question message and his components
+
+            const questionComponents = [
+                rowBooleanButtonsFactory(),
+                ...(!cleanButton.hidden ? [this.rowCleanButtonFactory(cleanButton.customId, cleanButton.label)] : []),
+                this.rowNavigateBetweenQuestionsFactory(
+                    prevQuestionButton.hidden ? undefined : prevQuestionButton,
+                    nextQuestionButton.hidden ? undefined : nextQuestionButton,
+                    finishFormButton.hidden ? undefined : finishFormButton
+                ),
+            ];
+
+
+            const question = await this.interaction.editReply({
+                message: this.questionMessage,
+                content: formattedMessage,
+                components: questionComponents
+            });
+
+
+
+
+            // Creates the question collector (collects any interaction in question components)
+            const collector = this.createMessageComponentCollector(question, {
+                filter: this.defaultCollectorFilter.bind(this),
+                idle: maxIdleTime,
+            });
+
+
+
+            return await new Promise<Returned>((resolve, reject) => {
+                collector.on('collect', async (i) => {
+                    /** Case the user select a value */
+                    if (
+                        (i.customId === falsyButton.customId || i.customId === truthyButton.customId) &&
+                        i.componentType === ComponentType.Button
+                    ) {
+
+                        await onChange(i)
+                            .then((response) => {
+                                if (response !== null) resolve(response as Returned);
+                            })
+                            .catch((error) => {
+                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            });
+
+                    }
+
+
+
+                    /** Case the user click to goBack to prev question or click to advance to next question */
+                    else if (
+                        (i.customId === prevQuestionButton.customId || i.customId === nextQuestionButton.customId) &&
+                        i.componentType === ComponentType.Button
+                    ) {
+
+                        await onChangeQuestionButtonClick(i.customId === prevQuestionButton.customId ? 'goBack' : 'advance', i)
+                            .then((response) => {
+                                if (response !== null) resolve(response as Returned);
+                            })
+                            .catch((error) => {
+                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            });
+
+                    }
+
+
+
+                    /** Case the user click to clean selected option */
+                    else if (
+                        i.customId === cleanButton.customId &&
+                        i.componentType === ComponentType.Button
+                    ) {
+                        await onCleanButtonClick(i)
+                            .then((response) => {
+                                if (response !== null) resolve(response as Returned);
+                            })
+                            .catch((error) => {
+                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            });
+                    }
+
+
+                    /** Case the user click to finish the form */
+                    else if (
+                        i.customId === finishFormButton.customId &&
+                        i.componentType === ComponentType.Button
+                    ) {
+                        await onFinishFormButtonClick(i)
+                            .then((response) => {
+                                if (response !== null) resolve(response as Returned);
+                            })
+                            .catch((error) => {
+                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            });
+                    }
+
+                });
+
+                collector.on('end', (_collected, reason) => {
+                    if (reason === 'time' || reason === 'idle') {
+                        if (!this.finished) this.finishForm(reason);
+                        reject(reason);
+                    }
+                });
+            });
+
+
+
+
+            /** Is executed when don't have a `option.onChange`  */
+            async function defaultOnChange(
+                this: Form,
+                i: ButtonInteraction<CacheType>,
+            ) {
+                if (i instanceof MessageComponentInteraction && !i.deferred) await i.deferUpdate()
+                    .catch((error) => {
+                        log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChange())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                        throw error;
+                    });
+
+
+
+                if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
+
+                /** Filters the input if have `options.onChangeFilter` */
+                const filteredInput = await options.onChangeFilter?.bind(this)(i);
+
+                if (filteredInput) {
+                    this.refreshQuestion({ warnMessage: filteredInput });
+
+                    return null;
+                }
+
+
+
+
+                /** Saves the user response */
+                this.questions.get(options.name)!.response = i.customId === falsyButton.customId ? false : (i.customId === truthyButton.customId ? true : undefined);
+
+
+
+                if (options.onResponseUpdate) await options.onResponseUpdate.bind(this)(this.questions.get(options.name)!);
+
+                this.emit('responseUpdate', this.questions.get(options.name)!);
+
+                
+
+
+
+                if (!filteredInput) this.refreshQuestion();
+
+                return null;
+            }
+
+            /** Is executed when don't have a `option.onCleanButtonClick`  */
+            async function defaultOnCleanButtonClick(
+                this: Form,
+                i: ButtonInteraction<CacheType>,
+            ) {
+                if (!i.deferred) await i.deferUpdate()
+                    .catch((error) => {
+                        log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnCleanButtonClick())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                        throw error;
+                    });
+
+
+
+                if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
+
+                /** Saves the user response */
+                this.questions.get(options.name)!.response = undefined;
+
+
+
+
+                if (options.onClean) await options.onClean.bind(this)(this.questions.get(options.name)!);
+                if (options.onResponseUpdate) await options.onResponseUpdate.bind(this)(this.questions.get(options.name)!);
+
+                this.emit('responseUpdate', this.questions.get(options.name)!);
+
+
+                this.refreshQuestion();
+
+                return undefined;
+            }
+
+            /** Is executed when don't have a `option.onChangeQuestionButtonClick` */
+            async function defaultOnChangeQuestionButtonClick(
+                this: Form,
+                action: ChangeQuestionAction,
+                i: ButtonInteraction<CacheType>
+            ) {
+                return await this.defaultOnChangeQuestionButtonClickFactory(options).bind(this)(action, i) as Returned;
+            }
+
+            /** Is executed when don't have a `option.onFinishFormButtonClick` */
+            async function defaultOnFinishFormButtonClick(
+                this: Form,
+                i: ButtonInteraction<CacheType>
+            ) {
+                return await this.defaultOnFinishFormButtonClickFactory(options).bind(this)(i) as Returned;
+            }
+
+
+            function rowBooleanButtonsFactory() {
+                return new ActionRowBuilder<ButtonBuilder>()
+                    .setComponents(
+                        ...(falsyButton.hidden ? [] : [new ButtonBuilder()
+                            .setCustomId(falsyButton.customId)
+                            .setLabel(falsyButton.label)
+                            .setStyle(ButtonStyle.Danger)]),
+                        ...(truthyButton.hidden ? [] : [new ButtonBuilder()
+                            .setCustomId(truthyButton.customId)
+                            .setLabel(truthyButton.label)
+                            .setStyle(ButtonStyle.Success)])
+                    );
+            }
             // const ask = await interaction.followUp({
             //     content: definedBaseContent,
             //     ephemeral: true,

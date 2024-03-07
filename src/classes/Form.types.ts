@@ -325,7 +325,31 @@ export interface IntegerQuestionOptions<Req extends boolean> extends BaseQuestio
 
 export interface AttachmentsQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Attachments'> {}
 
-export interface BooleanQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Boolean'> {}
+export interface BooleanQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Boolean'> {
+    /** Updating documentation for props that are in BaseQuestionOptions ------------------------------------- */
+
+    /** @default 30_000 // 30 seconds */
+    collectorIdle?: BaseQuestionOptions<Req, 'Boolean'>['collectorIdle'],
+
+    /** ------------------------------------------------------------------------------------------------------ */
+
+    truthyButton?: Partial<BaseButtonDataOption> & {
+        /** @default `truthy-button-${Date.now()}` */
+        customId?: string,
+        /** @default 'Sim' */
+        label?: string,
+    }
+    falsyButton?: Partial<BaseButtonDataOption> & {
+        /** @default `falsy-button-${Date.now()}` */
+        customId?: string,
+        /** @default 'Não' */
+        label?: string,
+    },
+    /** This message will appear on the response field of the question on Discord when response is undefined 
+     * @default '' 
+     */
+    placeholder?: string
+}
 
 
 
