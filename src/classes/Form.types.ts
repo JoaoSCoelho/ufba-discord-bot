@@ -254,8 +254,8 @@ export interface StringQuestionOptions<Req extends boolean> extends BaseQuestion
     minLength?: number,
     /** Defines the max length of content that the user can input. @default 8192 // 2^13 */
     maxLength?: number,
-    /** Defines if the user can send another message to replace the first input @default true */
-    canFix?: boolean,
+    // /** Defines if the user can send another message to replace the first input @default true */
+    // canFix?: boolean,
     /** This message will appear when the user try to input a text smaller than the minimum length. 
      * @default `Precisa ter um mínimo de ${minLength} caracteres`
      */
@@ -264,19 +264,64 @@ export interface StringQuestionOptions<Req extends boolean> extends BaseQuestion
      * @default `Precisa ter no máximo ${minLength} caracteres` 
      */
     greaterThanTheMaximumLengthMessage?: string,
+    /** This message will appear after the user input the first response to the question.
+     * @default 'Você pode substituir o valor atual enviando outra resposta.'
+     */
+    fixMessage?: string,
+    /** This message will appear on the response field of the question on Discord when response is undefined 
+     * @default '' 
+     */
+    placeholder?: string
+}
+
+export interface IntegerQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Integer'> {
+    /** Updating documentation for props that are in BaseQuestionOptions ------------------------------------- */
+
+    /** @default 60_000 // 60 seconds */
+    collectorIdle?: BaseQuestionOptions<Req, 'Integer'>['collectorIdle'],
+
+    /** ------------------------------------------------------------------------------------------------------ */
+
+    /** Defines the min length of content that the user can input. @default 0 */
+    minLength?: number,
+    /** Defines the max length of content that the user can input. @default 8192 // 2^13 */
+    maxLength?: number,
+    // /** Defines if the user can send another message to replace the first input @default true */
+    // canFix?: boolean,
+    /** This message will appear when the user try to input a number smaller than the minimum length. 
+     * @default `Precisa ter um mínimo de ${minLength} dígitos`
+     */
+    lessThanTheMinimumLengthMessage?: string,
+    /** This message will appear when the user try to input a number greater than the maximum length. 
+     * @default `Precisa ter no máximo ${minLength} dígitos` 
+     */
+    greaterThanTheMaximumLengthMessage?: string,
     /** This message will appear after the user input the first response to the question if `canFix` is `true`.
      * @default 'Você pode substituir o valor atual enviando outra resposta.'
      */
     fixMessage?: string,
-    
+    /** This message will appear on the response field of the question on Discord when response is undefined 
+     * @default '' 
+     */
+    placeholder?: string
 
-    filter?: (content: string, message: Message<boolean>, askMessage: Message<boolean>) => boolean | Promise<boolean>,
-    onMessageCollect?: (content: string, message: Message<boolean>) => unknown,
-    onConfirm?: (content: Req extends true ? string : (string | undefined)) => unknown,
-    onMessageClean?: () => unknown,
-} 
-
-export interface IntegerQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Integer'> {}
+    /** Defines the min value that the user can input. @default Number.MIN_SAFE_INTEGER */
+    min?: number,
+    /** Defines the max value that the user can input. @default Number.MAX_SAFE_INTEGER */
+    max?: number,
+    /** This message will appear when the user try to input a number less than the minimum. 
+     * @default `Valor mínimo: ${min}`
+     */
+    lessThanTheMinimumMessage?: string,
+    /** This message will appear when the user try to input a number greater than the maximum. 
+     * @default `Valor máximo: ${max}` 
+     */
+    greaterThanTheMaximumMessage?: string,
+    /** This message will appear when the user try to input a text that is not a integer number.
+     * @default 'Precisa ser um número inteiro!'
+     */
+    notAIntegerMessage?: string,
+}
 
 export interface AttachmentsQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Attachments'> {}
 
