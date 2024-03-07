@@ -33,7 +33,7 @@ export type ComponentInteraction = StringSelectMenuInteraction<CacheType> | Butt
 
 export interface BaseQuestionOptions<Req extends boolean, Type extends QuestionType> {
     name: string,
-    
+
     nextQuestionButton?: Partial<BaseButtonDataOption> & {
         /** @default `next-question-button-${Date.now()}` */
         customId?: string,
@@ -75,7 +75,7 @@ export interface BaseQuestionOptions<Req extends boolean, Type extends QuestionT
 
     /** The command of the question. @example 'Escolha qual o seu Pokemon favorito dentre as opções abaixo!' | 'Digite seu nome completo' */
     message: string,
-     /** Showed as a reply block in normal color below the `message` */
+    /** Showed as a reply block in normal color below the `message` */
     infoMessage?: string,
     /** Showed as a code block in red color below the `message` */
     warnMessage?: string,
@@ -296,7 +296,7 @@ export interface IntegerQuestionOptions<Req extends boolean> extends BaseQuestio
      * @default `Precisa ter no máximo ${minLength} dígitos` 
      */
     greaterThanTheMaximumLengthMessage?: string,
-    /** This message will appear after the user input the first response to the question if `canFix` is `true`.
+    /** This message will appear after the user input the first response to the question.
      * @default 'Você pode substituir o valor atual enviando outra resposta.'
      */
     fixMessage?: string,
@@ -322,8 +322,6 @@ export interface IntegerQuestionOptions<Req extends boolean> extends BaseQuestio
      */
     notAIntegerMessage?: string,
 }
-
-export interface AttachmentsQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Attachments'> {}
 
 export interface BooleanQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Boolean'> {
     /** Updating documentation for props that are in BaseQuestionOptions ------------------------------------- */
@@ -351,7 +349,86 @@ export interface BooleanQuestionOptions<Req extends boolean> extends BaseQuestio
     placeholder?: string
 }
 
+export interface AttachmentsQuestionOptions<Req extends boolean> extends Omit<BaseQuestionOptions<Req, 'Attachments'>, 'required'> {
+    /** Updating documentation for props that are in BaseQuestionOptions ------------------------------------- */
 
+    /** @default 60_000 // 60 seconds */
+    collectorIdle?: BaseQuestionOptions<Req, 'Boolean'>['collectorIdle'],
+
+    /** ------------------------------------------------------------------------------------------------------ */
+
+
+    /** The min quantity of attachments that the user can finish the form. @default 0 */
+    minAttachments?: Req extends true ? number : 0,
+    /** The max quantity of attachments that the user can finish the form.
+     * @obs These value defines the length of Attachments carousel.
+     * @default minAttachments
+     */
+    maxAttachments?: number,
+    /** This message will appear when the user try to input a number os Attachments less than the minimum. 
+     * @default `O mínimo de arquivos são ${minAttachments}`
+     */
+    lessThanTheMinimumMessage?: string,
+    /** This message will appear when the user try to input a number of Attachments greater than the maximum. 
+     * @default `O máximo de arquivos são ${maxAttachments}` 
+     */
+    greaterThanTheMaximumMessage?: string,
+
+    /** This message will appear after the user input the first response to the question.
+     * @default 'Você pode substituir o arquivo atual enviando outro arquivo.'
+     */
+    fixMessage?: string,
+    /** goBack attachment button */
+    prevAttachmentButton?: Partial<BaseButtonDataOption> & {
+        /** @default '<<' */
+        label?: string,
+        /** @default `prev-attachment-button-${Date.now()}` */
+        customId?: string,
+        /** Defines if the button should be displayed or not. @default false */
+        hidden?: boolean
+    }
+    /** advance to next attachment button */
+    nextAttachmentButton?: Partial<BaseButtonDataOption> & {
+        /** @default '>>' */
+        label?: string,
+        /** @default `next-attachment-button-${Date.now()}` */
+        customId?: string,
+        /** Defines if the button should be displayed or not. @default false */
+        hidden?: boolean
+    }
+
+    /** Defines the index of Attachment that question will receive input. @default 0 */
+    attachmentIndex?: number
+
+
+
+    /** Executed when the "prevAttachmentButton" or "nextAttachmentButton" is clicked 
+     * @obs prevents the default action, use `onChangeAttachment` if you don't want it
+     * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
+     * 
+     * `PromiseRejection<{ rejectReason: string }>` // if want to reject question
+     * 
+     * `Promise<null>` // if want to bypass the question resolving
+     */
+    onChangeAttachmentButtonClick?: (
+        this: Form,
+        action: 'advance' | 'goBack',
+        interaction: ButtonInteraction<CacheType>
+    ) => Promise<Awaited<ReturnType<Form['askers']['Attachments']>> | null>,
+    /** Executed everytime current attachment is updated 
+     * @obs not default executed if you are using `onChangeAttachmentButtonClick`
+     * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
+     * 
+     * `PromiseRejection<{ rejectReason: string }>` // if want to reject question
+     * 
+     * `Promise<null>` // if want to bypass the question resolving
+     */
+    onChangeAttachment?: (
+        this: Form,
+        action: 'advance' | 'goBack',
+        interaction: ButtonInteraction<CacheType>
+    ) => Promise<unknown>,
+}
 
 
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { EventEmitter } from 'node:events';
-import { ActionRowBuilder, Attachment, AttachmentBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ChannelSelectMenuInteraction, Collection, CollectorFilter, CommandInteraction, ComponentType, InteractionCollector, MappedInteractionTypes, MentionableSelectMenuInteraction, Message, MessageCollector, MessageCollectorOptions, MessageCollectorOptionsParams, MessageComponentInteraction, MessageComponentType, RoleSelectMenuInteraction, SelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder, TextBasedChannel, UserSelectMenuInteraction } from 'discord.js';
+import { ActionRowBuilder, Attachment, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ChannelSelectMenuInteraction, Collection, CollectorFilter, CommandInteraction, ComponentType, InteractionCollector, MappedInteractionTypes, MentionableSelectMenuInteraction, Message, MessageCollector, MessageCollectorOptions, MessageCollectorOptionsParams, MessageComponentInteraction, MessageComponentType, RoleSelectMenuInteraction, SelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder, TextBasedChannel, UserSelectMenuInteraction } from 'discord.js';
 import LocalClient from './LocalClient';
 import { Question, QuestionAttachments, QuestionBoolean, QuestionInteger, QuestionString, QuestionStringSelect, QuestionType, BaseButtonData, BaseButtonDataOption, ParamQuestionAttachments, ParamQuestionBoolean, ParamQuestionInteger, ParamQuestionString, ParamQuestionStringSelect, StringSelectMenuData, StringSelectQuestionOptions, ChangeQuestionAction, StringQuestionOptions, IntegerQuestionOptions, BooleanQuestionOptions, AttachmentsQuestionOptions, BaseQuestionOptions } from './Form.types';
 import { FormEvents } from './Form.types';
@@ -112,7 +112,7 @@ export default class Form extends EventEmitter {
         // @ts-ignore
         this.askers[question.type]?.bind(this)(question.options)
             .catch((error: unknown) => {
-                this.emit('error', { question, error });
+                this.emit('error', { error, question });
             });
     }
 
@@ -443,7 +443,7 @@ export default class Form extends EventEmitter {
 
                 this.emit('responseUpdate', this.questions.get(options.name)!);
 
-                
+
 
 
 
@@ -740,7 +740,7 @@ export default class Form extends EventEmitter {
 
                 this.emit('responseUpdate', this.questions.get(options.name)!);
 
-                
+
 
                 if (!filteredInput) this.refreshQuestion({ infoMessage: fixMessage });
 
@@ -799,7 +799,7 @@ export default class Form extends EventEmitter {
         },
 
         async Integer<Req extends boolean>(
-            this: Form, 
+            this: Form,
             options: IntegerQuestionOptions<Req>
         ) {
             if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
@@ -845,7 +845,7 @@ export default class Form extends EventEmitter {
                     if (!this.questions.get(question.options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
                     /** Converts the response of the question to a number immediately after the response update */
-                    if (typeof this.questions.get(question.options.name)!.response === 'string') 
+                    if (typeof this.questions.get(question.options.name)!.response === 'string')
                         this.questions.get(question.options.name)!.response = Number(this.questions.get(question.options.name)!.response);
 
                     /** Executes the `onResponseUpdate` provided externally */
@@ -855,15 +855,15 @@ export default class Form extends EventEmitter {
 
                 onFinishFilters: options.onFinishFilters?.map((filter) => {
                     /** New filter function that is addapted to numerical response */
-                    const newFilter: Required<StringQuestionOptions<Req>>['onFinishFilters'][number] = 
+                    const newFilter: Required<StringQuestionOptions<Req>>['onFinishFilters'][number] =
                         (response) => filter(response !== undefined ? Number(response) : undefined);
 
 
-                    return newFilter; 
+                    return newFilter;
                 }),
 
 
-                
+
                 onChange: options.onChange ? async (m) => {
                     const result = (await options.onChange!.bind(this)(m as Message));
 
@@ -955,7 +955,7 @@ export default class Form extends EventEmitter {
 
             const maxIdleTime = options.collectorIdle ?? 30_000;
 
-            
+
             const onChange: OmitThisParameter<Required<typeof options>['onChange']> =
                 options.onChange?.bind(this) ?? defaultOnChange.bind(this) as OmitThisParameter<Required<typeof options>['onChange']>;
             const onCleanButtonClick: OmitThisParameter<Required<typeof options>['onCleanButtonClick']> =
@@ -1114,7 +1114,7 @@ export default class Form extends EventEmitter {
 
                 this.emit('responseUpdate', this.questions.get(options.name)!);
 
-                
+
 
 
 
@@ -1186,305 +1186,365 @@ export default class Form extends EventEmitter {
                             .setStyle(ButtonStyle.Success)])
                     );
             }
-            // const ask = await interaction.followUp({
-            //     content: definedBaseContent,
-            //     ephemeral: true,
-            //     components: [rowBooleanButtonsFactory(), rowConfirmButtonFactory(confirmButtonCustomId)]
-            // });
 
-
-            // const collector = ask.createMessageComponentCollector({
-            //     filter: defaultCollectorFilter,
-            //     idle: idle ?? 30_000,
-            // });
-
-            // collectors.push(collector);
-
-
-            // return await new Promise<Req extends true ? boolean : (boolean | undefined)>((resolve, reject) => {
-            //     collector.on('collect', async (i) => {
-            //         if (!i.isButton()) return;
-
-            //         if (i.customId === confirmButtonCustomId) {
-            //             if (required && selectedValue === undefined) {
-            //                 i.update(`${definedBaseContent} (${confirmWithoutSelectingMessage ?? 'Você precisa selecionar uma das opções primeiro!'})`);
-            //                 return;
-            //             }
-
-            //             i.deferUpdate();
-            //             await onConfirm?.(selectedValue as Req extends true ? boolean : (boolean | undefined));
-            //             resolve(selectedValue as Req extends true ? boolean : (boolean | undefined));
-            //             interaction.deleteReply(ask).catch(() => (0));
-            //         }
-            //         else if (
-            //             [falsyButton.customId, truthyButton.customId].includes(i.customId) ||
-            //             (required ? false : (undefinedButton!.customId === i.customId))
-            //         ) {
-
-            //             if (i.customId === truthyButton.customId) selectedValue = true;
-            //             else if (i.customId === falsyButton.customId) selectedValue = false;
-            //             else selectedValue = undefined;
-
-            //             i.update({
-            //                 content:
-            //                     `${definedBaseContent}` +
-            //                     (selectedValue !== undefined ?
-            //                         `\n\`\`\`\n${selectedValue ? definedTruthyButtonLabel : definedFalsyButtonLabel}\n\`\`\`` :
-            //                         '')
-            //             });
-
-            //             await onSelect?.(selectedValue as Req extends true ? boolean : (boolean | undefined), i);
-
-            //             interaction.editReply(await bathroomPreviewMessageOptionsFactory());
-            //         }
-            //     });
-
-            //     collector.on('end', (_collected, reason) => {
-            //         interaction.deleteReply(ask).catch(() => (0));
-            //         if (reason) reject(reason);
-            //     });
-            // });
-
-
-            // function rowBooleanButtonsFactory() {
-            //     const row = new ActionRowBuilder<ButtonBuilder>()
-            //         .setComponents(
-            //             new ButtonBuilder()
-            //                 .setCustomId(falsyButton.customId)
-            //                 .setStyle(ButtonStyle.Danger)
-            //                 .setLabel(definedFalsyButtonLabel),
-            //             new ButtonBuilder()
-            //                 .setCustomId(truthyButton.customId)
-            //                 .setStyle(ButtonStyle.Primary)
-            //                 .setLabel(definedTruthyButtonLabel)
-            //         );
-
-            //     if (!required) row.addComponents(
-            //         new ButtonBuilder()
-            //             .setCustomId(undefinedButton!.customId)
-            //             .setStyle(ButtonStyle.Secondary)
-            //             .setLabel(definedUndefinedButtonLabel)
-            //     );
-
-            //     return row;
-            // }
         },
 
-        async Attachments<Req extends boolean>(options: AttachmentsQuestionOptions<Req>/* {
-            baseContent, baseContentsByAttachment = [], confirmButtonCustomId, cleanButtonCustomId, canFix, confirmWithoutValuesMessage,
-            fixMessage, greaterThanTheMaximumAttachmentsMessage, prevAttachmentButtonCustomId, nextAttachmentButtonCustomId,
-            idle, lessThanTheMinimumAttachmentsMessage, maxAttachments, minAttachments, cleanButtonLabel,
-            filter, onAttachmentClean, onAttachmentCollect, onConfirm
-        }: {
-            confirmButtonCustomId: string,
-            baseContent: string,
-            baseContentsByAttachment?: string[],
-            minAttachments?: number,
-            maxAttachments?: number,
-            idle?: number,
-            canFix?: boolean,
-            cleanButtonLabel?: string,
-            cleanButtonCustomId: string,
-            lessThanTheMinimumAttachmentsMessage?: string,
-            greaterThanTheMaximumAttachmentsMessage?: string,
-            confirmWithoutValuesMessage?: string,
-            fixMessage?: string,
-            prevAttachmentButtonCustomId?: string,
-            nextAttachmentButtonCustomId?: string,
-            filter?: (attachment: Attachment, index: number, askMessage: Message<boolean>) => boolean | Promise<boolean>,
-            onAttachmentCollect?: (attachment: Attachment, index: number, collected: Attachment[]) => unknown,
-            onAttachmentClean?: (index: number, collected: Attachment[]) => unknown,
-            onConfirm?: (collected: Req extends true ? Attachment[] : (Attachment[] | [])) => unknown
-        } */) {
-            options;
-            return [new AttachmentBuilder(Buffer.from(''))] as unknown as (Attachment[] | []);
-            // const definedMinAttachments = Math.max(minAttachments ?? 0, 0);
-            // const definedMaxAttachments = Math.max(maxAttachments ?? 0, definedMinAttachments);
-            // const definedCleanButtonLabel = cleanButtonLabel ?? 'Limpar';
-            // const definedPrevAttachmentButtonCustomId = prevAttachmentButtonCustomId ?? 'prev-attachment-button-' + Date.now();
-            // const definedNextAttachmentButtonCustomId = nextAttachmentButtonCustomId ?? 'next-attachment-button-' + Date.now();
-            // const definedConfirmButtonCustomId = confirmButtonCustomId + '-' + Date.now();
-            // const definedCleanButtonCustomId = cleanButtonCustomId + '-' + Date.now();
+        async Attachments<Req extends boolean>(
+            this: Form,
+            options: AttachmentsQuestionOptions<Req>
+        ) {
+            const thisQuestion = this.questions.get(options.name) as Question<'Attachments'> | undefined;
 
-            // const collectedAttachments: Attachment[] = [];
-            // let currentIndex = 0;
+            if (!thisQuestion) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
-            // const askComponents: ActionRowBuilder<ButtonBuilder>[] = [];
-
-            // if (definedMaxAttachments > 1) askComponents.push(rowAttachmentsPaginationFactory());
-
-            // askComponents.push(
-            //     rowCleanButtonFactory(definedCleanButtonCustomId, definedCleanButtonLabel),
-            //     rowConfirmButtonFactory(definedConfirmButtonCustomId)
-            // );
-
-            // const ask = await interaction.followUp({
-            //     content: getBaseContent(currentIndex),
-            //     ephemeral: true,
-            //     components: askComponents
-            // });
-
-            // const messageCollector = ask.channel.createMessageCollector({
-            //     filter: (m) => m.author.id === interaction.user.id,
-            //     idle: idle ?? 60_000,
-            // });
+            type Returned = Req extends true ? Attachment[] : (Attachment[] | [])
 
 
-            // const buttonCollector = ask.createMessageComponentCollector({
-            //     filter: defaultCollectorFilter,
-            // });
+            // Defining defaults
 
-            // collectors.push(messageCollector, buttonCollector);
+            const minAttachments = Math.max(options.minAttachments ?? 0, 0);
+            const maxAttachments = Math.max(options.maxAttachments ?? minAttachments, minAttachments);
 
-            // messageCollector.on('collect', async (m) => {
-            //     if (!m.attachments.size) return;
+            const required = minAttachments > 0 as Req;
 
-            //     m.delete();
+            const attachmentIndex = options.attachmentIndex ?? 0;
 
-            //     if (m.attachments.size + Math.min(currentIndex, Math.max(collectedAttachments.length, 0)) > definedMaxAttachments) {
-            //         interaction.editReply({
-            //             message: ask,
-            //             content: `${getBaseContent(currentIndex)} (${greaterThanTheMaximumAttachmentsMessage ?? `O máximo de arquivos são ${definedMaxAttachments}`})`
-            //         });
-            //         return;
-            //     }
-
-            //     if ((await Promise.all(m.attachments.toJSON().map(async (attachment, i) => {
-            //         let dontPassOnFilter = false;
-
-            //         if (filter && !(await filter(attachment, currentIndex + i, ask))) dontPassOnFilter = true;
-
-            //         return dontPassOnFilter;
-            //     }))).some((bool) => bool)) return;
+            /** Add markers to `options.message` to user know if is a required question or no. Add markdown prefix to display as a title */
+            const formattedMessage =
+                (required ? `## \\* ${options.message}` : `## (opcional) ${options.message}`) +
+                (options.infoMessage ? `\n> ${options.infoMessage}` : '') +
+                (options.warnMessage ? `\n\`\`\`ansi\n${discordAnsi.red()(options.warnMessage)}\n\`\`\`` : '') +
+                `\n\`\`\`ansi\n${thisQuestion.response[attachmentIndex].name ?? ''}\n\`\`\`` +
+                thisQuestion.response[attachmentIndex].url ?? '';
 
 
-            //     collectedAttachments.splice(currentIndex, m.attachments.size, ...m.attachments.toJSON());
+            const cleanButton: BaseButtonDataOption = {
+                label: options.cleanButton?.label ?? 'Limpar',
+                customId: options.cleanButton?.customId ?? `clean-button-${Date.now()}`,
+                hidden: options.cleanButton?.hidden ?? (!options.cleanButton)
+            };
 
-            //     await Promise.all(
-            //         m.attachments.toJSON().map(async (att, i) => await onAttachmentCollect?.(att, currentIndex + i, collectedAttachments))
-            //     );
+            const prevQuestionButton: BaseButtonDataOption = {
+                customId: options.prevQuestionButton?.customId ?? `prev-question-button-${Date.now()}`,
+                label: options.prevQuestionButton?.label ?? 'Anterior',
+                hidden: !!options.prevQuestionButton?.hidden
+            };
 
-            //     interaction.editReply({
-            //         message: ask,
-            //         content:
-            //             `${getBaseContent(currentIndex)}` +
-            //             (collectedAttachments[currentIndex] ?
-            //                 (
-            //                     `${canFix ? ` (${fixMessage ?? 'Envie novamente se desejar alterar o arquivo'})` : ''}\n` +
-            //                     `Arquivo: \`${collectedAttachments[currentIndex].name}\`\n` +
-            //                     collectedAttachments[currentIndex].url
-            //                 ) :
-            //                 ''
-            //             )
-            //     });
+            const nextQuestionButton: BaseButtonDataOption = {
+                customId: options.nextQuestionButton?.customId ?? `next-question-button-${Date.now()}`,
+                label: options.nextQuestionButton?.label ?? 'Próximo',
+                hidden: !!options.nextQuestionButton?.hidden
+            };
 
-            //     interaction.editReply(await bathroomPreviewMessageOptionsFactory());
-            // });
+            const finishFormButton: BaseButtonDataOption = {
+                customId: options.finishFormButton?.customId ?? `finish-form-button-${Date.now()}`,
+                label: options.finishFormButton?.label ?? 'Finalizar',
+                hidden: options.finishFormButton?.hidden ?? false
+            };
 
-            // messageCollector.on('end', (_collected, reason) => buttonCollector.stop(reason));
+            const prevAttachmentButton: BaseButtonDataOption = {
+                customId: options.prevAttachmentButton?.customId ?? `prev-attachment-button-${Date.now()}`,
+                label: options.prevAttachmentButton?.label ?? '<<',
+                hidden: options.prevAttachmentButton?.hidden ?? false
+            };
 
-            // return await new Promise<Req extends true ? Attachment[] : (Attachment[] | [])>((resolve, reject) => {
-            //     buttonCollector.on('collect', async (i) => {
-            //         if (i.customId === definedConfirmButtonCustomId) {
-            //             if (definedMinAttachments > 0 && !collectedAttachments.length) {
-            //                 i.update({
-            //                     content: `${getBaseContent(currentIndex)} (${confirmWithoutValuesMessage ?? 'Você precisar enviar algum arquivo antes de confirmar'})`,
-            //                 });
-            //                 return;
-            //             } else if (collectedAttachments.length < definedMinAttachments) {
-            //                 i.update({
-            //                     content: `${getBaseContent(currentIndex)} (${lessThanTheMinimumAttachmentsMessage ?? `O número mínimo de arquivos é ${definedMaxAttachments}`})`
-            //                 });
-            //                 return;
-            //             } else if (collectedAttachments.length > definedMaxAttachments) {
-            //                 i.update({
-            //                     content: `${getBaseContent(currentIndex)} (${greaterThanTheMaximumAttachmentsMessage ?? `O máximo de arquivos são ${definedMaxAttachments}`})`
-            //                 });
-            //                 return;
-            //             }
+            const nextAttachmentButton: BaseButtonDataOption = {
+                customId: options.nextAttachmentButton?.customId ?? `next-attachment-button-${Date.now()}`,
+                label: options.nextAttachmentButton?.label ?? '>>',
+                hidden: options.nextAttachmentButton?.hidden ?? false
+            };
 
-            //             i.deferUpdate();
-            //             await onConfirm?.(collectedAttachments);
-            //             messageCollector.stop('');
-            //             resolve(collectedAttachments as (Req extends true ? Attachment[] : (Attachment[] | [])));
-            //             interaction.deleteReply(ask).catch(() => (0));
-            //         }
 
-            //         else if (i.customId === definedCleanButtonCustomId) {
-            //             collectedAttachments.splice(currentIndex, 1);
+            const maxIdleTime = options.collectorIdle ?? 60_000;
+            const fixMessage = options.fixMessage ?? 'Você pode substituir o valor atual enviando outra resposta.';
+            const greaterThanTheMaximumMessage = options.greaterThanTheMaximumMessage ?? `O máximo de arquivos são ${maxAttachments}`;
 
-            //             await onAttachmentClean?.(currentIndex, collectedAttachments);
-
-            //             i.update({
-            //                 content: `${getBaseContent(currentIndex)}` +
-            //                     (collectedAttachments[currentIndex] ?
-            //                         (
-            //                             `${canFix ? ` (${fixMessage ?? 'Envie novamente se desejar alterar o arquivo'})` : ''}\n` +
-            //                             `Arquivo: \`${collectedAttachments[currentIndex].name}\`\n` +
-            //                             collectedAttachments[currentIndex].url
-            //                         ) :
-            //                         ''
-            //                     )
-            //             });
-
-            //             interaction.editReply(await bathroomPreviewMessageOptionsFactory());
-            //         }
-
-            //         else if ([definedPrevAttachmentButtonCustomId, definedNextAttachmentButtonCustomId].includes(i.customId)) {
-            //             if (i.customId === definedPrevAttachmentButtonCustomId) currentIndex--;
-            //             else currentIndex++;
-
-            //             askComponents.splice(0, 1, rowAttachmentsPaginationFactory());
-
-            //             i.update({
-            //                 content:
-            //                     `${getBaseContent(currentIndex)}` +
-            //                     (collectedAttachments[currentIndex] ?
-            //                         (
-            //                             `${canFix ? ` (${fixMessage ?? 'Envie novamente se desejar alterar o arquivo'})` : ''}\n` +
-            //                             `Arquivo: \`${collectedAttachments[currentIndex].name}\`\n` +
-            //                             collectedAttachments[currentIndex].url
-            //                         ) :
-            //                         ''
-            //                     ),
-            //                 components: askComponents
-            //             });
-            //         }
-            //     });
-
-            //     buttonCollector.on('end', (_collected, reason) => {
-            //         interaction.deleteReply(ask).catch(() => (0));
-            //         if (reason) reject(reason);
-            //     });
-            // });
+            const onChange: OmitThisParameter<Required<typeof options>['onChange']> =
+                options.onChange?.bind(this) ?? defaultOnChange.bind(this) as OmitThisParameter<Required<typeof options>['onChange']>;
+            const onCleanButtonClick: OmitThisParameter<Required<typeof options>['onCleanButtonClick']> =
+                options.onCleanButtonClick?.bind(this) ?? defaultOnCleanButtonClick.bind(this);
+            const onChangeQuestionButtonClick: OmitThisParameter<Required<typeof options>['onChangeQuestionButtonClick']> =
+                options.onChangeQuestionButtonClick?.bind(this) ?? defaultOnChangeQuestionButtonClick.bind(this);
+            const onFinishFormButtonClick: OmitThisParameter<Required<typeof options>['onFinishFormButtonClick']> =
+                options.onFinishFormButtonClick?.bind(this) ?? defaultOnFinishFormButtonClick.bind(this);
+            const onChangeAttachmentButtonClick: OmitThisParameter<Required<typeof options>['onChangeAttachmentButtonClick']> =
+                options.onChangeAttachmentButtonClick?.bind(this) ?? defaultOnChangeAttachmentButtonClick.bind(this);
 
 
 
 
-            // function getBaseContent(index: number) {
-            //     return `${definedMinAttachments > index ? '\\*' : '(opcional)'} ${baseContentsByAttachment[index] ?? baseContent}`;
-            // }
+            // Making the question message and his components
 
-            // function rowAttachmentsPaginationFactory() {
-            //     return new ActionRowBuilder<ButtonBuilder>()
-            //         .setComponents(
-            //             new ButtonBuilder()
-            //                 .setCustomId(definedPrevAttachmentButtonCustomId)
-            //                 .setStyle(ButtonStyle.Secondary)
-            //                 .setDisabled(currentIndex === 0)
-            //                 .setLabel('<<'),
-            //             new ButtonBuilder()
-            //                 .setCustomId('current-attachment-page-button-' + Date.now())
-            //                 .setDisabled()
-            //                 .setStyle(ButtonStyle.Secondary)
-            //                 .setLabel(`${currentIndex + 1}/${definedMaxAttachments}`),
-            //             new ButtonBuilder()
-            //                 .setCustomId(definedNextAttachmentButtonCustomId)
-            //                 .setStyle(ButtonStyle.Secondary)
-            //                 .setDisabled(currentIndex + 1 === definedMaxAttachments)
-            //                 .setLabel('>>'),
-            //         );
-            // }
+            const questionComponents = [
+                ...(!cleanButton.hidden ? [this.rowCleanButtonFactory(cleanButton.customId, cleanButton.label)] : []),
+                ...(maxAttachments > 1 ? [rowAttachmentsPaginationFactory()] : []),
+                this.rowNavigateBetweenQuestionsFactory(
+                    prevQuestionButton.hidden ? undefined : prevQuestionButton,
+                    nextQuestionButton.hidden ? undefined : nextQuestionButton,
+                    finishFormButton.hidden ? undefined : finishFormButton
+                ),
+            ];
+
+
+            const question = await this.interaction.editReply({
+                message: this.questionMessage,
+                content: formattedMessage,
+                components: questionComponents
+            });
+
+
+
+
+            // Creates the question collector (collects any interaction in question components)
+            const componentCollector = this.createMessageComponentCollector(question, {
+                filter: this.defaultCollectorFilter.bind(this),
+            });
+
+            // Creates the question message collector (in current channel) (collects any message sent by the author)
+            const messageCollector = this.createMessageCollector(question.channel, {
+                filter: (m) => m.author.id === this.interaction.user.id,
+                idle: maxIdleTime,
+            });
+
+
+
+
+            return await new Promise<Returned>((resolve, reject) => {
+                messageCollector.on('collect', async (m) => {
+                    if (!m.attachments.size) return;
+
+                    await onChange(m)
+                        .then((response) => {
+                            if (response !== null) resolve(response as Returned);
+                        })
+                        .catch((error) => {
+                            if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                        });
+                });
+
+                messageCollector.on('end', (_collected, reason) => componentCollector.stop(reason));
+
+
+
+
+                componentCollector.on('collect', async (i) => {
+                    /** Case the user click to goBack to prev question or click to advance to next question */
+                    if (
+                        (i.customId === prevQuestionButton.customId || i.customId === nextQuestionButton.customId) &&
+                        i.componentType === ComponentType.Button
+                    ) {
+
+                        await onChangeQuestionButtonClick(i.customId === prevQuestionButton.customId ? 'goBack' : 'advance', i)
+                            .then((response) => {
+                                if (response !== null) resolve(response as Returned);
+                            })
+                            .catch((error) => {
+                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            });
+
+                    }
+
+
+
+                    /** Case the user click to clean inputed value */
+                    else if (
+                        i.customId === cleanButton.customId &&
+                        i.componentType === ComponentType.Button
+                    ) {
+                        await onCleanButtonClick(i)
+                            .then((response) => {
+                                if (response !== null) resolve(response as Returned);
+                            })
+                            .catch((error) => {
+                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            });
+                    }
+
+
+                    /** Case the user click to finish the form */
+                    else if (
+                        i.customId === finishFormButton.customId &&
+                        i.componentType === ComponentType.Button
+                    ) {
+                        await onFinishFormButtonClick(i)
+                            .then((response) => {
+                                if (response !== null) resolve(response as Returned);
+                            })
+                            .catch((error) => {
+                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            });
+                    }
+
+
+
+                    /** Case the user click to goBack to prev attachment or click to advance to next attachment */
+                    else if (
+                        (i.customId === prevAttachmentButton.customId || i.customId === nextAttachmentButton.customId) &&
+                        i.componentType === ComponentType.Button
+                    ) {
+                        await onChangeAttachmentButtonClick(i.customId === prevAttachmentButton.customId ? 'goBack' : 'advance', i)
+                            .then((response) => {
+                                if (response !== null) resolve(response as Returned);
+                            })
+                            .catch((error) => {
+                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            });
+                    }
+                });
+
+
+                componentCollector.on('end', (_collected, reason) => {
+                    if (reason === 'time' || reason === 'idle') {
+                        if (!this.finished) this.finishForm(reason);
+                        reject(reason);
+                    }
+                });
+            });
+
+
+            /** Is executed when don't have a `option.onChange`  */
+            async function defaultOnChange(this: Form, m: Message) {
+                if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
+
+                if (m.deletable) m.delete()
+                    .catch((error) => {
+                        log.error(`Erro ao usar #i(Message<Boolean>)###(delete())# enquanto executava #(defaultOnChange())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(Message)#:', m, '\n#(CommandInteraction)#:', this.interaction);
+                        throw error;
+                    });
+
+                /** Filter if the number of attachments that the user has been sent is higher than `maxAttachments` */
+                if (m.attachments.size + Math.min(attachmentIndex, Math.max((this.questions.get(options.name)!.response as Returned).length, 0)) > maxAttachments) {
+                    this.refreshQuestion({ warnMessage: greaterThanTheMaximumMessage });
+                    return null;
+                }
+
+
+                /** Filters the input if have `options.onChangeFilter` */
+                const filteredInput = await options.onChangeFilter?.bind(this)(m);
+
+
+                if (filteredInput) {
+                    this.refreshQuestion({ warnMessage: filteredInput });
+
+                    return null;
+                }
+
+
+
+                /** Saves the user response */
+                (this.questions.get(options.name)!.response as Returned).splice(attachmentIndex, m.attachments.size, ...m.attachments.toJSON());
+
+
+                if (options.onResponseUpdate) await options.onResponseUpdate.bind(this)(this.questions.get(options.name)!);
+
+                this.emit('responseUpdate', this.questions.get(options.name)!);
+
+
+
+                if (!filteredInput) this.refreshQuestion({ infoMessage: fixMessage });
+
+                return null;
+            }
+
+            /** Is executed when don't have a `option.onCleanButtonClick`  */
+            async function defaultOnCleanButtonClick(
+                this: Form,
+                i: ButtonInteraction<CacheType>,
+            ) {
+                if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
+
+
+                if (!i.deferred) await i.deferUpdate()
+                    .catch((error) => {
+                        log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnCleanButtonClick())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                        throw error;
+                    });
+
+
+                /** Saves the user response */
+                (this.questions.get(options.name)!.response as Returned).splice(attachmentIndex, 1);
+
+
+
+                if (options.onClean) await options.onClean.bind(this)(this.questions.get(options.name)!);
+                if (options.onResponseUpdate) await options.onResponseUpdate.bind(this)(this.questions.get(options.name)!);
+
+                this.emit('responseUpdate', this.questions.get(options.name)!);
+
+
+
+                this.refreshQuestion();
+
+                return this.questions.get(options.name)!.response as Returned;
+            }
+
+            /** Is executed when don't have a `option.onChangeQuestionButtonClick` */
+            async function defaultOnChangeQuestionButtonClick(
+                this: Form,
+                action: ChangeQuestionAction,
+                i: ButtonInteraction<CacheType>
+            ) {
+                return await this.defaultOnChangeQuestionButtonClickFactory(options).bind(this)(action, i) as Returned;
+            }
+
+            /** Is executed when don't have a `option.onChangeAttachmentButtonClick` */
+            async function defaultOnChangeAttachmentButtonClick(
+                this: Form,
+                action: ChangeQuestionAction,
+                i: ButtonInteraction<CacheType>
+            ) {
+                if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
+
+                if (!i.deferred) await i.deferUpdate()
+                    .catch((error) => {
+                        log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChangeAttachmentButtonClick)# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                        throw error;
+                    });
+
+
+                /** Changes the attachmentIndex */
+                (this.questions.get(options.name)! as Question<'Attachments'>).options.attachmentIndex = 
+                    Math.min(Math.max(attachmentIndex + (action === 'goBack' ? -1 : 1), 0), maxAttachments - 1);
+
+
+                this.refreshQuestion();
+
+                if (options.onChangeAttachment) await options.onChangeAttachment.bind(this)(action, i);
+
+
+                return this.questions.get(options.name)!.response as Returned;
+            }
+
+            /** Is executed when don't have a `option.onFinishFormButtonClick` */
+            async function defaultOnFinishFormButtonClick(
+                this: Form,
+                i: ButtonInteraction<CacheType>
+            ) {
+                return await this.defaultOnFinishFormButtonClickFactory(options).bind(this)(i) as Returned;
+            }
+
+
+            function rowAttachmentsPaginationFactory() {
+                return new ActionRowBuilder<ButtonBuilder>()
+                    .setComponents(
+                        new ButtonBuilder()
+                            .setCustomId(prevAttachmentButton.customId)
+                            .setStyle(ButtonStyle.Secondary)
+                            .setDisabled(attachmentIndex === 0)
+                            .setLabel(prevAttachmentButton.label),
+                        new ButtonBuilder()
+                            .setCustomId('current-attachment-button-' + Date.now())
+                            .setDisabled()
+                            .setStyle(ButtonStyle.Secondary)
+                            .setLabel(`${attachmentIndex + 1}/${maxAttachments}`),
+                        new ButtonBuilder()
+                            .setCustomId(nextAttachmentButton.customId)
+                            .setStyle(ButtonStyle.Secondary)
+                            .setDisabled(attachmentIndex + 1 === maxAttachments)
+                            .setLabel(nextAttachmentButton.label),
+                    );
+            }
+
         }
     };
 
@@ -1513,7 +1573,7 @@ export default class Form extends EventEmitter {
                 return options.requiredFieldMessage ?? 'Este é um campo obrigatório!';
 
             if (options.onFinishFilters)
-                return (await Promise.all(options.onFinishFilters.map((filter) => { return filter(response); }))).find(reason => reason !== undefined); 
+                return (await Promise.all(options.onFinishFilters.map((filter) => { return filter(response); }))).find(reason => reason !== undefined);
         },
 
         async Integer<Req extends boolean>(
@@ -1521,11 +1581,11 @@ export default class Form extends EventEmitter {
             options: IntegerQuestionOptions<Req>,
             response: Awaited<ReturnType<typeof this.askers.Integer<Req>>>
         ) {
-            if (options.required && !response)
+            if (options.required && typeof response !== 'number')
                 return options.requiredFieldMessage ?? 'Este é um campo obrigatório!';
 
             if (options.onFinishFilters)
-                return (await Promise.all(options.onFinishFilters.map((filter) => { return filter(response); }))).find(reason => reason !== undefined); 
+                return (await Promise.all(options.onFinishFilters.map((filter) => { return filter(response); }))).find(reason => reason !== undefined);
         },
 
         async Boolean<Req extends boolean>(
@@ -1533,9 +1593,11 @@ export default class Form extends EventEmitter {
             options: BooleanQuestionOptions<Req>,
             response: Awaited<ReturnType<typeof this.askers.Boolean<Req>>>
         ) {
-            options;
-            response;
-            return '' as string | undefined;
+            if (options.required && typeof response !== 'boolean')
+                return options.requiredFieldMessage ?? 'Este é um campo obrigatório!';
+
+            if (options.onFinishFilters)
+                return (await Promise.all(options.onFinishFilters.map((filter) => { return filter(response); }))).find(reason => reason !== undefined);
         },
 
         async Attachments<Req extends boolean>(
@@ -1543,9 +1605,32 @@ export default class Form extends EventEmitter {
             options: AttachmentsQuestionOptions<Req>,
             response: Awaited<ReturnType<typeof this.askers.Attachments<Req>>>
         ) {
-            options;
-            response;
-            return '' as string | undefined;
+            const minAttachments = Math.max(options.minAttachments ?? 0, 0);
+            const maxAttachments = Math.max(options.maxAttachments ?? minAttachments, minAttachments);
+
+            const required = minAttachments > 0 as Req;
+
+            const lessThanTheMinimumAttachmentsMessage = options.lessThanTheMinimumMessage ?? `O mínimo de arquivos são ${minAttachments}`;
+            const greaterThanTheMaximumAttachmentsMessage = options.greaterThanTheMaximumMessage ?? `O máximo de arquivos são ${maxAttachments}`;
+
+
+            if (required && !response.length) {
+                (this.questions.get(options.name)! as Question<'Attachments'>).options.attachmentIndex = 0;
+
+                return options.requiredFieldMessage ?? 'Este é um campo obrigatório!';
+            } else if (response.length < minAttachments) {
+                (this.questions.get(options.name)! as Question<'Attachments'>).options.attachmentIndex = response.length;
+
+                return lessThanTheMinimumAttachmentsMessage;
+            } else if (response.length > maxAttachments) {
+                (this.questions.get(options.name)! as Question<'Attachments'>).options.attachmentIndex = maxAttachments - 1;
+
+                return greaterThanTheMaximumAttachmentsMessage;
+            }
+
+
+            if (options.onFinishFilters)
+                return (await Promise.all(options.onFinishFilters.map((filter) => { return filter(response); }))).find(reason => reason !== undefined);
         },
     };
 
@@ -1572,6 +1657,9 @@ export default class Form extends EventEmitter {
             action: ChangeQuestionAction,
             i: ButtonInteraction<CacheType>
         ) {
+            if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
+
+
             if (!i.deferred) await i.deferUpdate()
                 .catch((error) => {
                     log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChangeQuestionButtonClick)# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
@@ -1579,8 +1667,6 @@ export default class Form extends EventEmitter {
                 });
 
 
-
-            if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
             const returns = this.questions.get(options.name)!.response as Awaited<ReturnType<Form['askers'][Type]>>;
 
@@ -1602,6 +1688,10 @@ export default class Form extends EventEmitter {
             this: Form,
             i: ButtonInteraction<CacheType>
         ) {
+            if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
+
+
+
             if (!i.deferred) await i.deferUpdate()
                 .catch((error) => {
                     log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnFinishFormButtonClick)# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
@@ -1609,7 +1699,7 @@ export default class Form extends EventEmitter {
                 });
 
 
-            if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
+
 
             const returns = this.questions.get(options.name)!.response as Awaited<ReturnType<Form['askers'][Type]>>;
 
