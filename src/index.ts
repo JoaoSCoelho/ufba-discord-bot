@@ -7,7 +7,6 @@ import Database from './database/Database';
 import Member from './classes/database/Member';
 import scoreSystem from './score-system';
 import LogSystem from './classes/LogSystem';
-import chalk from 'chalk';
 
 export const log = new LogSystem();
 
