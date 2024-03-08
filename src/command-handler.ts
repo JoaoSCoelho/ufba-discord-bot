@@ -24,7 +24,7 @@ export default async function commandHandler(client: LocalClient) {
         /** `PT`: O caminho da pasta `/commands/[folder]` */
         const commandsPath = path.join(foldersPath, folder);
         /** `PT`: String com todos os arquivos TypeScript da pasta `/commands/[folder]` */
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
+        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
 
 
         for (const file of commandFiles) {
@@ -64,7 +64,7 @@ export default async function commandHandler(client: LocalClient) {
 export async function adminCommandHandler(client: LocalClient) {
 
     const commandsPath = path.join(__dirname, 'admin-commands');
-    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
+    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
 
     for (const file of commandFiles) {
 
