@@ -3,3 +3,5 @@ logs
 log.txt
 log.ansi
 .env
+/build
+discloud.config

@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+process.env.FORCE_COLOR = undefined;
+
 import * as fs from 'node:fs';
 import chalk from 'chalk';
 import stripAnsi from 'strip-ansi';
@@ -175,7 +177,7 @@ export default class LogSystem {
             }
 
             try {
-                const stacks = /src\\([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename))?.trim() ?? '')?.[1];
+                const stacks = /(?:src|build)(?:\\|\/)([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename))?.trim() ?? '')?.[1];
                 
                 return this(`${chalk[chalkMethod]('>')} [${chalk[chalkMethod](typeName)}] [${chalk[chalkMethod](logMoment)}] [${chalk[chalkMethod](stacks)}]:`, ...data);
             } catch (err) {
@@ -215,7 +217,7 @@ export default class LogSystem {
         function writeLogs(this: LogSystem, chunk: string | Uint8Array, stderr?: boolean) {
             if (typeof chunk === 'string') {
 
-                // `PT`: Faz a colorização de todas as ocorrências `#(abcde...)` ou `#c(abcde...)` com um `chalk[chalkMethod](abcde...)`
+                // `PT`: Faz a colorização de todas as ocorrências `#(abcde...)#` ou `#c(abcde...)#` com um `chalk[chalkMethod](abcde...)`
                 let oldChunk = '';
                 while (oldChunk !== chunk) {
                     oldChunk = chunk;
