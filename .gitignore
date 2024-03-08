@@ -5,3 +5,4 @@ log.ansi
 .env
 /build
 discloud.config
+*.zip
