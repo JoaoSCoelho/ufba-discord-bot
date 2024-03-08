@@ -29,7 +29,7 @@ adminCommandHandler(client);
 
 // These event are executed when the bot goes online on discord
 client.once(Events.ClientReady, readyClient => {
-    log.info(`Bot ${chalk.cyan(`@${readyClient.user.tag}`)} iniciado`);
+    log.info(`Bot #(@${readyClient.user.tag})# iniciado`);
 
     log.clientReady(client);
     client.database = new Database(client);
@@ -47,7 +47,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const command = client.commands.get(interaction.commandName) ?? client.commands.find((command) => command.documentation?.aliases?.includes(interaction.commandName));
 
     if (!command) {
-        log.error(`Não foi encontrado o comando /#(${interaction.commandName}) na lista de comandos do bot`);
+        log.error(`Não foi encontrado o comando /#(${interaction.commandName})# na lista de comandos do bot`);
         return;
     }
 
@@ -70,7 +70,7 @@ client.on(Events.MessageCreate, async (message) => {
 
 
     // Computes message to scoreSystem if is a message in guild and isn't a bot
-    if (message.inGuild() && !message.author.bot) 
+    if (message.inGuild() && !message.author.bot)
         scoreSystem(client, message)
             .catch((error) => log.error(`Ocorreu um erro ao executar #g(scoreSystem)# para a mensagem enviada por #(@${message.author.tag})# no servidor #(${message.guild.name})#\n#(Conteúdo)#:`, message.content, '\n#(Erro)#:', error, '\n#(Arquivos)#:', message.attachments, '\n#(Message)#:', message));
 
@@ -82,7 +82,7 @@ client.on(Events.MessageCreate, async (message) => {
 
     // Filter only messages of bot admins
     if (!client.admins.includes(message.author.id)) return;
-    
+
     // Filter only messages that can be a admin command
     if (!message.content.startsWith(client.prefix)) return;
 
@@ -105,27 +105,27 @@ client.on(Events.MessageCreate, async (message) => {
 
 
 
-    
+
 
     const command = client.adminCommands.get(calledCommand);
 
     if (!command) return;
 
     log.infoh(
-        `O admin #(@${message.author.tag})# usou o comando de admin #(${client.prefix}${calledCommand})#, no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})# do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`, 
-        ...(Object.values(params).length ? ['\nParâmetros:', params] : []), 
+        `O admin #(@${message.author.tag})# usou o comando de admin #(${client.prefix}${calledCommand})#, no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})# do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`,
+        ...(Object.values(params).length ? ['\nParâmetros:', params] : []),
         ...(words.length ? ['\nArgumentos:', words] : [])
     );
 
 
     try {
         await command.execute(
-            message, 
-            client, 
+            message,
+            client,
             params, // In line below, words are passed to the function only if don't have params
             !Object.values(params).length ? words : []
         );
-		
+
     } catch (error) {
         log.error(`Aconteceu um erro na execução do comando /#(${client.prefix}${calledCommand})# pelo admin #(@${message.author.tag})#, no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})# do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`, error);
         await message.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!' });
@@ -142,7 +142,7 @@ client.on(Events.GuildCreate, async (guild) => {
     let errorOnAddingMemberCount = 0;
     // `PT`: Mapeia todos os membros do servidor para o banco de dados do bot
     await Promise.all(guild.members.cache.map(async (guildMember) => {
-        const alreadyHasTheMember = !!client.database!.member.find((member) => 
+        const alreadyHasTheMember = !!client.database!.member.find((member) =>
             member.discordId === guildMember.id && member.discordGuildId === guild.id
         );
 
@@ -157,7 +157,7 @@ client.on(Events.GuildCreate, async (guild) => {
             discordId: guildMember.id,
             discordGuildId: guild.id,
         });
-        
+
         await client.database!.member.new(member)
             .then(() => {
                 log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# adicionado ao banco de dados`);
@@ -180,7 +180,7 @@ client.on(Events.GuildDelete, async (guild) => {
 
     // Removes all members with this guild.id
     await Promise.all(client.database!.member
-        .filter((member) =>  member.discordGuildId === guild.id)
+        .filter((member) => member.discordGuildId === guild.id)
         .map(async (member) => {
             await client.database!.member.remove(member.id)
                 .then(() => log.success(`Member #(${member.id})# from server #(${guild.name || guild.id})#, successfully removed from database`))
@@ -196,7 +196,7 @@ client.on(Events.GuildMemberAdd, async (guildMember) => {
     log.infoh(`O membro #(@${guildMember.user.tag})# foi adicionado ao servidor #(${guildMember.guild.name})#`);
 
     /** `true` if the member has already on database */
-    const alreadyHasTheMember = !!client.database.member.find((member) => 
+    const alreadyHasTheMember = !!client.database.member.find((member) =>
         member.discordGuildId === guildMember.guild.id && member.discordId === guildMember.id
     );
 
