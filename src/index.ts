@@ -72,7 +72,7 @@ client.on(Events.MessageCreate, async (message) => {
     // Computes message to scoreSystem if is a message in guild and isn't a bot
     if (message.inGuild() && !message.author.bot) 
         scoreSystem(client, message)
-            .catch((error) => log.error(`Ocorreu um erro ao executar ${chalk.bold.gray('scoreSystem')} para a mensagem enviada por #(@${message.author.tag})# no servidor #(${message.guild.name})#\n#(Conteúdo)#:`, message.content, '\n#(Erro)#:', error, '\n#(Arquivos)#:', message.attachments, '\n#(Message)#:', message));
+            .catch((error) => log.error(`Ocorreu um erro ao executar #g(scoreSystem)# para a mensagem enviada por #(@${message.author.tag})# no servidor #(${message.guild.name})#\n#(Conteúdo)#:`, message.content, '\n#(Erro)#:', error, '\n#(Arquivos)#:', message.attachments, '\n#(Message)#:', message));
 
 
 
