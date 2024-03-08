@@ -58,7 +58,6 @@ export default new Command(
     },
 
     {
-        aliases: ['top15', 'score-ranking'],
         howToUse: 'Você pode usar apenas /ranking se desejar ver o ranking dos 15 melhores e saber a sua posição no ranking total ou pode usar a opção "membro" para ver a posição de um membro específico no ranking total',
         optionsTutorial: {
             membro: 'Escolha um membro do servidor nessa opção para saber sua posição no ranking total do servidor.'

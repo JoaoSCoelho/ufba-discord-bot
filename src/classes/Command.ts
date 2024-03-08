@@ -3,7 +3,6 @@ import LocalClient from './LocalClient';
 import commandOptions from '../utils/command-options';
 
 export interface CommandDocumentation {
-    aliases?: string[],
     howToUse?: string,
     howToUseEmbed?: EmbedBuilder,
     optionsTutorial?: Record<string, string>,

@@ -84,7 +84,6 @@ export default new Command(
     },
 
     {
-        aliases: ['escore', 'pontuação', 'pontos'],
         howToUse: 'Você pode usar apenas /score sem nenhuma opção, e com isso vai receber informações sobre o seu próprio score. Também pode usar /score e passar um membro na opção "membro", com isso receberá informações sobre o score do membro',
         optionsTutorial: {
             membro: 'Escolha um membro do servidor nessa opção para obter informações sobre seu score.'

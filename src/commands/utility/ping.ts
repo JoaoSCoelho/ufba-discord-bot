@@ -8,7 +8,6 @@ export default new Command(
         await interaction.reply(`Pong!${client.uptime ? ` Bot ativo a **${prettyTime(client.uptime * 1_000_000, 'm')}**.` : ''} Latência WebSocket **${prettyTime(client.ws.ping * 1_000_000, 'ms')}**.`);
     },
     {
-        aliases: ['latencia', 'latency', 'uptime', 'tempo-ativo'],
         howToUse: 'Digite /ping no chat e selecione o comando na lista',
     }
 );
