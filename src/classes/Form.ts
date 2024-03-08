@@ -42,19 +42,19 @@ export default class Form extends EventEmitter {
     ) {
         super(eventEmitterOptions);
 
-        const DEFAULT_RESPONSES: { [Key in QuestionType]: Question<Key>['response'] } = {
-            Attachments: [],
-            Boolean: undefined,
-            Integer: undefined,
-            String: undefined,
-            StringSelect: []
+        const DEFAULT_RESPONSES: { [Key in QuestionType]: () => Question<Key>['response'] } = {
+            Attachments: () => [],
+            Boolean: () => undefined,
+            Integer: () => undefined,
+            String: () => undefined,
+            StringSelect: () => []
         };
 
         // @ts-ignore
         this.questions = new Collection(questions.map((question, index, array) => [question.options.name, {
-            response: DEFAULT_RESPONSES[question.type],
-
             ...question,
+
+            response: question.response ?? DEFAULT_RESPONSES[question.type](),
 
             options: {
                 ...question.options,
@@ -75,8 +75,8 @@ export default class Form extends EventEmitter {
 
 
     /** Starts the form */
-    public async run() {
-        if (!this.interaction.deferred) await this.interaction.deferReply({ ephemeral: true })
+    public async run(fromIndex?: number) {
+        if (!this.interaction.deferred && !this.interaction.replied) await this.interaction.deferReply({ ephemeral: true })
             .catch((error) => {
                 log.error(`Erro ao usar #i(CommandInteraction<CacheType>)###(deferReply())# enquanto executava #(run())# no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(CommandInteraction)#:', this.interaction);
                 this.emit('error', error);
@@ -88,6 +88,7 @@ export default class Form extends EventEmitter {
         if (this.questions.size) {
             const questionMessageOptions = {
                 content: 'Iniciando formulário...',
+                ephemeral: true,
             };
 
             this.questionMessage = await this.interaction.followUp(questionMessageOptions)
@@ -99,13 +100,16 @@ export default class Form extends EventEmitter {
 
 
             /** Starts with the first question */
-            this.changeQuestion(0);
+            this.changeQuestion(fromIndex ?? 0);
         } else {
             this.finishForm();
         };
 
     }
 
+    public stop() {
+        this.finishForm('stopped');
+    }
 
 
     private callQuestionAsker(question: Question<QuestionType>) {
@@ -250,7 +254,7 @@ export default class Form extends EventEmitter {
                 placeholder: options.select.placeholder,
                 options: options.select.options.map((option) => ({
                     ...option,
-                    default: (this.questions.get(options.name)?.response as Returns[]).includes(option.value)
+                    default: (this.questions.get(options.name)?.response as Returns[] | undefined)?.includes(option.value) ? true : false
                 })),
                 maxValues: options.select.maxValues ?? 1,
             };
@@ -412,7 +416,7 @@ export default class Form extends EventEmitter {
                 this: Form,
                 i: StringSelectMenuInteraction<CacheType>,
             ) {
-                if (i instanceof MessageComponentInteraction && !i.deferred) await i.deferUpdate()
+                if (i instanceof MessageComponentInteraction && !i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
                         log.error(`Erro ao usar #i(StringSelectMenuInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChange())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(StringSelectMenuInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
                         throw error;
@@ -457,7 +461,7 @@ export default class Form extends EventEmitter {
                 this: Form,
                 i: ButtonInteraction<CacheType>,
             ) {
-                if (!i.deferred) await i.deferUpdate()
+                if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
                         log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnCleanButtonClick())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
                         throw error;
@@ -752,7 +756,7 @@ export default class Form extends EventEmitter {
                 this: Form,
                 i: ButtonInteraction<CacheType>,
             ) {
-                if (!i.deferred) await i.deferUpdate()
+                if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
                         log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnCleanButtonClick())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
                         throw error;
@@ -1083,7 +1087,7 @@ export default class Form extends EventEmitter {
                 this: Form,
                 i: ButtonInteraction<CacheType>,
             ) {
-                if (i instanceof MessageComponentInteraction && !i.deferred) await i.deferUpdate()
+                if (i instanceof MessageComponentInteraction && !i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
                         log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChange())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
                         throw error;
@@ -1128,7 +1132,7 @@ export default class Form extends EventEmitter {
                 this: Form,
                 i: ButtonInteraction<CacheType>,
             ) {
-                if (!i.deferred) await i.deferUpdate()
+                if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
                         log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnCleanButtonClick())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
                         throw error;
@@ -1194,7 +1198,7 @@ export default class Form extends EventEmitter {
             options: AttachmentsQuestionOptions<Req>
         ) {
             const thisQuestion = this.questions.get(options.name) as Question<'Attachments'> | undefined;
-
+           
             if (!thisQuestion) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
             type Returned = Req extends true ? Attachment[] : (Attachment[] | [])
@@ -1214,8 +1218,8 @@ export default class Form extends EventEmitter {
                 (required ? `## \\* ${options.message}` : `## (opcional) ${options.message}`) +
                 (options.infoMessage ? `\n> ${options.infoMessage}` : '') +
                 (options.warnMessage ? `\n\`\`\`ansi\n${discordAnsi.red()(options.warnMessage)}\n\`\`\`` : '') +
-                `\n\`\`\`ansi\n${thisQuestion.response[attachmentIndex].name ?? ''}\n\`\`\`` +
-                thisQuestion.response[attachmentIndex].url ?? '';
+                (thisQuestion.response[attachmentIndex]?.name ? `\n\`\`\`ansi\n${thisQuestion.response[attachmentIndex]?.name}\n\`\`\`` : '') +
+                (thisQuestion.response[attachmentIndex]?.url ?? '');
 
 
             const cleanButton: BaseButtonDataOption = {
@@ -1413,11 +1417,10 @@ export default class Form extends EventEmitter {
                     });
 
                 /** Filter if the number of attachments that the user has been sent is higher than `maxAttachments` */
-                if (m.attachments.size + Math.min(attachmentIndex, Math.max((this.questions.get(options.name)!.response as Returned).length, 0)) > maxAttachments) {
+                if (m.attachments.size + Math.min(attachmentIndex, Math.max((this.questions.get(options.name)!.response as Returned | undefined)?.length ?? 0, 0)) > maxAttachments) {
                     this.refreshQuestion({ warnMessage: greaterThanTheMaximumMessage });
                     return null;
                 }
-
 
                 /** Filters the input if have `options.onChangeFilter` */
                 const filteredInput = await options.onChangeFilter?.bind(this)(m);
@@ -1430,9 +1433,11 @@ export default class Form extends EventEmitter {
                 }
 
 
-
                 /** Saves the user response */
-                (this.questions.get(options.name)!.response as Returned).splice(attachmentIndex, m.attachments.size, ...m.attachments.toJSON());
+                if (Array.isArray(this.questions.get(options.name)!.response)) 
+                    (this.questions.get('mainImageUrl')!.response as Returned).splice(attachmentIndex, m.attachments.size, ...m.attachments.toJSON());
+                else this.questions.get(options.name)!.response = m.attachments.toJSON();
+
 
 
                 if (options.onResponseUpdate) await options.onResponseUpdate.bind(this)(this.questions.get(options.name)!);
@@ -1454,7 +1459,7 @@ export default class Form extends EventEmitter {
                 if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
 
-                if (!i.deferred) await i.deferUpdate()
+                if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
                         log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnCleanButtonClick())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
                         throw error;
@@ -1462,7 +1467,9 @@ export default class Form extends EventEmitter {
 
 
                 /** Saves the user response */
-                (this.questions.get(options.name)!.response as Returned).splice(attachmentIndex, 1);
+                if (Array.isArray(this.questions.get(options.name)!.response))
+                    (this.questions.get(options.name)!.response as Returned).splice(attachmentIndex, 1);
+                else this.questions.get(options.name)!.response = [];
 
 
 
@@ -1495,7 +1502,7 @@ export default class Form extends EventEmitter {
             ) {
                 if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
-                if (!i.deferred) await i.deferUpdate()
+                if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
                         log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChangeAttachmentButtonClick)# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
                         throw error;
@@ -1660,7 +1667,7 @@ export default class Form extends EventEmitter {
             if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
 
-            if (!i.deferred) await i.deferUpdate()
+            if (!i.deferred && !i.replied) await i.deferUpdate()
                 .catch((error) => {
                     log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChangeQuestionButtonClick)# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
                     throw error;
@@ -1668,7 +1675,7 @@ export default class Form extends EventEmitter {
 
 
 
-            const returns = this.questions.get(options.name)!.response as Awaited<ReturnType<Form['askers'][Type]>>;
+            const returns = this.questions.get(options.name)!.response as Awaited<ReturnType<Form['askers'][Type]>> | undefined;
 
 
 
@@ -1692,7 +1699,7 @@ export default class Form extends EventEmitter {
 
 
 
-            if (!i.deferred) await i.deferUpdate()
+            if (!i.deferred && !i.replied) await i.deferUpdate()
                 .catch((error) => {
                     log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnFinishFormButtonClick)# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
                     throw error;
@@ -1701,7 +1708,7 @@ export default class Form extends EventEmitter {
 
 
 
-            const returns = this.questions.get(options.name)!.response as Awaited<ReturnType<Form['askers'][Type]>>;
+            const returns = this.questions.get(options.name)!.response as Awaited<ReturnType<Form['askers'][Type]>> | undefined;
 
 
             this.finishForm();
