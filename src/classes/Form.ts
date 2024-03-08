@@ -1435,7 +1435,7 @@ export default class Form extends EventEmitter {
 
                 /** Saves the user response */
                 if (Array.isArray(this.questions.get(options.name)!.response)) 
-                    (this.questions.get('mainImageUrl')!.response as Returned).splice(attachmentIndex, m.attachments.size, ...m.attachments.toJSON());
+                    (this.questions.get(options.name)!.response as Returned).splice(attachmentIndex, m.attachments.size, ...m.attachments.toJSON());
                 else this.questions.get(options.name)!.response = m.attachments.toJSON();
 
 
