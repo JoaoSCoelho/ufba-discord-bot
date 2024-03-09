@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-process.env.FORCE_COLOR = undefined;
+process.env.FORCE_COLOR = '1';
+process.env.NO_COLOR = '0';
 
 import * as fs from 'node:fs';
 import chalk from 'chalk';
