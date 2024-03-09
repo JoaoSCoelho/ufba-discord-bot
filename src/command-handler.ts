@@ -96,7 +96,7 @@ export async function deployCommands(commands: RESTPostAPIChatInputApplicationCo
         ) as Command[];
 
         log.success(`Successfully reloaded #(${data.length})# application (/) commands.`,
-            `\n${commands.map((command, index) => `#g(${index + 1}º)# ${command.name}`).join('#(, )#')}`);
+            `\n${commands.map((command, index) => `#g(${index + 1}º)# ${command.name}`).join('#g(, )#')}`);
     } catch (error) {
         // And of course, make sure you catch and log any errors!
         log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord', error);
