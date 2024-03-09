@@ -10,7 +10,7 @@ import { log } from './classes/LogSystem';
 const shouldDeploy = process.env.DEPLOY === 'true';
 const commandsToDeploy: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
-/** `PT`: Seta em `client.commands` e na constante `commands` todos os comandos da pasta `/commands` */
+/** `PT`: Seta em `client.commands` e na constante `commandsToDeploy` todos os comandos da pasta `/commands` */
 export default async function commandHandler(client: LocalClient) {
 
     /** `PT`: O caminho da pasta `/commands` */
@@ -23,7 +23,7 @@ export default async function commandHandler(client: LocalClient) {
 
         /** `PT`: O caminho da pasta `/commands/[folder]` */
         const commandsPath = path.join(foldersPath, folder);
-        /** `PT`: String com todos os arquivos TypeScript da pasta `/commands/[folder]` */
+        /** `PT`: String com todos os arquivos TypeScript ou JavaScript da pasta `/commands/[folder]` */
         const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
 
 
@@ -57,9 +57,11 @@ export default async function commandHandler(client: LocalClient) {
 }
 
 export async function adminCommandHandler(client: LocalClient) {
-
+    /** `PT`: O caminho da pasta `/admin-commands` */
     const commandsPath = path.join(__dirname, 'admin-commands');
+    /** `PT`: String com todos os arquivos TypeScript ou JavaScript da pasta `/admin-commands` */
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
+
 
     for (const file of commandFiles) {
 
@@ -87,13 +89,14 @@ export async function deployCommands(commands: RESTPostAPIChatInputApplicationCo
     try {
         log.loading(`Started refreshing #(${commands.length})# application (/) commands.`);
 
-        // The put method is used to fully refresh all commands in the guild with the current set
+        // The put method is used to fully refresh all commands with the current set
         const data = await rest.put(
             Routes.applicationCommands(process.env.CLIENT_ID!),
             { body: commands },
         ) as Command[];
 
-        log.success(`Successfully reloaded #(${data.length})# application (/) commands.\n${commands.map((command, index) => `#(${index + 1}º)# ${command.name}`).join(' | ')}`);
+        log.success(`Successfully reloaded #(${data.length})# application (/) commands.`,
+            `\n${commands.map((command, index) => `#g(${index + 1}º)# ${command.name}`).join('#(, )#')}`);
     } catch (error) {
         // And of course, make sure you catch and log any errors!
         log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord', error);
