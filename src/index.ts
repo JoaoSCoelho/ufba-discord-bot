@@ -1,14 +1,14 @@
 import './configEnv';
+import './classes/LogSystem';
 
-import { Events, GatewayIntentBits } from 'discord.js';
+import { Events, GatewayIntentBits, TextChannel } from 'discord.js';
 import LocalClient from './classes/LocalClient';
 import commandHandler, { adminCommandHandler } from './command-handler';
 import Database from './database/Database';
 import Member from './classes/database/Member';
 import scoreSystem from './score-system';
-import LogSystem from './classes/LogSystem';
+import { log } from './classes/LogSystem';
 
-export const log = new LogSystem();
 
 // Instance a new Client Bot
 const client = new LocalClient({ intents: [
@@ -21,16 +21,16 @@ const client = new LocalClient({ intents: [
 ] });
 
 // Map all the commands in '/commands/[type]'|'/admin_commands' directories and put it in .commands|.adminCommands of the client
-// Mapeia todos os comandos das pastas '/commands/[type]' e '/admin_commands' e coloca isso na propriedade '.commands' e '.adminCommands' do client
 commandHandler(client);
 adminCommandHandler(client);
 
 
 // These event are executed when the bot goes online on discord
-client.once(Events.ClientReady, readyClient => {
+client.once(Events.ClientReady, (readyClient) => {
     log.info(`Bot #(@${readyClient.user.tag})# iniciado`);
 
     log.clientReady(client);
+
     client.database = new Database(client);
 
     client.database!.on('ready', () => log.info('Banco de dados pronto'));
@@ -41,7 +41,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // Filter only chatinput commands in guild
     if (!interaction.isChatInputCommand() || !interaction.inGuild()) return;
 
-    log.infoh(`#(@${interaction.user.tag})# usou o comando #(/${interaction.commandName})# no canal #(#${interaction.channel?.name ?? interaction.channelId})# do servidor #(${interaction.guild?.name ?? interaction.guildId})#`);
+    log.infoh(`#(@${interaction.user.tag})# usou o comando #(/${interaction.commandName})#`,
+        `no canal #(#${interaction.channel?.name ?? interaction.channelId})#`,
+        `do servidor #(${interaction.guild?.name ?? interaction.guildId})#`);
 
     const command = client.commands.get(interaction.commandName);
 
@@ -53,13 +55,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     try {
         await command.execute(interaction, client);
+
+        log.infoh(`Fim da execução do comando #(/${interaction.commandName})#`,
+            `executado por #(@${interaction.user.tag})#`, 
+            `no canal #(#${interaction.channel?.name ?? interaction.channelId})#`,
+            `do servidor #(${interaction.guild?.name ?? interaction.guildId})#`);
     } catch (error) {
-        log.error(`Aconteceu um erro na execução do comando /#(${interaction.commandName})# pelo usuário #(@${interaction.user.tag})#, no canal #(@${interaction.channel?.name ?? interaction.channelId})# do servidor #(${interaction.guild?.name ?? interaction.guildId})#`, error);
+        log.error(`Aconteceu um erro na execução do comando /#(${interaction.commandName})#`,
+            `pelo usuário #(@${interaction.user.tag})#,`,
+            `no canal #(@${interaction.channel?.name ?? interaction.channelId})#`, 
+            `do servidor #(${interaction.guild?.name ?? interaction.guildId})#`, error);
 
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true });
+            await interaction.followUp({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true })
+                .catch((error) => {
+                    log.error(`Erro ao enviar mensagem de erro na execução do comando #(${interaction.commandName})#`, error);
+                });
         } else {
-            await interaction.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true });
+            await interaction.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true })
+                .catch((error) => {
+                    log.error(`Erro ao enviar mensagem de erro na execução do comando #(${interaction.commandName})#`, error);
+                });
         }
     }
 });
@@ -71,7 +87,15 @@ client.on(Events.MessageCreate, async (message) => {
     // Computes message to scoreSystem if is a message in guild and isn't a bot
     if (message.inGuild() && !message.author.bot)
         scoreSystem(client, message)
-            .catch((error) => log.error(`Ocorreu um erro ao executar #g(scoreSystem)# para a mensagem enviada por #(@${message.author.tag})# no servidor #(${message.guild.name})#\n#(Conteúdo)#:`, message.content, '\n#(Erro)#:', error, '\n#(Arquivos)#:', message.attachments, '\n#(Message)#:', message));
+            .catch((error) => {
+                log.error('Ocorreu um erro ao executar #g(scoreSystem)#',
+                    `para a mensagem enviada por #(@${message.author.tag})#`, 
+                    `no servidor #(${message.guild.name})#`, 
+                    '\n#(Conteúdo)#:', message.content,
+                    '\n#(Erro)#:', error, 
+                    '\n#(Arquivos)#:', message.attachments,
+                    '\n#(Message)#:', message);
+            });
 
 
 
@@ -88,17 +112,25 @@ client.on(Events.MessageCreate, async (message) => {
 
 
 
-    // Removes the prefix of the message
+    /** Removes the prefix of the message. 
+     * @example 
+     * message.content === '_myadmincommand arg1 arg2'
+     * prefixRemovedMessageContent === 'myadmincommand arg1 arg2'
+     */
     const prefixRemovedMessageContent = message.content.slice(client.prefix.length);
 
-    // Divide the message in words and take the first as the command name
+    /** Divide the message in words. */
     const words = prefixRemovedMessageContent.split(/ +/g);
+    /** Take the first word as the command name. */
     const calledCommand = words.shift()!;
 
     // Remove the command name from the message content, make a trim and replace all \" by a controlled match string
     const commandMessage = prefixRemovedMessageContent
-        .slice(calledCommand.length).trim().replace(/\\"/g, '%%QUOTATION%%');
+        .slice(calledCommand.length)
+        .trim()
+        .replace(/\\"/g, '%%QUOTATION%%');
 
+    /** Command parameters as a object (if the user use parameters) @see /docs/admin-commands-helper.md#arguments-and-parameters-explanation */
     const params = getParamsAsAObject(() => /-(\w+)="([^"]+)"/g, commandMessage);
 
 
@@ -111,7 +143,9 @@ client.on(Events.MessageCreate, async (message) => {
     if (!command) return;
 
     log.infoh(
-        `O admin #(@${message.author.tag})# usou o comando de admin #(${client.prefix}${calledCommand})#, no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})# do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`,
+        `O admin #(@${message.author.tag})# usou o comando de admin #(${client.prefix}${calledCommand})#,`,
+        `no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})#`,
+        `do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`,
         ...(Object.values(params).length ? ['\nParâmetros:', params] : []),
         ...(words.length ? ['\nArgumentos:', words] : [])
     );
@@ -125,9 +159,21 @@ client.on(Events.MessageCreate, async (message) => {
             !Object.values(params).length ? words : []
         );
 
+        log.infoh(`Fim da execução do comando de admin #(${client.prefix}${calledCommand})#`,
+            `executado por #(@${message.author.tag})#`, 
+            `no canal #(#${(message.channel as TextChannel | undefined)?.name ?? message.channelId})#`,
+            `do servidor #(${message.guild?.name ?? message.guildId})#`);
     } catch (error) {
-        log.error(`Aconteceu um erro na execução do comando /#(${client.prefix}${calledCommand})# pelo admin #(@${message.author.tag})#, no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})# do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`, error);
-        await message.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!' });
+        log.error(`Aconteceu um erro na execução do comando #(${client.prefix}${calledCommand})#`,
+            `pelo admin #(@${message.author.tag})#,`,
+            `no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})#`,
+            `do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`,
+            error);
+            
+        await message.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!' })
+            .catch((error) => {
+                log.error(`Erro ao enviar mensagem de erro na execução do comando de admin #(${client.prefix}${calledCommand})#`, error);
+            });
     }
 });
 
@@ -135,40 +181,54 @@ client.on(Events.MessageCreate, async (message) => {
 client.on(Events.GuildCreate, async (guild) => {
     log.info(`O bot acabou de entrar no servidor "#(${guild.name})#" - #(${guild.id})#`);
 
-    if (!client.database) return;
+    if (client.database) {
+        let addedMembersCount = 0;
+        let errorOnAddingMemberCount = 0;
 
-    let addedMembersCount = 0;
-    let errorOnAddingMemberCount = 0;
-    // `PT`: Mapeia todos os membros do servidor para o banco de dados do bot
-    await Promise.all(guild.members.cache.map(async (guildMember) => {
-        const alreadyHasTheMember = !!client.database!.member.find((member) =>
-            member.discordId === guildMember.id && member.discordGuildId === guild.id
-        );
+        // `PT`: Mapeia todos os membros do servidor para o banco de dados do bot
+        await Promise.all(
+            guild.members.cache.toJSON().map(async (guildMember, index, array) => {
+                const alreadyHasTheMemberOnDatabase = !!client.database!.member.find((member) =>
+                    member.discordId === guildMember.id && member.discordGuildId === guild.id
+                );
+    
+                if (alreadyHasTheMemberOnDatabase) return;
+    
+    
 
-        if (alreadyHasTheMember) return;
+                log.loadingh(`#(${index + 1})#/#(${array.length})# Salvando novo membro #(@${guildMember.user.tag})#`, 
+                    `do servidor #(${guild.name})# no banco de dados...`);
+    
+                const member = new Member({
+                    id: Date.now().toString(),
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    discordId: guildMember.id,
+                    discordGuildId: guild.id,
+                });
+    
+                await client.database!.member.new(member)
+                    .then(() => {
+                        log.successh(`#(${index + 1})#/#(${array.length})# Membro #(@${guildMember.user.tag})#`,
+                            `do servidor #(${guild.name})# adicionado ao banco de dados`);
 
+                        addedMembersCount++;
+                    })
+                    .catch((error) => {
+                        log.error(`#(${index + 1})#/#(${array.length})# Erro ao adicionar membro #(@${guildMember.user.tag})#`,
+                            `do servidor #(${guild.name})# ao banco de dados`,
+                            '\n#(Erro)#:', error, 
+                            '\n#(Membro)#:', member);
 
-
-        const member = new Member({
-            id: Date.now().toString(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            discordId: guildMember.id,
-            discordGuildId: guild.id,
-        });
-
-        await client.database!.member.new(member)
-            .then(() => {
-                log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# adicionado ao banco de dados`);
-                addedMembersCount++;
+                        errorOnAddingMemberCount++;
+                    });
             })
-            .catch((error) => {
-                log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})# do servidor #(${guild.name})# ao banco de dados\n#(Erro)#:`, error, '\n#(Membro)#:', member);
-                errorOnAddingMemberCount++;
-            });
-    }));
+        );
+    
+        log.info(`#(${addedMembersCount})# membros do servidor #(${guild.name})# adicionados ao banco.`,
+            `#(${errorOnAddingMemberCount})# membros tiveram erro ao serem adicionados ao banco.`);
+    };
 
-    log.info(`#(${addedMembersCount})# membros do servidor #(${guild.name})# adicionados ao banco. #(${errorOnAddingMemberCount})# membros tiveram erro ao serem adicionados ao banco.`);
 });
 
 // Captures when the client get out of a guild
@@ -177,14 +237,29 @@ client.on(Events.GuildDelete, async (guild) => {
 
     log.info(`O bot acabou de sair do servidor "#(${guild.name || guild.id})#"`);
 
-    // Removes all members with this guild.id
-    await Promise.all(client.database!.member
-        .filter((member) => member.discordGuildId === guild.id)
-        .map(async (member) => {
-            await client.database!.member.remove(member.id)
-                .then(() => log.success(`Member #(${member.id})# from server #(${guild.name || guild.id})#, successfully removed from database`))
-                .catch((error) => log.error(`Erro ao remover membro #(${member.id})# do servidor #(${guild.name || guild.id})#\n#(Erro)#:`, error));
-        }));
+    // Removes all members from database with this guild.id
+    await Promise.all(
+        client.database!.member
+            .filter((member) => member.discordGuildId === guild.id)
+            .toJSON()
+            .map(async (member, index, array) => {
+                log.loadingh(`#(${index + 1})#/#(${array.length})# Removing member #(${member.id})#`,
+                    `from server #(${guild.name || guild.id})#...`);
+
+                await client.database!.member.remove(member.id)
+                    .then(() => {
+                        log.successh(`#(${index + 1})#/#(${array.length})# Member #(${member.id})#`, 
+                            `from server #(${guild.name || guild.id})#,`, 
+                            'successfully removed from database');
+                    })
+                    .catch((error) => {
+                        log.error(`#(${index + 1})#/#(${array.length})#`,
+                            `Erro ao remover membro #(${member.id})#`, 
+                            `do servidor #(${guild.name || guild.id})#`,
+                            '\n#(Erro)#:', error);
+                    });
+            })
+    );
 
     log.info(`Members from server #(${guild.name || guild.id})# removed from database`);
 });
@@ -202,6 +277,9 @@ client.on(Events.GuildMemberAdd, async (guildMember) => {
     if (alreadyHasTheMember) return;
 
 
+    log.loadingh(`Salvando membro #(@${guildMember.user.tag})#`,
+        `do servidor #(${guildMember.guild.name})# no banco de dados...`);
+
     const member = new Member({
         id: Date.now().toString(),
         createdAt: new Date(),
@@ -211,8 +289,15 @@ client.on(Events.GuildMemberAdd, async (guildMember) => {
     });
 
     await client.database.member.new(member)
-        .then(() => log.successh(`Membro #(@${guildMember.user.tag})# do servidor #(${guildMember.guild.name})# adicionado ao banco de dados`))
-        .catch((error) => log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})# do servidor #(${guildMember.guild.name})# ao banco de dados`, error));
+        .then(() => {
+            log.successh(`Membro #(@${guildMember.user.tag})#`,
+                `do servidor #(${guildMember.guild.name})# adicionado ao banco de dados`);
+        })
+        .catch((error) => {
+            log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})#`,
+                `do servidor #(${guildMember.guild.name})# ao banco de dados`, 
+                error);
+        });
 });
 
 
