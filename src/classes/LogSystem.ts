@@ -353,3 +353,5 @@ function configInspectDefaultOptions() {
     util.inspect.defaultOptions.depth = 7;
     util.inspect.defaultOptions.maxArrayLength = 500;
 }
+
+export const log = new LogSystem();

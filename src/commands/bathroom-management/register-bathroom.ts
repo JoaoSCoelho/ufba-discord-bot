@@ -5,8 +5,10 @@ import Bathroom, { CampusNames, CampusValues, GenderNames, GenderValues } from '
 import bathroomEmbedFactory from '../../shared/bathroomEmbedFactory';
 import Form from '../../classes/Form';
 import { Question } from '../../classes/Form.types';
-import { log } from '../..';
 import isObject from '../../utils/isObject';
+import { log } from '../../classes/LogSystem';
+
+// [TODO]: DOCUMENTAR ESSE COMANDO
 
 const rateLimitOptions = { 
     windowMs: 60_000, 

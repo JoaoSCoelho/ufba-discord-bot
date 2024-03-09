@@ -7,8 +7,8 @@ import axios from 'axios';
 import ClassEntity from '../classes/database/Entity';
 import BathroomAvaliation from '../classes/database/BathroomAvaliation';
 import Member from '../classes/database/Member';
-import { log } from '..';
 import prettyBytes from '../utils/prettyBytes';
+import { log } from '../classes/LogSystem';
 
 export interface DatabaseInterface {
     bathroom: Bathroom[];

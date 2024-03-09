@@ -1,9 +1,9 @@
 import { SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
 import Command from '../../classes/Command';
 import { levels } from '../../score-system';
-import { log } from '../..';
 import isObject from '../../utils/isObject';
 import discordAnsi from '../../utils/discord-ansi';
+import { log } from '../../classes/LogSystem';
 
 export default new Command(
     new SlashCommandBuilder()

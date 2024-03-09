@@ -2,7 +2,7 @@ import { Client, ClientOptions, Collection, IntentsBitField } from 'discord.js';
 import Command from './Command';
 import Database from '../database/Database';
 import AdminCommand from './AdminCommand';
-import { log } from '..';
+import { log } from './LogSystem';
 
 export default class LocalClient extends Client {
     /** `PT`: Array de IDs de usuários Discord que possuem poder de `ADMIN` no bot */

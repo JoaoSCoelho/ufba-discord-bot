@@ -1,7 +1,7 @@
 import { Message, PermissionsBitField } from 'discord.js';
 import LocalClient from './classes/LocalClient';
 import Member from './classes/database/Member';
-import { log } from '.';
+import { log } from './classes/LogSystem';
 
 export const levels = [
     { targetScore: 100 },

@@ -4,7 +4,7 @@ import Command from './classes/Command';
 import LocalClient from './classes/LocalClient';
 import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes } from 'discord.js';
 import AdminCommand from './classes/AdminCommand';
-import { log } from '.';
+import { log } from './classes/LogSystem';
 
 /** Controls whether when the commandHandler is being executed, the deployment of commands on discord should also be executed */
 const shouldDeploy = process.env.DEPLOY === 'true';

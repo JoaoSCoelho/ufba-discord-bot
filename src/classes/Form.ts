@@ -5,8 +5,8 @@ import LocalClient from './LocalClient';
 import { Question, QuestionAttachments, QuestionBoolean, QuestionInteger, QuestionString, QuestionStringSelect, QuestionType, BaseButtonData, BaseButtonDataOption, ParamQuestionAttachments, ParamQuestionBoolean, ParamQuestionInteger, ParamQuestionString, ParamQuestionStringSelect, StringSelectMenuData, StringSelectQuestionOptions, ChangeQuestionAction, StringQuestionOptions, IntegerQuestionOptions, BooleanQuestionOptions, AttachmentsQuestionOptions, BaseQuestionOptions } from './Form.types';
 import { FormEvents } from './Form.types';
 import isObject from '../utils/isObject';
-import { log } from '..';
 import discordAnsi from '../utils/discord-ansi';
+import { log } from './LogSystem';
 
 
 

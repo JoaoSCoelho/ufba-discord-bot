@@ -1,4 +1,8 @@
 {
+  "name": "ufba-discord-bot",
+  "version": "0.0.1",
+  "description": "Bot com funcionalidade focadas no universo UFBa.",
+  "main": "index.ts",
   "dependencies": {
     "axios": "^1.6.5",
     "chalk": "^4.1.2",
@@ -8,6 +12,9 @@
     "pretty-time": "^1.1.0",
     "strip-ansi": "^6.0.1"
   },
+  "keywords": ["ufba", "bot", "discord"],
+  "author": "João Coelho",
+  "license": "MIT",
   "devDependencies": {
     "@types/pretty-time": "^1.1.5",
     "@typescript-eslint/eslint-plugin": "^6.19.0",

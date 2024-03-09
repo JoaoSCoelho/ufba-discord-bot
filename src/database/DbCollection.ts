@@ -1,7 +1,7 @@
 import { Collection } from 'discord.js';
 import Database, { DatabaseInterface } from './Database';
 import ClassEntity from '../classes/database/Entity';
-import { log } from '..';
+import { log } from '../classes/LogSystem';
 
 /** A extension of a Collection, but with methods of Database */
 export default class DbCollection<Entity extends ClassEntity> extends Collection<string, Entity> {
