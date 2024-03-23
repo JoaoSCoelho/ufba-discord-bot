@@ -1,8 +1,9 @@
 import { CommandInteraction, EmbedBuilder, SlashCommandBuilder } from 'discord.js';
+import CommandExecution from './CommandExecution';
 import LocalClient from './LocalClient';
-import commandOptions from '../utils/command-options';
 
 export interface CommandDocumentation {
+    category?: string,
     howToUse?: string,
     howToUseEmbed?: EmbedBuilder,
     optionsTutorial?: Record<string, string>,
@@ -11,9 +12,8 @@ export interface CommandDocumentation {
 export default class Command {
     constructor(
 		public data: SlashCommandBuilder,
-	    public execute: (interaction: CommandInteraction, client: LocalClient) => unknown,
+	    public execute: ((interaction: CommandInteraction, client: LocalClient) => Promise<unknown>) | 
+            typeof CommandExecution,
         public documentation?: CommandDocumentation
     ) {}
-
-    static commandOptions = commandOptions;
 }

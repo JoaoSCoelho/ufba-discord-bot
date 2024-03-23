@@ -23,31 +23,39 @@ export default async function commandHandler(client: LocalClient) {
 
         /** `PT`: O caminho da pasta `/commands/[folder]` */
         const commandsPath = path.join(foldersPath, folder);
-        /** `PT`: String com todos os arquivos TypeScript ou JavaScript da pasta `/commands/[folder]` */
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
+        /** `PT`: Array de strings com todas as pastas da pasta `/commands/[folder]` */
+        const commandPath = fs.readdirSync(commandsPath, { withFileTypes: true }).filter((dir) => dir.isDirectory());
 
 
-        for (const file of commandFiles) {
-            const filePath = path.join(commandsPath, file);
-            const command: Command = (await import(filePath))?.default;
+        for (const dir of commandPath) {
+            const dirPath = path.join(commandsPath, dir.name);
+            const fileName = fs.readdirSync(dirPath).find((file) => file === 'index.js' || file === 'index.ts');
+            
+            if (fileName) {
+                const filePath = path.join(dirPath, fileName);
 
-
-            if ('data' in command && 'execute' in command) {
-                client.commands.set(command.data.name, command);
-
-                log.successh(`Comando #(${command.data.name})# (#(${folder}/${file})#) cadastrado com sucesso`);
-
-
-
-
-
-                if (shouldDeploy) {
-                    commandsToDeploy.push(command.data.toJSON());
-                    log.info(`Comando #(${command.data.name})# (#(${folder}/${file})#) cadastrado para deploy`);
+                const command: Command = (await import(filePath))?.default;
+    
+    
+                if ('data' in command && 'execute' in command) {
+                    client.commands.set(command.data.name, command);
+    
+                    log.successh(`Comando #(${command.data.name})# (#(${folder}/${dir.name}/${fileName})#) cadastrado com sucesso`);
+    
+    
+    
+                    if (shouldDeploy) {
+                        commandsToDeploy.push(command.data.toJSON());
+                        log.info(`Comando #(${command.data.name})# (#(${folder}/${dir.name}/${fileName})#) cadastrado para deploy`);
+                    }
+                } else {
+                    log.warn(`O comando em (#(${folder}/${dir.name}/${fileName})#) não possui as propriedades necessárias "#(data)#" e "#(execute)#".`);
                 }
             } else {
-                log.warn(`O comando em (#(${folder}/${file})#) não possui as propriedades necessárias "#(data)#" e "#(execute)#".`);
+                log.warn(`Comando em (#(${folder}/${dir.name}/)#) não possui arquivo #(index)#`);
             }
+
+            
         }
     }
 

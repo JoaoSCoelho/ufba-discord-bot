@@ -1,8 +1,8 @@
 import { SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
-import Command from '../../classes/Command';
-import discordAnsi from '../../utils/discord-ansi';
-import isObject from '../../utils/isObject';
-import { log } from '../../classes/LogSystem';
+import Command from '../../../classes/Command';
+import discordAnsi from '../../../utils/discord-ansi';
+import isObject from '../../../utils/isObject';
+import { log } from '../../../classes/LogSystem';
 
 export default new Command(
     new SlashCommandBuilder()

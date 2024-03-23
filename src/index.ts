@@ -1,13 +1,14 @@
 import './configEnv';
 import './classes/LogSystem';
 
-import { Events, GatewayIntentBits, TextChannel } from 'discord.js';
+import { CommandInteraction, Events, GatewayIntentBits, TextChannel } from 'discord.js';
 import LocalClient from './classes/LocalClient';
 import commandHandler, { adminCommandHandler } from './command-handler';
 import Database from './database/Database';
 import Member from './classes/database/Member';
 import scoreSystem from './score-system';
 import { log } from './classes/LogSystem';
+import CommandExecution from './classes/CommandExecution';
 
 
 // Instance a new Client Bot
@@ -54,7 +55,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 
     try {
-        await command.execute(interaction, client);
+        if (command.execute.toString().startsWith('class')) {
+            await new (command.execute as typeof CommandExecution)(interaction, client).run();
+        } else {
+            await (command.execute as (interaction: CommandInteraction, client: LocalClient) => Promise<unknown>)(interaction, client);
+        }
 
         log.infoh(`Fim da execução do comando #(/${interaction.commandName})#`,
             `executado por #(@${interaction.user.tag})#`, 

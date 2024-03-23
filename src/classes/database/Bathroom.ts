@@ -66,5 +66,74 @@ export default class Bathroom extends Entity {
         this.imagesUrls = data.imagesUrls || [];
     }
 
-    static imagesLimit = 20;
+    static id = {
+        name: 'id'
+    } as const;
+
+    static campus = {
+        name: 'campus',
+        commandOptionsChoices: [
+            { name: CampusNames.CANELA, value: 'CANELA' },
+            { name: CampusNames.ONDINA, value: 'ONDINA' },
+            { name: CampusNames.SAO_LAZARO, value: 'SAO_LAZARO' },
+            { name: CampusNames.FEDERACAO, value: 'FEDERACAO' },
+            { name: CampusNames.VITORIA, value: 'VITORIA' },
+            { name: CampusNames.CAMACARI, value: 'CAMACARI' },
+        ],
+    } as const;
+
+    static institute = {
+        name: 'instituto',
+        minLength: 3,
+        maxLength: 50,
+    } as const;
+
+    static floor = {
+        name: 'andar',
+        max: 163,
+        min: -2400
+    } as const;
+
+    static haveShower = {
+        name: 'tem-chuveiro'
+    } as const;
+
+    static hasHandDryer = {
+        name: 'tem-secador-de-maos'
+    } as const;
+
+    static gender = {
+        name: 'genero',
+        commandOptionsChoices: [
+            { name: GenderNames.MASCULINO, value: 'MASCULINO' },
+            { name: GenderNames.FEMININO, value: 'FEMININO' },
+            { name: GenderNames.UNISSEX, value: 'UNISSEX' },
+        ]
+    } as const;
+
+    static cabins = {
+        name: 'cabines',
+        min: 0,
+        max: 1000
+    } as const;
+
+    static urinals = {
+        name: 'mictorios',
+        min: 0,
+        max: 1000,
+    } as const;
+
+    static localization = {
+        name: 'localizacao',
+        minLength: 10,
+        maxLength: 512
+    } as const;
+
+    static mainImageUrl = {
+        name: 'imagem-principal',
+    } as const;
+
+    static imagesUrls = {
+        max: 20
+    } as const;
 }

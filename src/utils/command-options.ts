@@ -1,7 +1,7 @@
 import { SlashCommandAttachmentOption, SlashCommandBooleanOption, SlashCommandIntegerOption, SlashCommandStringOption } from 'discord.js';
 import { CampusNames, GenderNames } from '../classes/database/Bathroom';
 
-export default {
+const obj = {
     bathroomManagement: {
         campus: () => new SlashCommandStringOption()
             .setName('campus')
@@ -104,3 +104,5 @@ export default {
         
     }
 };
+
+obj;

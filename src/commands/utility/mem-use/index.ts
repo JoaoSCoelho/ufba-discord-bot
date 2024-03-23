@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
-import Command from '../../classes/Command';
-import prettyBytes from '../../utils/prettyBytes';
+import Command from '../../../classes/Command';
+import prettyBytes from '../../../utils/prettyBytes';
 import os from 'node:os';
 
 export default new Command(
