@@ -13,26 +13,21 @@ const commandsToDeploy: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 /** `PT`: Seta em `client.commands` e na constante `commandsToDeploy` todos os comandos da pasta `/commands` */
 export default async function commandHandler(client: LocalClient) {
 
-    /** `PT`: O caminho da pasta `/commands` */
     const foldersPath = path.join(__dirname, 'commands');
-    /** `PT`: String com todos os diretórios da pasta `/commands` */
     const commandsFolder = fs.readdirSync(foldersPath);
 
-    /** `PT`: Para cada pasta em `/commands` um novo loop é iniciado para obter os arquivos */
     for (const folder of commandsFolder) {
 
-        /** `PT`: O caminho da pasta `/commands/[folder]` */
         const commandsPath = path.join(foldersPath, folder);
-        /** `PT`: Array de strings com todas as pastas da pasta `/commands/[folder]` */
         const commandPath = fs.readdirSync(commandsPath, { withFileTypes: true }).filter((dir) => dir.isDirectory());
 
 
         for (const dir of commandPath) {
             const dirPath = path.join(commandsPath, dir.name);
-            const fileName = fs.readdirSync(dirPath).find((file) => file === 'index.js' || file === 'index.ts');
+            const indexFile = fs.readdirSync(dirPath).find((file) => file === 'index.js' || file === 'index.ts');
             
-            if (fileName) {
-                const filePath = path.join(dirPath, fileName);
+            if (indexFile) {
+                const filePath = path.join(dirPath, indexFile);
 
                 const command: Command = (await import(filePath))?.default;
     
@@ -40,16 +35,16 @@ export default async function commandHandler(client: LocalClient) {
                 if ('data' in command && 'execute' in command) {
                     client.commands.set(command.data.name, command);
     
-                    log.successh(`Comando #(${command.data.name})# (#(${folder}/${dir.name}/${fileName})#) cadastrado com sucesso`);
+                    log.successh(`Comando #(${command.data.name})# (#(${folder}/${dir.name}/${indexFile})#) cadastrado com sucesso`);
     
     
     
                     if (shouldDeploy) {
                         commandsToDeploy.push(command.data.toJSON());
-                        log.info(`Comando #(${command.data.name})# (#(${folder}/${dir.name}/${fileName})#) cadastrado para deploy`);
+                        log.info(`Comando #(${command.data.name})# (#(${folder}/${dir.name}/${indexFile})#) cadastrado para deploy`);
                     }
                 } else {
-                    log.warn(`O comando em (#(${folder}/${dir.name}/${fileName})#) não possui as propriedades necessárias "#(data)#" e "#(execute)#".`);
+                    log.warn(`O comando em (#(${folder}/${dir.name}/${indexFile})#) não possui as propriedades necessárias "#(data)#" e "#(execute)#".`);
                 }
             } else {
                 log.warn(`Comando em (#(${folder}/${dir.name}/)#) não possui arquivo #(index)#`);
@@ -64,10 +59,9 @@ export default async function commandHandler(client: LocalClient) {
     shouldDeploy && deployCommands(commandsToDeploy);
 }
 
+/** `PT`: Seta em `client.adminCommands` todos os comandos da pasta `/admin-commands` */
 export async function adminCommandHandler(client: LocalClient) {
-    /** `PT`: O caminho da pasta `/admin-commands` */
     const commandsPath = path.join(__dirname, 'admin-commands');
-    /** `PT`: String com todos os arquivos TypeScript ou JavaScript da pasta `/admin-commands` */
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
 
 
@@ -89,11 +83,11 @@ export async function adminCommandHandler(client: LocalClient) {
     log.successh(`#(${client.adminCommands.size})# comandos de admin cadastrados com sucesso`);
 }
 
+/** `PT`: Faz deploy dos comandos para a API do discord (para que apareçam na UI do Discord) */
 export async function deployCommands(commands: RESTPostAPIChatInputApplicationCommandsJSONBody[]) {
     const rest = new REST().setToken(process.env.TOKEN!);
 
 
-    // and deploy your commands!
     try {
         log.loading(`Started refreshing #(${commands.length})# application (/) commands.`);
 
@@ -106,7 +100,6 @@ export async function deployCommands(commands: RESTPostAPIChatInputApplicationCo
         log.success(`Successfully reloaded #(${data.length})# application (/) commands.`,
             `\n${commands.map((command, index) => `#g(${index + 1}º)# ${command.name}`).join('#g(, )#')}`);
     } catch (error) {
-        // And of course, make sure you catch and log any errors!
         log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord', error);
     }
 }
