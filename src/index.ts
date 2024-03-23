@@ -1,4 +1,4 @@
-import './configEnv';
+import './config-env';
 import './classes/LogSystem';
 
 import { CommandInteraction, Events, GatewayIntentBits, TextChannel } from 'discord.js';
