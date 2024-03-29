@@ -14,42 +14,46 @@ export default new ClientEvent(Events.GuildCreate, async (guild) => {
 
         // `PT`: Mapeia todos os membros do servidor para o banco de dados do bot
         await Promise.all(
-            guild.members.cache.toJSON().map(async (guildMember, index, array) => {
-                const alreadyHasTheMemberOnDatabase = !!client.database!.member.find((member) =>
-                    member.discordId === guildMember.id && member.discordGuildId === guild.id
-                );
+            guild.members.cache
+                // Filter only no bot users
+                .filter((guildMember) => !guildMember.user.bot)
+                .toJSON()
+                .map(async (guildMember, index, array) => {
+                    const alreadyHasTheMemberOnDatabase = !!client.database!.member.find((member) =>
+                        member.discordId === guildMember.id && member.discordGuildId === guild.id
+                    );
     
-                if (alreadyHasTheMemberOnDatabase) return;
+                    if (alreadyHasTheMemberOnDatabase) return;
     
     
 
-                log.loadingh(`#(${index + 1})#/#(${array.length})# Salvando novo membro #(@${guildMember.user.tag})#`, 
-                    `do servidor #(${guild.name})# no banco de dados...`);
+                    log.loadingh(`#(${index + 1})#/#(${array.length})# Salvando novo membro #(@${guildMember.user.tag})#`, 
+                        `do servidor #(${guild.name})# no banco de dados...`);
     
-                const member = new Member({
-                    id: Date.now().toString(),
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    discordId: guildMember.id,
-                    discordGuildId: guild.id,
-                });
-    
-                await client.database!.member.new(member)
-                    .then(() => {
-                        log.successh(`#(${index + 1})#/#(${array.length})# Membro #(@${guildMember.user.tag})#`,
-                            `do servidor #(${guild.name})# adicionado ao banco de dados`);
-
-                        addedMembersCount++;
-                    })
-                    .catch((error) => {
-                        log.error(`#(${index + 1})#/#(${array.length})# Erro ao adicionar membro #(@${guildMember.user.tag})#`,
-                            `do servidor #(${guild.name})# ao banco de dados`,
-                            '\n#(Erro)#:', error, 
-                            '\n#(Membro)#:', member);
-
-                        errorOnAddingMemberCount++;
+                    const member = new Member({
+                        id: Date.now().toString(),
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        discordId: guildMember.id,
+                        discordGuildId: guild.id,
                     });
-            })
+    
+                    await client.database!.member.new(member)
+                        .then(() => {
+                            log.successh(`#(${index + 1})#/#(${array.length})# Membro #(@${guildMember.user.tag})#`,
+                                `do servidor #(${guild.name})# adicionado ao banco de dados`);
+
+                            addedMembersCount++;
+                        })
+                        .catch((error) => {
+                            log.error(`#(${index + 1})#/#(${array.length})# Erro ao adicionar membro #(@${guildMember.user.tag})#`,
+                                `do servidor #(${guild.name})# ao banco de dados`,
+                                '\n#(Erro)#:', error, 
+                                '\n#(Membro)#:', member);
+
+                            errorOnAddingMemberCount++;
+                        });
+                })
         );
     
         log.info(`#(${addedMembersCount})# membros do servidor #(${guild.name})# adicionados ao banco.`,

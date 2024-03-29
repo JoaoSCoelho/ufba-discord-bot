@@ -16,7 +16,7 @@ export default new ClientEvent(Events.GuildMemberAdd, async (guildMember) => {
         member.discordGuildId === guildMember.guild.id && member.discordId === guildMember.id
     );
 
-    if (!alreadyHasTheMember) {
+    if (!alreadyHasTheMember && !guildMember.user.bot) {
         // Saves the member on client database
 
         log.loadingh(`Salvando membro #(@${guildMember.user.tag})#`,
