@@ -4,5 +4,5 @@ export default new AdminCommand({
     name: 'eval'
 }, 
 async (message, client) => {
-    message.reply(`${eval(message.content.slice(client.prefix.length + 4 + 1))}`);
+    await message.author.send(`${eval(message.content.slice(client.prefix.length + 4 + 1))}`);
 });

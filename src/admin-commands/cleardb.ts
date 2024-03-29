@@ -2,6 +2,7 @@ import AdminCommand from '../classes/AdminCommand';
 import { DatabaseInterface } from '../database/Database';
 import DbCollection from '../database/DbCollection';
 
+// Clears one collection of the database
 export default new AdminCommand(
     {
         name: 'cleardb'
@@ -9,6 +10,9 @@ export default new AdminCommand(
     async (message, client, params, words) => {
         const collectionName = (params.collection || words[0]) as keyof DatabaseInterface;
 
+        if (!client.database![collectionName]) return message.reply('Coleção não existe!');
+
+        // Send a intermediate message to confirm the action
         const confirmationMessage = await message.reply(`Tem certeza que deseja limpar a coleção **${collectionName}**?`);
 
         await confirmationMessage.react('✅');
@@ -22,12 +26,12 @@ export default new AdminCommand(
 
         if (reacted.size === 0) return message.reply('Ação finalizada!');
 
-        if (!client.database![collectionName]) return message.reply('Coleção não existe!');
+        
         
         // @ts-expect-error Erro bobo
         client.database![collectionName] = new DbCollection(collectionName, client.database!);
 
-        await client.database?.updateInDiscord();
+        await client.database!.updateInDiscord();
 
         return message.reply('Coleção limpa!');
     }
