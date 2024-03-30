@@ -30,7 +30,7 @@ export default class BathroomAvaliation extends Entity {
         }
     ) {
         super(data.id, data.createdAt, data.updatedAt);
-        // [update] create object values for each prop
+        // [TASK 2.0] create object values for each prop
         this.bathroomId = data.bathroomId;
         this.grade = data.grade;
         this.cleaningGrade = data.cleaningGrade;
