@@ -644,19 +644,34 @@ export default class Form extends EventEmitter {
             const maxLength = options.maxLength ?? 8192;
 
 
-            const lessThanTheMinimumLengthMessage = options.lessThanTheMinimumLengthMessage ?? `Precisa ter um mínimo de ${minLength} caracteres`;
-            const greaterThanTheMaximumLengthMessage = options.greaterThanTheMaximumLengthMessage ?? `Precisa ter no máximo ${maxLength} caracteres`;
-            const fixMessage = options.fixMessage ?? 'Você pode substituir o valor atual enviando outra resposta.';
+            const lessThanTheMinimumLengthMessage = 
+                options.lessThanTheMinimumLengthMessage ?? 
+                `Precisa ter um mínimo de ${minLength} caracteres`;
+
+            const greaterThanTheMaximumLengthMessage = 
+                options.greaterThanTheMaximumLengthMessage ?? 
+                `Precisa ter no máximo ${maxLength} caracteres`;
+
+            const fixMessage = 
+                options.fixMessage ?? 
+                'Você pode substituir o valor atual enviando outra resposta.';
 
 
             const onChange: OmitThisParameter<Required<typeof options>['onChange']> =
-                options.onChange?.bind(this) ?? defaultOnChange.bind(this) as OmitThisParameter<Required<typeof options>['onChange']>;
+                options.onChange?.bind(this) ?? 
+                defaultOnChange.bind(this) as OmitThisParameter<Required<typeof options>['onChange']>;
+
             const onCleanButtonClick: OmitThisParameter<Required<typeof options>['onCleanButtonClick']> =
-                options.onCleanButtonClick?.bind(this) ?? defaultOnCleanButtonClick.bind(this);
+                options.onCleanButtonClick?.bind(this) ?? 
+                defaultOnCleanButtonClick.bind(this);
+
             const onChangeQuestionButtonClick: OmitThisParameter<Required<typeof options>['onChangeQuestionButtonClick']> =
-                options.onChangeQuestionButtonClick?.bind(this) ?? defaultOnChangeQuestionButtonClick.bind(this);
+                options.onChangeQuestionButtonClick?.bind(this) ?? 
+                defaultOnChangeQuestionButtonClick.bind(this);
+                
             const onFinishFormButtonClick: OmitThisParameter<Required<typeof options>['onFinishFormButtonClick']> =
-                options.onFinishFormButtonClick?.bind(this) ?? defaultOnFinishFormButtonClick.bind(this);
+                options.onFinishFormButtonClick?.bind(this) ??
+                defaultOnFinishFormButtonClick.bind(this);
 
 
 
@@ -695,7 +710,7 @@ export default class Form extends EventEmitter {
 
 
 
-
+            /** That's promise stay waiting the user interaction to get out the question or end of collector */
             return await new Promise<Returned>((resolve, reject) => {
                 messageCollector.on('collect', async (m) => {
                     await onChange(m)
@@ -707,7 +722,9 @@ export default class Form extends EventEmitter {
                         });
                 });
 
-                messageCollector.on('end', (_collected, reason) => componentCollector.stop(reason));
+                messageCollector.on('end', 
+                    (_collected, reason) => componentCollector.stop(reason)
+                );
 
 
 
@@ -776,9 +793,18 @@ export default class Form extends EventEmitter {
             async function defaultOnChange(this: Form, m: Message) {
                 if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
+                // [TASK 3.0] Verify if the bot has permission to delete messages on channel
                 if (m.deletable) m.delete()
                     .catch((error) => {
-                        log.error(`Erro ao usar #i(Message<Boolean>)###(delete())# enquanto executava #(defaultOnChange())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(Message)#:', m, '\n#(CommandInteraction)#:', this.interaction);
+                        log.error('Erro ao usar #i(Message<Boolean>)###(delete())#', 
+                            `enquanto executava #(defaultOnChange())# para a question "#(${options.name})#"`, 
+                            `no Form "#(${this.name})#",`, 
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`, 
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`, 
+                            '\n#(Erro)#:', error, 
+                            '\n#(Message)#:', m, 
+                            '\n#(CommandInteraction)#:', this.interaction
+                        );
                         throw error;
                     });
 
@@ -798,7 +824,7 @@ export default class Form extends EventEmitter {
                 const filteredInput = await options.onChangeFilter?.bind(this)(m);
 
 
-                if (filteredInput) {
+                if (typeof filteredInput !== 'undefined') {
                     this.refreshQuestion({ warnMessage: filteredInput });
 
                     return null;
@@ -810,13 +836,14 @@ export default class Form extends EventEmitter {
                 this.questions.get(options.name)!.response = m.content;
 
 
-                if (options.onResponseUpdate) await options.onResponseUpdate.bind(this)(this.questions.get(options.name)!);
+                if (options.onResponseUpdate) 
+                    await options.onResponseUpdate.bind(this)(this.questions.get(options.name)!);
 
                 this.emit('responseUpdate', this.questions.get(options.name)!);
 
 
 
-                if (!filteredInput) this.refreshQuestion({ infoMessage: fixMessage });
+                this.refreshQuestion({ infoMessage: fixMessage });
 
                 return null;
             }
@@ -828,13 +855,22 @@ export default class Form extends EventEmitter {
             ) {
                 if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
-                        log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnCleanButtonClick())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                        log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#', 
+                            'enquanto executava #(defaultOnCleanButtonClick())#', 
+                            `para a question "#(${options.name})#" no Form "#(${this.name})#",`, 
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`, 
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                            '\n#(Erro)#:', error, 
+                            '\n#(ButtonInteraction)#:', i, 
+                            '\n#(CommandInteraction)#:', this.interaction
+                        );
                         throw error;
                     });
 
 
 
-                if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
+                if (!this.questions.get(options.name)) 
+                    throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
                 /** Saves the user response */
                 this.questions.get(options.name)!.response = undefined;
