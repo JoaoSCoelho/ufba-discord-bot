@@ -261,7 +261,7 @@ export interface StringQuestionOptions<Req extends boolean> extends BaseQuestion
      */
     lessThanTheMinimumLengthMessage?: string,
     /** This message will appear when the user try to input a text greater than the maximum length. 
-     * @default `Precisa ter no máximo ${minLength} caracteres` 
+     * @default `Precisa ter no máximo ${maxLength} caracteres` 
      */
     greaterThanTheMaximumLengthMessage?: string,
     /** This message will appear after the user input the first response to the question.
@@ -293,7 +293,7 @@ export interface IntegerQuestionOptions<Req extends boolean> extends BaseQuestio
      */
     lessThanTheMinimumLengthMessage?: string,
     /** This message will appear when the user try to input a number greater than the maximum length. 
-     * @default `Precisa ter no máximo ${minLength} dígitos` 
+     * @default `Precisa ter no máximo ${maxLength} dígitos` 
      */
     greaterThanTheMaximumLengthMessage?: string,
     /** This message will appear after the user input the first response to the question.
