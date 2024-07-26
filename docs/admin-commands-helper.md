@@ -41,3 +41,4 @@ Clear a specific collection of the database
 
 Deploy the bot commands to the discord API so that commands are visible in the interface.
 
+#David Feats
