@@ -1,7 +1,7 @@
 import { IntentsBitField, Collection } from 'discord.js';
 import LocalClient from './LocalClient';
 import { log } from './LogSystem';
-import ScoreSystem from '../ScoreSystem';
+import ScoreSystem from '../utils/ScoreSystem';
 
 jest.mock('./LogSystem', () => ({
     log: {

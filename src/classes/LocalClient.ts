@@ -3,7 +3,7 @@ import SlashCommand from './Command';
 import Database from '../database/Database';
 import AdminCommand from './AdminCommand';
 import { log } from './LogSystem';
-import ScoreSystem from '../ScoreSystem';
+import ScoreSystem from '../utils/ScoreSystem';
 
 export default class LocalClient<Ready extends boolean = boolean> extends Client<Ready> {
     /** Array of admin Discord IDs that have full access to all bot commands */

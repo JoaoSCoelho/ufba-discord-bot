@@ -1,7 +1,7 @@
 import { Events, GuildMember, GuildTextBasedChannel, If, Message, PermissionsBitField } from 'discord.js';
-import LocalClient from './classes/LocalClient';
-import { log } from './classes/LogSystem';
-import Member from './classes/database/Member';
+import LocalClient from '../classes/LocalClient';
+import { log } from '../classes/LogSystem';
+import Member from '../classes/database/Member';
 
 export default class ScoreSystem<Initialized extends boolean = boolean> {
     static readonly levels = [
@@ -30,6 +30,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         { targetScore: 100_000_000_000_000 },
     ];
 
+    /** The amount of points that a member gets when sending a message */
     public scorePerMessage = 3;
     private client: If<Initialized, LocalClient<true>, undefined> = undefined as If<Initialized, LocalClient<true>, undefined>;
     private running = false;
@@ -121,9 +122,6 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         if (achievedLevel > 0) {
             await this.sendNextLevelMessage(message.member, message.channel, achievedLevel);
         }
-
-
-
     }
 
 
@@ -212,6 +210,11 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         return 0;
     }
 
+    /** Sends a next level message for the member in a channel.
+     * @param guildMember The instance of the member that passed to the next level
+     * @param channel The channel where the message will be sent
+     * @param level The level that the member passed to
+     */
     private async sendNextLevelMessage(guildMember: GuildMember, channel: GuildTextBasedChannel, level: number) {
         log.infoh(`O membro #(@${guildMember.user.tag})#`,
             `do servidor #(${guildMember.guild.name})# passou para o nível #(${level})#`);

@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
 import SlashCommand from '../../../classes/Command';
-import ScoreSystem from '../../../ScoreSystem';
+import ScoreSystem from '../../../utils/ScoreSystem';
 import isObject from '../../../utils/isObject';
 import discordAnsi from '../../../utils/discord-ansi';
 import { log } from '../../../classes/LogSystem';

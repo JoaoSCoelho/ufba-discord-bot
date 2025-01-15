@@ -2,7 +2,6 @@ import { Events, TextChannel } from 'discord.js';
 import { client } from '..';
 import ClientEvent from '../classes/ClientEvent';
 import { log } from '../classes/LogSystem';
-import scoreSystem from '../ScoreSystem';
 
 
 // Captures when a new message is sent
