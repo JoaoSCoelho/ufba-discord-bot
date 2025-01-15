@@ -9,13 +9,13 @@ import AdminCommand from '../classes/AdminCommand';
 
 jest.mock('fs');
 jest.mock('path');
-jest.mock('./classes/Command', () => ({
+jest.mock('../classes/Command', () => ({
     __esModule: true,
     default: class SlashCommand {
         constructor(public data: unknown, public execute: unknown) { }
     },
 }));
-jest.mock('./classes/AdminCommand', () => ({
+jest.mock('../classes/AdminCommand', () => ({
     __esModule: true,
     default: class AdminCommand {
         constructor(public data: unknown, public execute: unknown) { }
@@ -31,13 +31,13 @@ jest.mock('discord.js', () => ({
         applicationCommands: jest.fn(() => 'mockRoute'),
     },
 }));
-jest.mock('./', () => ({
+jest.mock('../', () => ({
     client: {
         commands: new Map(),
         adminCommands: new Map(),
     },
 }));
-jest.mock('./classes/LogSystem', () => ({
+jest.mock('../classes/LogSystem', () => ({
     log: {
         loading: jest.fn(),
         success: jest.fn(),
