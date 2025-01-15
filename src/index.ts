@@ -3,8 +3,8 @@ import './classes/LogSystem';
 
 import { GatewayIntentBits } from 'discord.js';
 import LocalClient from './classes/LocalClient';
-import CommandHandler from './CommandHandler';
-import EventHandler from './EventHandler';
+import CommandHandler from './utils/CommandHandler';
+import EventHandler from './utils/EventHandler';
 
 export const client = new LocalClient({
     intents: [

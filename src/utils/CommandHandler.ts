@@ -1,10 +1,10 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import SlashCommand from './classes/Command';
+import SlashCommand from '../classes/Command';
 import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes } from 'discord.js';
-import AdminCommand from './classes/AdminCommand';
-import { log } from './classes/LogSystem';
-import { client } from '.';
+import AdminCommand from '../classes/AdminCommand';
+import { log } from '../classes/LogSystem';
+import { client } from '..';
 
 export default class CommandHandler {
     /** Controls whether when the commandHandler is being executed, the deployment of commands on discord should also be executed */

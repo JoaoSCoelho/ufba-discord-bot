@@ -1,5 +1,5 @@
 import AdminCommand from '../classes/AdminCommand';
-import CommandHandler from '../CommandHandler';
+import CommandHandler from '../utils/CommandHandler';
 
 export default new AdminCommand(
     { name: 'deploy' },

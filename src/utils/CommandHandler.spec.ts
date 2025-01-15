@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import CommandHandler from './CommandHandler';
-import SlashCommand from './classes/Command';
-import { client } from '.';
+import SlashCommand from '../classes/Command';
+import { client } from '..';
 import { RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js';
 import path from 'path';
-import { log } from './classes/LogSystem';
-import AdminCommand from './classes/AdminCommand';
+import { log } from '../classes/LogSystem';
+import AdminCommand from '../classes/AdminCommand';
 
 jest.mock('fs');
 jest.mock('path');

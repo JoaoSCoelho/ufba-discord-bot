@@ -1,9 +1,9 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import ClientEvent from './classes/ClientEvent';
-import { client } from '.';
+import ClientEvent from '../classes/ClientEvent';
+import { client } from '..';
 import { ClientEvents } from 'discord.js';
-import { log } from './classes/LogSystem';
+import { log } from '../classes/LogSystem';
 
 export default class EventHandler {
     /** Map all events in `'/events'` directory and register in bot event listeners */
