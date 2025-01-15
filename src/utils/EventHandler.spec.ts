@@ -34,30 +34,97 @@ jest.mock('..', () => ({
 describe('EventHandler', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        jest.resetAllMocks();
     });
 
 
     describe('handleAllEvents', () => {
-        it('should handle valid events in the events directory', async () => {
-            // Mock estrutura de diretórios e arquivos
-            (path.join as jest.Mock).mockImplementation((...args) => {
-                if (args.join('/').endsWith('events/event1.ts')) {
-                    return '/mock/events/event1.ts';
-                }
-                return args.join('/');
+        describe('should handle valid events in the events directory', () => {
+            it('one event', async () => {
+                // Mock estrutura de diretórios e arquivos
+                (path.join as jest.Mock).mockImplementation((...args) => {
+                    if (args.join('/').endsWith('events/validEvent1.ts')) {
+                        return '/mock/events/validEvent1.ts';
+                    }
+                    return args.join('/');
+                });
+                (fs.readdirSync as jest.Mock).mockReturnValue(['validEvent1.ts']);
+                jest.mock('/mock/events/validEvent1.ts', () => ({
+                    __esModule: true,
+                    default: new ClientEvent('validEvent1' as keyof ClientEvents, () => { }),
+                }), { virtual: true });
+
+                const eventHandler = new EventHandler();
+                await eventHandler.handleAllEvents();
+
+
+                expect(client.on).toHaveBeenNthCalledWith(1, 'validEvent1', expect.any(Function));
+                expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
             });
-            (fs.readdirSync as jest.Mock).mockReturnValue(['event1.ts']);
-            jest.mock('/mock/events/event1.ts', () => ({
-                __esModule: true,
-                default: new ClientEvent('event1' as keyof ClientEvents, () => { }),
-            }), { virtual: true });
 
-            const eventHandler = new EventHandler();
-            await eventHandler.handleAllEvents();
+            it('multiple events', async () => {
+                // Mock estrutura de diretórios e arquivos
+                (path.join as jest.Mock).mockImplementation((...args) => {
+                    if (args.join('/').endsWith('events/vEvent1.ts')) {
+                        return '/mock/events/vEvent1.ts';
+                    }
+                    if (args.join('/').endsWith('events/vEvent2.ts')) {
+                        return '/mock/events/vEvent2.ts';
+                    }
+                    return args.join('/');
+
+                });
+                (fs.readdirSync as jest.Mock).mockReturnValue(['vEvent1.ts', 'vEvent2.ts']);
+                jest.mock('/mock/events/vEvent1.ts', () => ({
+                    __esModule: true,
+                    default: new ClientEvent('vEvent1' as keyof ClientEvents, () => { }),
+                }), { virtual: true });
+                jest.mock('/mock/events/vEvent2.ts', () => ({
+                    __esModule: true,
+                    default: new ClientEvent('vEvent2' as keyof ClientEvents, () => { }, true),
+                }), { virtual: true });
+
+                const eventHandler = new EventHandler();
+                await eventHandler.handleAllEvents();
 
 
-            expect(client.on).toHaveBeenNthCalledWith(1, 'event1', expect.any(Function));
-            expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
+                expect(client.on).toHaveBeenNthCalledWith(1, 'vEvent1', expect.any(Function));
+                expect(client.once).toHaveBeenNthCalledWith(1, 'vEvent2', expect.any(Function));
+                expect(log.successh).toHaveBeenCalledWith('#(2)# eventos cadastrados com sucesso');
+            });
         });
+
+        describe('should skip invalid events in the events directory', () => {
+            it('1 valid and 1 invalid events', async () => {
+                (path.join as jest.Mock).mockImplementation((...args) => {
+                    if (args.join('/').endsWith('events/invalidEvent1.ts')) {
+                        return '/mock/events/invalidEvent1.ts';
+                    }
+                    if (args.join('/').endsWith('events/invalidEvent2.ts')) {
+                        return '/mock/events/invalidEvent2.ts';
+                    }
+                    return args.join('/');
+                });
+                (fs.readdirSync as jest.Mock).mockReturnValue(['invalidEvent1.ts', 'invalidEvent2.ts']);
+                jest.mock('/mock/events/invalidEvent1.ts', () => ({
+                    __esModule: true,
+                    default: new ClientEvent('invalidEvent1' as keyof ClientEvents, () => { }),
+                }), { virtual: true });
+
+                jest.mock('/mock/events/invalidEvent2.ts', () => ({
+                    default: {},
+                }), { virtual: true });
+
+                const eventHandler = new EventHandler();
+                await eventHandler.handleAllEvents();
+
+
+                expect(client.on).toHaveBeenCalledWith('invalidEvent1', expect.any(Function));
+                expect(client.once).not.toHaveBeenCalled();
+                expect(log.warn).toHaveBeenCalledWith('O evento em #(invalidEvent2.ts)# não é uma instância de #(ClientEvent)#.');
+                expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
+            });
+        });
+
     });
 });

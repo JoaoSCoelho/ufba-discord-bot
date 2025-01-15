@@ -9,7 +9,7 @@ export default class EventHandler {
     /** Map all events in `'/events'` directory and register in bot event listeners */
     public async handleAllEvents() {
         let registeredEvents = 0;
-        const eventsPath = path.join(__dirname, 'events');
+        const eventsPath = path.join(__dirname, '../events');
         const eventsFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
 
 
