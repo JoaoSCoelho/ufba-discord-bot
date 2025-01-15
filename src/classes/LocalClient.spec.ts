@@ -10,7 +10,7 @@ jest.mock('./LogSystem', () => ({
         successh: jest.fn(),
     },
 }));
-jest.mock('../ScoreSystem', () => ({
+jest.mock('../utils/ScoreSystem', () => ({
     __esModule: true,
     default: class ScoreSystem { }
 }));

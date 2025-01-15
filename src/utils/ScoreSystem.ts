@@ -41,16 +41,18 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         this.client = client as If<Initialized, LocalClient<true>, undefined>;
     }
 
-    /** Starts the score system registering a message listener that computes a new score to a member when he sends a message */
+    /** Starts the score system registering a message listener that computes a new score to a member when he sends a message
+     * @note Requires a client to be set
+     */
     public start() {
         if (this.running) {
             log.warnh('Tentativa de iniciar o sistema de pontuação que está em andamento.',
-                'Inicialização do sistema de pontuação #(abortada)#.');
+                'Inicialização do sistema de pontuação abortada.');
             return;
         }
         if (!this.client) {
-            log.warn('Tentativa de iniciar o sistema de pontuação sem uma instância do #(client)# setada.',
-                'Inicialização do sistema de pontuação #(abortada)#.'
+            log.warn('Tentativa de iniciar o sistema de pontuação sem uma instância do client setada.',
+                'Inicialização do sistema de pontuação abortada.'
             );
             return;
         }
@@ -72,7 +74,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
     public stop() {
         if (!this.running) {
             log.warnh('Tentativa de parar o sistema de pontuação que não está em andamento.',
-                'Parada do sistema de pontuação #(abortada)#.');
+                'Parada do sistema de pontuação abortada.');
             return;
         }
         ScoreSystem.runningSystems.delete(this);
@@ -201,13 +203,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         const newScore = updatedMember.score;
 
         // Passes for each level to verify if the member passed to the next level
-        ScoreSystem.levels.forEach(({ targetScore }, index) => {
-            if (oldScore < targetScore && newScore >= targetScore) {
-                return index + 1;
-            }
-        });
-
-        return 0;
+        return ScoreSystem.levels.findIndex(({ targetScore }) => oldScore < targetScore && newScore >= targetScore) + 1;
     }
 
     /** Sends a next level message for the member in a channel.

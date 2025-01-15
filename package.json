@@ -38,6 +38,7 @@
     "devT": "ts-node-dev -T src",
     "build": "tsc --project ./",
     "start": "ts-node src",
-    "test": "jest"
+    "test": "jest",
+    "test-coverage": "jest --coverage"
   }
 }
