@@ -31,7 +31,7 @@ export default class CommandHandler {
      */
     async handleCommands() {
         const commandsToDeploy: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
-        const commandsPath = path.join(__dirname, 'commands');
+        const commandsPath = path.join(__dirname, '../commands');
         const commandsFolder = fs.readdirSync(commandsPath);
 
         for (const categoryFolder of commandsFolder) {
@@ -79,7 +79,7 @@ export default class CommandHandler {
     /** Sets in `client.adminCommands` all the commands in the `/admin-commands` folder
     */
     async handleAdminCommands() {
-        const commandsPath = path.join(__dirname, 'admin-commands');
+        const commandsPath = path.join(__dirname, '../admin-commands');
         const commandsFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
 
 
