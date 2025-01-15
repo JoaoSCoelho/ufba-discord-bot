@@ -2,30 +2,11 @@ import { Events, TextChannel } from 'discord.js';
 import { client } from '..';
 import ClientEvent from '../classes/ClientEvent';
 import { log } from '../classes/LogSystem';
-import scoreSystem from '../score-system';
+import scoreSystem from '../ScoreSystem';
 
 
 // Captures when a new message is sent
 export default new ClientEvent(Events.MessageCreate, async (message) => {
-
-
-    // Computes message to scoreSystem if is a message in guild and isn't a bot
-    if (message.inGuild() && !message.author.bot)
-        scoreSystem(client, message)
-            .catch((error) => {
-                log.error('Ocorreu um erro ao executar #g(scoreSystem)#',
-                    `para a mensagem enviada por #(@${message.author.tag})#`, 
-                    `no servidor #(${message.guild.name})#`, 
-                    '\n#(Conteúdo)#:', message.content,
-                    '\n#(Erro)#:', error, 
-                    '\n#(Arquivos)#:', message.attachments,
-                    '\n#(Message)#:', message);
-            });
-
-
-
-
-
     // Computes the message to an admin command
 
     // Filter only messages of the bot admins
@@ -85,7 +66,7 @@ export default new ClientEvent(Events.MessageCreate, async (message) => {
         );
 
         log.infoh(`Fim da execução do comando de admin #(${client.prefix}${commandName})#`,
-            `executado por #(@${message.author.tag})#`, 
+            `executado por #(@${message.author.tag})#`,
             `no canal #(#${(message.channel as TextChannel | undefined)?.name ?? message.channelId})#`,
             `do servidor #(${message.guild?.name ?? message.guildId})#`);
     } catch (error) {
@@ -94,7 +75,7 @@ export default new ClientEvent(Events.MessageCreate, async (message) => {
             `no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})#`,
             `do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`,
             error);
-            
+
         await message.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!' })
             .catch((error) => {
                 log.error(`Erro ao enviar mensagem de erro na execução do comando de admin #(${client.prefix}${commandName})#`, error);

@@ -1,9 +1,9 @@
-import Command from '../../../classes/Command';
+import SlashCommand from '../../../classes/Command';
 import bathroomsData from './data';
 import BathroomsExecution from './execution';
 
 
-export default new Command(
+export default new SlashCommand(
     bathroomsData,
     BathroomsExecution
 );

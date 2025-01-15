@@ -9,12 +9,12 @@ export interface CommandDocumentation {
     optionsTutorial?: Record<string, string>,
 }
 
-export default class Command {
+export default class SlashCommand {
     constructor(
-		public data: SlashCommandBuilder,
-		// [TASK 1.0]
-	    public execute: ((interaction: CommandInteraction, client: LocalClient) => Promise<unknown>) | 
+        public data: SlashCommandBuilder,
+        // [TASK 1.0]
+        public execute: ((interaction: CommandInteraction, client: LocalClient) => Promise<unknown>) |
             typeof CommandExecution,
         public documentation?: CommandDocumentation
-    ) {}
+    ) { }
 }

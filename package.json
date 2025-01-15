@@ -12,16 +12,23 @@
     "pretty-time": "^1.1.0",
     "strip-ansi": "^6.0.1"
   },
-  "keywords": ["ufba", "bot", "discord"],
+  "keywords": [
+    "ufba",
+    "bot",
+    "discord"
+  ],
   "author": "João Coelho",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/pretty-time": "^1.1.5",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
+    "jest": "^29.7.0",
     "prettier": "3.2.4",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3"
@@ -30,6 +37,7 @@
     "dev": "ts-node-dev src",
     "devT": "ts-node-dev -T src",
     "build": "tsc --project ./",
-    "start": "ts-node src"
+    "start": "ts-node src",
+    "test": "jest"
   }
 }

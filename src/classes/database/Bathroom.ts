@@ -4,17 +4,17 @@ export type CampusValues = 'ONDINA' | 'FEDERACAO' | 'CANELA' | 'SAO_LAZARO' | 'V
 export type GenderValues = 'MASCULINO' | 'FEMININO' | 'UNISSEX';
 
 export enum CampusNames {
-    ONDINA='Ondina',
-    FEDERACAO='Federação',
-    CANELA='Canela',
-    SAO_LAZARO='São Lázaro',
-    VITORIA='Vitória da Conquista',
-    CAMACARI='Camaçari'
+    ONDINA = 'Ondina',
+    FEDERACAO = 'Federação',
+    CANELA = 'Canela',
+    SAO_LAZARO = 'São Lázaro',
+    VITORIA = 'Vitória da Conquista',
+    CAMACARI = 'Camaçari'
 }
 export enum GenderNames {
-    MASCULINO='Masculino',
-    FEMININO='Feminino',
-    UNISSEX='Unissex'
+    MASCULINO = 'Masculino',
+    FEMININO = 'Feminino',
+    UNISSEX = 'Unissex'
 }
 
 export default class Bathroom extends Entity {
@@ -24,13 +24,13 @@ export default class Bathroom extends Entity {
     public readonly haveShower: boolean;
     public readonly createdBy: string;
     public readonly hasHandDryer?: boolean;
-    public readonly gender?: GenderValues; 
+    public readonly gender?: GenderValues;
     public readonly cabins?: number;
     public readonly urinals?: number;
     public readonly localization?: string;
     public readonly mainImageUrl?: string;
     public readonly imagesUrls: string[];
-    
+
     constructor(
         data: {
             id: string,

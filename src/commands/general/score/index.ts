@@ -1,11 +1,11 @@
 import { SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
-import Command from '../../../classes/Command';
-import { levels } from '../../../score-system';
+import SlashCommand from '../../../classes/Command';
+import ScoreSystem from '../../../ScoreSystem';
 import isObject from '../../../utils/isObject';
 import discordAnsi from '../../../utils/discord-ansi';
 import { log } from '../../../classes/LogSystem';
 
-export default new Command(
+export default new SlashCommand(
     new SlashCommandBuilder()
         .setName('score')
         .setDescription('Mostra o seu escore de interação neste servidor e o seu nível atual.')
@@ -47,10 +47,10 @@ export default new Command(
 
 
         /** The currentLevel that the member is at */
-        const levelIndex = levels.findIndex(({ targetScore }) => targetScore > member.score);
+        const levelIndex = ScoreSystem.levels.findIndex(({ targetScore }) => targetScore > member.score);
 
-        const currentLevelScore = levelIndex ? levels[levelIndex - 1].targetScore : 0;
-        const nextLevelScore = levels[levelIndex].targetScore;
+        const currentLevelScore = levelIndex ? ScoreSystem.levels[levelIndex - 1].targetScore : 0;
+        const nextLevelScore = ScoreSystem.levels[levelIndex].targetScore;
 
         const scoreObtainedAtCurrentLevel = member.score - currentLevelScore;
 
@@ -68,13 +68,13 @@ export default new Command(
             guildMember,
             '```ansi',
             `@${guildMember.user.tag}`,
-            
+
             /** @example Lv 1 (100 pts) → Lv 2 (300 pts) faltam 117 pts */
             `Lv ${discordAnsi.bold()(`${levelIndex}`)} (${discordAnsi.bold()(`${currentLevelScore}`)} ${discordAnsi.gray()('pts')}) → Lv ${discordAnsi.bold()(`${levelIndex + 1}`)} (${discordAnsi.bold()(`${nextLevelScore}`)} ${discordAnsi.gray()('pts')}) ${discordAnsi.blue()('faltam')} ${discordAnsi.blue()(`${discordAnsi.bold()(`${nextLevelScore - member.score}`)}`)} ${discordAnsi.blue()('pts')}`,
-            
+
             /** @example 41,5% | Lv 1 ■■■■■■■■■■■■■■■■□□□□□□□□□□□□□□□□□□□□□□□□ 11 */
             `${discordAnsi.bold()(percentOfCurrentLevel.toFixed(1).replace('.', ','))}% ${discordAnsi.gray()('|')} Lv ${discordAnsi.bold()(`${levelIndex}`)} ${discordAnsi.blue()('■'.repeat(progressOfTheCurrentLevel))}${'□'.repeat(TOTAL_PROGRESS_BLOCKS - progressOfTheCurrentLevel)} ${discordAnsi.bold()(`${levelIndex + 1}`)}`,
-            
+
             `Score: ${discordAnsi.bold()(`${member.score}`)}`,
             `Nível: ${discordAnsi.bold()(`${levelIndex}`)}`,
             '```'

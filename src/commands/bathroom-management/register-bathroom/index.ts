@@ -1,4 +1,4 @@
-import Command from '../../../classes/Command';
+import SlashCommand from '../../../classes/Command';
 import registerBathroomData from './data';
 import RegisterBathroomExecution from './execution';
 
@@ -6,7 +6,7 @@ import RegisterBathroomExecution from './execution';
 
 
 
-export default new Command(
+export default new SlashCommand(
     registerBathroomData,
     RegisterBathroomExecution
 );

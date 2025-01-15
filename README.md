@@ -1,7 +1,7 @@
 # ufba-discord-bot
  
 ## Getting Started
-**For more details: [Discord.JS Guide](https://discordjs.guide/)
+> For more details: [Discord.JS Guide](https://discordjs.guide/)
 1. First of all, create a Discord Application in [Discord Developer Portal](https://discord.com/developers/applications/)
 2. Create a file called `.env` in the root directory of the project with the follow variables
     ```.env
@@ -13,6 +13,8 @@
     FULL_LOG_CHANNEL_ID=bot_full_log_channel_id
     BOT_ADMINS=a_comma-separated_and_space-free_list_of_discord_users_who_will_have_full_access_to_all_bot_commands
     PREFIX=the_prefix_of_admin_commands // Default is _
+    FORCE_COLOR=1 // 1 to force coloring terminal
+    NO_COLOR=0 // 0 to enable terminal coloring
     ```
 3. Install the dependecies
     ```bash
@@ -34,6 +36,14 @@ to deploy your commands, use once:
 $ DEPLOY=true npm run start
 ```
 or use command `deploy` on your bot (it is a admin command, use then with the bot prefix)
+
+## Testing
+To run all jest tests, you can run:
+```bash
+$ npm run test
+```
+
+> See more of Jest in: [https://jestjs.io/docs/getting-started](https://jestjs.io/docs/getting-started)
 
 ## How to use commands
 * [Commands Helper](/docs/commands-helper.md)

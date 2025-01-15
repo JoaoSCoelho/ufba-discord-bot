@@ -1,9 +1,9 @@
 import { SlashCommandBuilder } from 'discord.js';
-import Command from '../../../classes/Command';
+import SlashCommand from '../../../classes/Command';
 import prettyBytes from '../../../utils/prettyBytes';
 import os from 'node:os';
 
-export default new Command(
+export default new SlashCommand(
     new SlashCommandBuilder()
         .setName('mem-use')
         .setDescription('Mostra quanto de memória está sendo usado pelo bot'),

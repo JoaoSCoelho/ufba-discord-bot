@@ -1,10 +1,10 @@
-import Command from '../../../classes/Command';
+import SlashCommand from '../../../classes/Command';
 import addBathroomImagesData from './data';
 import AddBathroomImagesExecution from './execution';
 
 
 
-export default new Command(
+export default new SlashCommand(
     addBathroomImagesData,
     AddBathroomImagesExecution
 );

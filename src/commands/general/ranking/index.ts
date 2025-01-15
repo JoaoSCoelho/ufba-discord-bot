@@ -1,10 +1,10 @@
 import { SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
-import Command from '../../../classes/Command';
+import SlashCommand from '../../../classes/Command';
 import discordAnsi from '../../../utils/discord-ansi';
 import isObject from '../../../utils/isObject';
 import { log } from '../../../classes/LogSystem';
 
-export default new Command(
+export default new SlashCommand(
     new SlashCommandBuilder()
         .setName('ranking')
         .setDescription('Permite ver o ranking dos membros com mais pontos no server.')
@@ -43,9 +43,9 @@ export default new Command(
                     log.error(`Erro ao dar fetch em membro de ID: #(${member.discordId})# enquanto executava o comando /#(ranking)# usado por #(@${interaction.user.tag})# no servidor #(${interaction.guild?.name ?? interaction.guildId})#\n#(Opções usadas)#:`, interaction.options.data, '\n#(Erro)#:', error);
                     throw error;
                 });
-                
 
-            /** If the `discordMember.id` is equal to `targetUser.id`, so a ansi code is saved on var, else a empty string is saved on var */ 
+
+            /** If the `discordMember.id` is equal to `targetUser.id`, so a ansi code is saved on var, else a empty string is saved on var */
             const ansiColorCode = discordMember?.id === targetUser.id ? discordAnsi.getBlueCode() as `\u001b[${number};${number}m` : '';
 
             return ansiColorCode + `${(index + 1).toString().padStart(2)}º ${(discordAnsi.bold()(((discordMember?.displayName ?? 'NÃO ENCONTRADO') + ' ').padEnd(20, '-')))}${ansiColorCode} ${discordAnsi.bold()(member.score.toString().padEnd(3))} ${ansiColorCode}pontos ${discordMember ? discordAnsi.gray()(`(${member.discordId})`) : ''}`;
@@ -53,7 +53,7 @@ export default new Command(
 
 
 
-        
+
         await interaction.followUp(`\`\`\`ansi\n${rankingLines.join('\n')}\n\`\`\`\n${targetUser.id === interaction.user.id ? 'Sua posição' : `A posição de ${targetUser}`} no ranking é **${userPositionInRanking}º**`);
     },
 

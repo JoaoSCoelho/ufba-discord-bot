@@ -1,5 +1,4 @@
 import { AttachmentBuilder, ChannelType } from 'discord.js';
-import { EventEmitter } from 'node:events';
 import Bathroom from '../classes/database/Bathroom';
 import DbCollection from './DbCollection';
 import LocalClient from '../classes/LocalClient';
@@ -9,6 +8,13 @@ import BathroomAvaliation from '../classes/database/BathroomAvaliation';
 import Member from '../classes/database/Member';
 import prettyBytes from '../utils/prettyBytes';
 import { log } from '../classes/LogSystem';
+import { EventEmitter } from 'node:events';
+
+interface NodeEventEmitter {
+    on(event: string, listener: (...args: unknown[]) => void): this;
+    emit(event: string, ...args: unknown[]): boolean;
+    // Adicione os métodos que você usa
+}
 
 export interface DatabaseInterface {
     bathroom: Bathroom[];
@@ -18,15 +24,14 @@ export interface DatabaseInterface {
 
 export type EntityClasses = typeof Bathroom | typeof BathroomAvaliation | typeof Member
 
-export default class Database extends EventEmitter {
+export default class Database extends (EventEmitter as unknown as { new(): NodeEventEmitter }) {
     public bathroom: DbCollection<Bathroom>;
     public bathroomAvaliation: DbCollection<BathroomAvaliation>;
     public member: DbCollection<Member>;
 
-
     constructor(public readonly client: LocalClient) {
         super();
-        
+
         this.bathroom = new DbCollection('bathroom', this);
         this.bathroomAvaliation = new DbCollection('bathroomAvaliation', this);
         this.member = new DbCollection('member', this);
@@ -34,7 +39,7 @@ export default class Database extends EventEmitter {
         this.fetch().then(() => this.emit('ready'));
     }
 
-    toJSON() {
+    toJSON(): DatabaseInterface {
         return {
             bathroom: this.bathroom.toJSON(),
             bathroomAvaliation: this.bathroomAvaliation.toJSON(),
@@ -84,7 +89,7 @@ export default class Database extends EventEmitter {
 
         // Gets the file of the last message
         const file = lastMessage.attachments.find((att) => att.contentType?.startsWith('application/json'));
-        
+
         if (!file) {
             log.error(`Não há arquivos na última mensagem do dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`);
             throw new Error('There is no file in last published database');
@@ -107,7 +112,7 @@ export default class Database extends EventEmitter {
     setCache(data: DatabaseInterface, collections: (keyof DatabaseInterface)[] = ['bathroom', 'bathroomAvaliation', 'member']) {
         const collectionsAndHisClasses: [keyof DatabaseInterface, EntityClasses | undefined][] = collections.map((entityName) => {
             let entityClass: EntityClasses | undefined = undefined;
- 
+
             if (entityName === 'bathroom') entityClass = Bathroom;
             if (entityName === 'bathroomAvaliation') entityClass = BathroomAvaliation;
             if (entityName === 'member') entityClass = Member;
@@ -116,7 +121,7 @@ export default class Database extends EventEmitter {
         });
 
 
-        
+
         collectionsAndHisClasses.forEach(([entityName, entityClass]) => {
             if (!entityClass) {
                 log.error(`The #("entityClass")# for "#(${entityName})#" entity is undefined!`);
@@ -135,7 +140,7 @@ export default class Database extends EventEmitter {
                     ...entityJson,
                     createdAt: new Date(entityJson.createdAt),
                     updatedAt: new Date(entityJson.updatedAt),
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 }) as any);
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -177,7 +182,7 @@ export default class Database extends EventEmitter {
     /** `PT`: Envia o banco de dados local, globalmente */
     async updateInDiscord() {
         const dbChannel = await this.getDbChannel();
-            
+
         const FILE_NAME = 'db.json';
         const fileBuffer = Buffer.from(JSON.stringify(this.toJSON(), null, 4));
 
