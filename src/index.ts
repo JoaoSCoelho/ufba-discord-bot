@@ -4,7 +4,7 @@ import './classes/LogSystem';
 import { GatewayIntentBits } from 'discord.js';
 import LocalClient from './classes/LocalClient';
 import CommandHandler from './CommandHandler';
-import EventHandler from './event-handler';
+import EventHandler from './EventHandler';
 
 export const client = new LocalClient({
     intents: [
