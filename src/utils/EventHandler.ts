@@ -8,6 +8,7 @@ import { log } from '../classes/LogSystem';
 export default class EventHandler {
     /** Map all events in `'/events'` directory and register in bot event listeners */
     public async handleAllEvents() {
+        let registeredEvents = 0;
         const eventsPath = path.join(__dirname, 'events');
         const eventsFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
 
@@ -23,9 +24,11 @@ export default class EventHandler {
 
             client[event.once ? 'once' : 'on'](event.eventName, event.listener);
 
+            registeredEvents++;
+
             log.successh(`Evento #(${event.eventName})# (#(${eventFile})#) cadastrado com sucesso`);
         }
 
-        log.successh(`#(${client.adminCommands.size})# eventos cadastrados com sucesso`);
+        log.successh(`#(${registeredEvents})# eventos cadastrados com sucesso`);
     }
 }
