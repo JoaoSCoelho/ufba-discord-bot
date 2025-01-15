@@ -1,4 +1,4 @@
-import './config-env';
+import './utils/configEnv';
 import './classes/LogSystem';
 
 import { GatewayIntentBits } from 'discord.js';
