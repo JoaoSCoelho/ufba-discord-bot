@@ -86,6 +86,8 @@ export default class Form extends EventEmitter {
                         '\n#(Erro)#:', error,
                         '\n#(CommandInteraction)#:', this.interaction
                     );
+                    error.handled = true;
+
                     this.emit('error', error);
                     throw error;
                 });
@@ -113,6 +115,8 @@ export default class Form extends EventEmitter {
                     '\n#(MessageOptions)#:', questionMessageOptions,
                     '\n#(CommandInteraction)#:', this.interaction
                 );
+                error.handled = true;
+
                 this.emit('error', error);
                 throw error;
             });
@@ -178,7 +182,7 @@ export default class Form extends EventEmitter {
         this.collectors.forEach((collector) => collector.stop());
 
 
-        
+
         this.emit('changeQuestion', this.currentQuestionIndex, this.lastQuestionIndex, typeof arg === 'string' ? arg : undefined);
 
 
@@ -228,14 +232,15 @@ export default class Form extends EventEmitter {
 
                     this.interaction.editReply(questionMessageOptions)
                         .catch((error) => {
-                            log.error('Erro ao usar #i(CommandInteraction<CacheType>)###(editReply(Message))#', 
-                                `enquanto finalizava o Form "#(${this.name})#",`, 
-                                `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`, 
+                            log.error('Erro ao usar #i(CommandInteraction<CacheType>)###(editReply(Message))#',
+                                `enquanto finalizava o Form "#(${this.name})#",`,
+                                `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
                                 `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
-                                '\n#(Erro)#:', error, 
-                                '\n#(MessageOptions)#:', questionMessageOptions, 
+                                '\n#(Erro)#:', error,
+                                '\n#(MessageOptions)#:', questionMessageOptions,
                                 '\n#(CommandInteraction)#:', this.interaction
                             );
+                            error.handled = true;
                             this.emit('error', error);
                         });
 
@@ -326,19 +331,19 @@ export default class Form extends EventEmitter {
 
 
             const onChange: OmitThisParameter<Required<typeof options>['onChange']> =
-                options.onChange?.bind(this) ?? 
+                options.onChange?.bind(this) ??
                 defaultOnChange.bind(this) as OmitThisParameter<Required<typeof options>['onChange']>;
 
             const onCleanButtonClick: OmitThisParameter<Required<typeof options>['onCleanButtonClick']> =
-                options.onCleanButtonClick?.bind(this) ?? 
+                options.onCleanButtonClick?.bind(this) ??
                 defaultOnCleanButtonClick.bind(this);
 
             const onChangeQuestionButtonClick: OmitThisParameter<Required<typeof options>['onChangeQuestionButtonClick']> =
-                options.onChangeQuestionButtonClick?.bind(this) ?? 
+                options.onChangeQuestionButtonClick?.bind(this) ??
                 defaultOnChangeQuestionButtonClick.bind(this);
 
             const onFinishFormButtonClick: OmitThisParameter<Required<typeof options>['onFinishFormButtonClick']> =
-                options.onFinishFormButtonClick?.bind(this) ?? 
+                options.onFinishFormButtonClick?.bind(this) ??
                 defaultOnFinishFormButtonClick.bind(this);
 
 
@@ -465,15 +470,16 @@ export default class Form extends EventEmitter {
             ) {
                 if (i instanceof MessageComponentInteraction && !i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
-                        log.error('Erro ao usar #i(StringSelectMenuInteraction<CacheType>)###(deferUpdate())#', 
+                        log.error('Erro ao usar #i(StringSelectMenuInteraction<CacheType>)###(deferUpdate())#',
                             `enquanto executava #(defaultOnChange())# para a question "#(${options.name})#"`,
-                            `no Form "#(${this.name})#",`, 
-                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`, 
+                            `no Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
                             `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
-                            '\n#(Erro)#:', error, 
-                            '\n#(StringSelectMenuInteraction)#:', i, 
+                            '\n#(Erro)#:', error,
+                            '\n#(StringSelectMenuInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
+                        error.handled = true;
                         throw error;
                     });
 
@@ -498,7 +504,7 @@ export default class Form extends EventEmitter {
 
 
 
-                if (options.onResponseUpdate) 
+                if (options.onResponseUpdate)
                     await options.onResponseUpdate.bind(this)(this.questions.get(options.name)!);
 
                 this.emit('responseUpdate', this.questions.get(options.name)!);
@@ -519,21 +525,22 @@ export default class Form extends EventEmitter {
             ) {
                 if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
-                        log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#', 
-                            'enquanto executava #(defaultOnCleanButtonClick())#', 
-                            `para a question "#(${options.name})#" no Form "#(${this.name})#",`, 
-                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`, 
+                        log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
+                            'enquanto executava #(defaultOnCleanButtonClick())#',
+                            `para a question "#(${options.name})#" no Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
                             `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
-                            '\n#(Erro)#:', error, 
-                            '\n#(ButtonInteraction)#:', i, 
+                            '\n#(Erro)#:', error,
+                            '\n#(ButtonInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
+                        error.handled = true;
                         throw error;
                     });
 
 
 
-                if (!this.questions.get(options.name)) 
+                if (!this.questions.get(options.name))
                     throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
                 /** Saves the user response */
@@ -577,7 +584,7 @@ export default class Form extends EventEmitter {
                     .setMaxValues(select.maxValues)
                     .setCustomId(select.customId);
 
-                if (select.placeholder) 
+                if (select.placeholder)
                     selectMenu.setPlaceholder(select.placeholder);
 
 
@@ -644,31 +651,31 @@ export default class Form extends EventEmitter {
             const maxLength = options.maxLength ?? 8192;
 
 
-            const lessThanTheMinimumLengthMessage = 
-                options.lessThanTheMinimumLengthMessage ?? 
+            const lessThanTheMinimumLengthMessage =
+                options.lessThanTheMinimumLengthMessage ??
                 `Precisa ter um mínimo de ${minLength} caracteres`;
 
-            const greaterThanTheMaximumLengthMessage = 
-                options.greaterThanTheMaximumLengthMessage ?? 
+            const greaterThanTheMaximumLengthMessage =
+                options.greaterThanTheMaximumLengthMessage ??
                 `Precisa ter no máximo ${maxLength} caracteres`;
 
-            const fixMessage = 
-                options.fixMessage ?? 
+            const fixMessage =
+                options.fixMessage ??
                 'Você pode substituir o valor atual enviando outra resposta.';
 
 
             const onChange: OmitThisParameter<Required<typeof options>['onChange']> =
-                options.onChange?.bind(this) ?? 
+                options.onChange?.bind(this) ??
                 defaultOnChange.bind(this) as OmitThisParameter<Required<typeof options>['onChange']>;
 
             const onCleanButtonClick: OmitThisParameter<Required<typeof options>['onCleanButtonClick']> =
-                options.onCleanButtonClick?.bind(this) ?? 
+                options.onCleanButtonClick?.bind(this) ??
                 defaultOnCleanButtonClick.bind(this);
 
             const onChangeQuestionButtonClick: OmitThisParameter<Required<typeof options>['onChangeQuestionButtonClick']> =
-                options.onChangeQuestionButtonClick?.bind(this) ?? 
+                options.onChangeQuestionButtonClick?.bind(this) ??
                 defaultOnChangeQuestionButtonClick.bind(this);
-                
+
             const onFinishFormButtonClick: OmitThisParameter<Required<typeof options>['onFinishFormButtonClick']> =
                 options.onFinishFormButtonClick?.bind(this) ??
                 defaultOnFinishFormButtonClick.bind(this);
@@ -722,7 +729,7 @@ export default class Form extends EventEmitter {
                         });
                 });
 
-                messageCollector.on('end', 
+                messageCollector.on('end',
                     (_collected, reason) => componentCollector.stop(reason)
                 );
 
@@ -796,15 +803,16 @@ export default class Form extends EventEmitter {
                 // [TASK 3.0] Verify if the bot has permission to delete messages on channel
                 if (m.deletable) m.delete()
                     .catch((error) => {
-                        log.error('Erro ao usar #i(Message<Boolean>)###(delete())#', 
-                            `enquanto executava #(defaultOnChange())# para a question "#(${options.name})#"`, 
-                            `no Form "#(${this.name})#",`, 
-                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`, 
-                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`, 
-                            '\n#(Erro)#:', error, 
-                            '\n#(Message)#:', m, 
+                        log.error('Erro ao usar #i(Message<Boolean>)###(delete())#',
+                            `enquanto executava #(defaultOnChange())# para a question "#(${options.name})#"`,
+                            `no Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                            '\n#(Erro)#:', error,
+                            '\n#(Message)#:', m,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
+                        error.handled = true;
                         throw error;
                     });
 
@@ -836,7 +844,7 @@ export default class Form extends EventEmitter {
                 this.questions.get(options.name)!.response = m.content;
 
 
-                if (options.onResponseUpdate) 
+                if (options.onResponseUpdate)
                     await options.onResponseUpdate.bind(this)(this.questions.get(options.name)!);
 
                 this.emit('responseUpdate', this.questions.get(options.name)!);
@@ -855,21 +863,22 @@ export default class Form extends EventEmitter {
             ) {
                 if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
-                        log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#', 
-                            'enquanto executava #(defaultOnCleanButtonClick())#', 
-                            `para a question "#(${options.name})#" no Form "#(${this.name})#",`, 
-                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`, 
+                        log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
+                            'enquanto executava #(defaultOnCleanButtonClick())#',
+                            `para a question "#(${options.name})#" no Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
                             `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
-                            '\n#(Erro)#:', error, 
-                            '\n#(ButtonInteraction)#:', i, 
+                            '\n#(Erro)#:', error,
+                            '\n#(ButtonInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
+                        error.handled = true;
                         throw error;
                     });
 
 
 
-                if (!this.questions.get(options.name)) 
+                if (!this.questions.get(options.name))
                     throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
                 /** Saves the user response */
@@ -1195,7 +1204,17 @@ export default class Form extends EventEmitter {
             ) {
                 if (i instanceof MessageComponentInteraction && !i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
-                        log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChange())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                        log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
+                            'enquanto executava #(defaultOnChange())#',
+                            `para a question "#(${options.name})#"`,
+                            `no Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n`,
+                            '#(Erro)#:', error,
+                            '\n#(ButtonInteraction)#:', i,
+                            '\n#(CommandInteraction)#:', this.interaction
+                        );
+                        error.handled = true;
                         throw error;
                     });
 
@@ -1240,7 +1259,17 @@ export default class Form extends EventEmitter {
             ) {
                 if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
-                        log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnCleanButtonClick())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                        log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
+                            'enquanto executava #(defaultOnCleanButtonClick())#',
+                            `para a question "#(${options.name})#"`,
+                            `no Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                            '\n#(Erro)#:', error,
+                            '\n#(ButtonInteraction)#:', i,
+                            '\n#(CommandInteraction)#:', this.interaction
+                        );
+                        error.handled = true;
                         throw error;
                     });
 
@@ -1518,7 +1547,17 @@ export default class Form extends EventEmitter {
 
                 if (m.deletable) m.delete()
                     .catch((error) => {
-                        log.error(`Erro ao usar #i(Message<Boolean>)###(delete())# enquanto executava #(defaultOnChange())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(Message)#:', m, '\n#(CommandInteraction)#:', this.interaction);
+                        log.error('Erro ao usar #i(Message<Boolean>)###(delete())#',
+                            'enquanto executava #(defaultOnChange())#',
+                            `para a question "#(${options.name})#"`,
+                            `no Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                            '\n#(Erro)#:', error,
+                            '\n#(Message)#:', m,
+                            '\n#(CommandInteraction)#:', this.interaction
+                        );
+                        error.handled = true;
                         throw error;
                     });
 
@@ -1567,7 +1606,17 @@ export default class Form extends EventEmitter {
 
                 if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
-                        log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnCleanButtonClick())# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                        log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
+                            'enquanto executava #(defaultOnCleanButtonClick())#',
+                            `para a question "#(${options.name})#"`,
+                            `no Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                            '\n#(Erro)#:', error,
+                            '\n#(ButtonInteraction)#:', i,
+                            '\n#(CommandInteraction)#:', this.interaction
+                        );
+                        error.handled = true;
                         throw error;
                     });
 
@@ -1610,7 +1659,17 @@ export default class Form extends EventEmitter {
 
                 if (!i.deferred && !i.replied) await i.deferUpdate()
                     .catch((error) => {
-                        log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChangeAttachmentButtonClick)# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                        log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
+                            'enquanto executava #(defaultOnChangeAttachmentButtonClick)#',
+                            `para a question "#(${options.name})#"`,
+                            `no Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                            '\n#(Erro)#:', error,
+                            '\n#(ButtonInteraction)#:', i,
+                            '\n#(CommandInteraction)#:', this.interaction
+                        );
+                        error.handled = true;
                         throw error;
                     });
 
@@ -1775,7 +1834,17 @@ export default class Form extends EventEmitter {
 
             if (!i.deferred && !i.replied) await i.deferUpdate()
                 .catch((error) => {
-                    log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnChangeQuestionButtonClick)# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                    log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
+                        'enquanto executava #(defaultOnChangeQuestionButtonClick)#',
+                        `para a question "#(${options.name})#"`,
+                        `no Form "#(${this.name})#",`,
+                        `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                        '\n#(Erro)#:', error,
+                        '\n#(ButtonInteraction)#:', i,
+                        '\n#(CommandInteraction)#:', this.interaction
+                    );
+                    error.handled = true;
                     throw error;
                 });
 
@@ -1807,7 +1876,17 @@ export default class Form extends EventEmitter {
 
             if (!i.deferred && !i.replied) await i.deferUpdate()
                 .catch((error) => {
-                    log.error(`Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())# enquanto executava #(defaultOnFinishFormButtonClick)# para a question "#(${options.name})#" no Form "#(${this.name})#", aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(ButtonInteraction)#:', i, '\n#(CommandInteraction)#:', this.interaction);
+                    log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
+                        'enquanto executava #(defaultOnFinishFormButtonClick)#',
+                        `para a question "#(${options.name})#"`,
+                        `no Form "#(${this.name})#",`,
+                        `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                        '\n#(Erro)#:', error,
+                        '\n#(ButtonInteraction)#:', i,
+                        '\n#(CommandInteraction)#:', this.interaction
+                    );
+                    error.handled = true;
                     throw error;
                 });
 

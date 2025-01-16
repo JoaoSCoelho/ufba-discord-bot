@@ -1,0 +1,1 @@
+export type ErrorPossiblyHandled = Error & { handled?: boolean }
