@@ -3,6 +3,7 @@ import { client } from '..';
 import ClientEvent from '../classes/ClientEvent';
 import { log } from '../classes/LogSystem';
 import Member from '../classes/database/Member';
+import BaseError from '../Errors/BaseError';
 
 // Captures when the client enter on a guild
 export default new ClientEvent(Events.GuildCreate, async (guild) => {
@@ -22,14 +23,14 @@ export default new ClientEvent(Events.GuildCreate, async (guild) => {
                     const alreadyHasTheMemberOnDatabase = !!client.database!.member.find((member) =>
                         member.discordId === guildMember.id && member.discordGuildId === guild.id
                     );
-    
-                    if (alreadyHasTheMemberOnDatabase) return;
-    
-    
 
-                    log.loadingh(`#(${index + 1})#/#(${array.length})# Salvando novo membro #(@${guildMember.user.tag})#`, 
+                    if (alreadyHasTheMemberOnDatabase) return;
+
+
+
+                    log.loadingh(`#(${index + 1})#/#(${array.length})# Salvando novo membro #(@${guildMember.user.tag})#`,
                         `do servidor #(${guild.name})# no banco de dados...`);
-    
+
                     const member = new Member({
                         id: Date.now().toString(),
                         createdAt: new Date(),
@@ -37,7 +38,7 @@ export default new ClientEvent(Events.GuildCreate, async (guild) => {
                         discordId: guildMember.id,
                         discordGuildId: guild.id,
                     });
-    
+
                     await client.database!.member.new(member)
                         .then(() => {
                             log.successh(`#(${index + 1})#/#(${array.length})# Membro #(@${guildMember.user.tag})#`,
@@ -45,17 +46,20 @@ export default new ClientEvent(Events.GuildCreate, async (guild) => {
 
                             addedMembersCount++;
                         })
-                        .catch((error) => {
-                            log.error(`#(${index + 1})#/#(${array.length})# Erro ao adicionar membro #(@${guildMember.user.tag})#`,
-                                `do servidor #(${guild.name})# ao banco de dados`,
-                                '\n#(Erro)#:', error, 
-                                '\n#(Membro)#:', member);
+                        .catch((error: unknown) => {
+                            if (!BaseError.isHandled(error)) {
+                                log.error(`#(${index + 1})#/#(${array.length})# Erro ao adicionar membro #(@${guildMember.user.tag})#`,
+                                    `do servidor #(${guild.name})# ao banco de dados`,
+                                    '\n#(Membro)#:', member,
+                                    '\n#(Erro)#:', error
+                                );
+                            }
 
                             errorOnAddingMemberCount++;
                         });
                 })
         );
-    
+
         log.info(`#(${addedMembersCount})# membros do servidor #(${guild.name})# adicionados ao banco.`,
             `#(${errorOnAddingMemberCount})# membros tiveram erro ao serem adicionados ao banco.`);
     };

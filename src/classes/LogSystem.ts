@@ -233,7 +233,7 @@ export default class LogSystem {
 
             try {
                 throw new Error();
-            } catch (error) {
+            } catch (error: unknown) {
                 err = error as Error;
             }
 
@@ -241,7 +241,7 @@ export default class LogSystem {
                 const stacks = /(?:src|build)(?:\\|\/)([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename))?.trim() ?? '')?.[1];
 
                 return this(`${chalk[chalkMethod]('>')} [${chalk[chalkMethod](typeName)}] [${chalk[chalkMethod](logMoment)}] [${chalk[chalkMethod](stacks)}]:`, ...data);
-            } catch (err) {
+            } catch (err: unknown) {
                 return this(...data);
             }
         }

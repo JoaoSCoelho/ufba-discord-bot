@@ -4,6 +4,8 @@ import ScoreSystem from '../../../utils/ScoreSystem';
 import isObject from '../../../utils/isObject';
 import discordAnsi from '../../../utils/discord-ansi';
 import { log } from '../../../classes/LogSystem';
+import BaseError from '../../../Errors/BaseError';
+import { Obj } from '../../../utils/Obj';
 
 export default new SlashCommand(
     new SlashCommandBuilder()
@@ -26,10 +28,18 @@ export default new SlashCommand(
         const targetMemberId = interaction.options.get('membro')?.user!.id ?? interaction.user.id;
 
         const guildMember = await client.guilds.cache.get(interaction.guildId)?.members.fetch(targetMemberId)
-            .catch((error) => {
-                if (isObject(error) && error.message === 'Unknown Member') return undefined;
+            .catch((error: unknown) => {
+                if (isObject(error) && (error as Obj).message === 'Unknown Member') return undefined;
 
-                log.error(`Erro ao dar fetch em membro de ID: #(${targetMemberId})# enquanto executava o comando /#(score)# usado por #(@${interaction.user.tag})# no servidor #(${interaction.guild?.name ?? interaction.guildId})#\n#(Opções usadas)#:`, interaction.options.data, '\n#(Erro)#:', error);
+                log.error(`Erro ao dar fetch em membro de ID: #(${targetMemberId})#`,
+                    'enquanto executava o comando /#(score)#',
+                    `usado por #(@${interaction.user.tag})#`,
+                    `no servidor #(${interaction.guild?.name ?? interaction.guildId})#`,
+                    '\n#(Opções usadas)#:', interaction.options.data,
+                    '\n#(Erro)#:', error
+                );
+
+                BaseError.handle(error);
                 throw error;
             });
 

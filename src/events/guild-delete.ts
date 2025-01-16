@@ -2,6 +2,7 @@ import { Events } from 'discord.js';
 import { client } from '..';
 import ClientEvent from '../classes/ClientEvent';
 import { log } from '../classes/LogSystem';
+import BaseError from '../Errors/BaseError';
 
 
 // Captures when the client get out of a guild
@@ -22,15 +23,17 @@ export default new ClientEvent(Events.GuildDelete, async (guild) => {
 
                 await client.database!.member.remove(member.id)
                     .then(() => {
-                        log.successh(`#(${index + 1})#/#(${array.length})# Member #(${member.id})#`, 
-                            `from server #(${guild.name || guild.id})#,`, 
+                        log.successh(`#(${index + 1})#/#(${array.length})# Member #(${member.id})#`,
+                            `from server #(${guild.name || guild.id})#,`,
                             'successfully removed from database');
                     })
-                    .catch((error) => {
-                        log.error(`#(${index + 1})#/#(${array.length})#`,
-                            `Erro ao remover membro #(${member.id})#`, 
-                            `do servidor #(${guild.name || guild.id})#`,
-                            '\n#(Erro)#:', error);
+                    .catch((error: unknown) => {
+                        if (!BaseError.isHandled(error)) {
+                            log.error(`#(${index + 1})#/#(${array.length})#`,
+                                `Erro ao remover membro #(${member.id})#`,
+                                `do servidor #(${guild.name || guild.id})#`,
+                                '\n#(Erro)#:', error);
+                        }
                     });
             })
     );

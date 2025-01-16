@@ -6,9 +6,10 @@ import Form from '../../../classes/Form';
 import { Question } from '../../../classes/Form.types';
 import isObject from '../../../utils/isObject';
 import { log } from '../../../classes/LogSystem';
+import BaseError from '../../../Errors/BaseError';
 
-const rateLimitOptions = { 
-    windowMs: 60_000, 
+const rateLimitOptions = {
+    windowMs: 60_000,
     successfullyTimes: 3,
     times: 10
 };
@@ -17,8 +18,15 @@ const limiter: Record<string, { lastUsage: number, times: number, successfullyTi
 export default class RegisterBathroomExecution extends CommandExecution {
     run = async () => {
         await this.interaction.deferReply({ ephemeral: true })
-            .catch((error) => {
-                log.error(`Erro ao usar #i(CommandInteraction<CacheType>)###(deferReply())# enquanto executava o comando #(${this.interaction.commandName})# aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.\n#(Erro)#:`, error, '\n#(CommandInteraction)#:', this.interaction);
+            .catch((error: unknown) => {
+                log.error('Erro ao usar #i(CommandInteraction<CacheType>)###(deferReply())#',
+                    `enquanto executava o comando #(${this.interaction.commandName})#`,
+                    `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                    `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                    '\n#(Erro)#:', error,
+                    '\n#(CommandInteraction)#:', this.interaction
+                );
+                BaseError.handle(error);
                 throw error;
             });
 
@@ -28,7 +36,7 @@ export default class RegisterBathroomExecution extends CommandExecution {
                 content: `‼️ Você está criando muitos banheiros em um curto intervalo de tempo.\n⏳ Aguarde ${rateLimitOptions.windowMs / 1000} segundos e tente novamente!`,
                 ephemeral: true,
             });
-            // FAZER ESSE CATCH
+        // FAZER ESSE CATCH
 
 
 
@@ -221,14 +229,14 @@ export default class RegisterBathroomExecution extends CommandExecution {
             form.on('responseUpdate', async (question) => {
                 try {
                     const name = question.options.name as keyof typeof bathroomData;
-            
+
                     if (['campus', 'gender', 'mainImageUrl', 'imagesUrls'].includes(name)) {
                         // @ts-expect-error - ts can't understand this
                         if (name === 'campus' || name === 'gender') bathroomData[name] = (question as Question<'StringSelect'>).response[0];
-            
+
                         else if (name === 'imagesUrls') {
-                            bathroomData[name] = ((form.questions.get('mainImageUrl')?.response as Attachment[] | undefined)?.[0] ? 
-                                [(form.questions.get('mainImageUrl')!.response as Attachment[])[0].url] : 
+                            bathroomData[name] = ((form.questions.get('mainImageUrl')?.response as Attachment[] | undefined)?.[0] ?
+                                [(form.questions.get('mainImageUrl')!.response as Attachment[])[0].url] :
                                 []
                             ).concat((question as Question<'Attachments'>).response?.map((attachment) => attachment.url));
                         }
@@ -237,80 +245,146 @@ export default class RegisterBathroomExecution extends CommandExecution {
                         // @ts-expect-error - ts can't understand this
                         bathroomData[name] = question.response;
                     }
-            
+
                     await this.interaction.editReply(await this.bathroomPreviewMessageOptionsFactory(bathroomData))
-                        .catch((error) => {
-                            log.error(`Erro ao executar #i(CommandInteraction)###(editReply())# enquanto executava listener #(responseUpdate)# do form #(${form.name})# para o comando #(${this.interaction.commandName})# executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.\n#(Erro)#:`, error);
+                        .catch((error: unknown) => {
+                            log.error('Erro ao executar #i(CommandInteraction)###(editReply())#',
+                                'enquanto executava listener #(responseUpdate)#',
+                                `do form #(${form.name})#`,
+                                `para o comando #(${this.interaction.commandName})#`,
+                                `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
+                                '\n#(Erro)#:', error
+                            );
+                            BaseError.handle(error);
                             throw error;
                         });
-                } catch (error) {
-                    log.error(`Erro ao executar listener #(responseUpdate)# do form #(${form.name})# enquanto executava o comando #(${this.interaction.commandName})# executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.\n#(Erro)#:`, error);
+                } catch (error: unknown) {
+                    if (!BaseError.isHandled(error)) {
+                        log.error('Erro ao executar listener #(responseUpdate)#',
+                            `do form #(${form.name})#`,
+                            `enquanto executava o comando #(${this.interaction.commandName})#`,
+                            `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
+                            '\n#(Erro)#:', error
+                        );
+                        BaseError.handle(error);
+                    }
+
                     reject(error);
                 }
             });
-        
-                
+
+
             previewMessageCollector.on('collect', async (i) => {
                 try {
                     if (i.customId === 'cancel-bathroom-register') {
                         form.stop();
-            
+
                         await this.interaction.deleteReply(form.questionMessage)
-                            .catch((error) => {
-                                log.error(`Erro ao deletar mensagem #(questionMessage)# enquanto cancelava o formulário #(${form.name})# enquanto executava o comando #(${this.interaction.commandName})#, executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#\n#(Erro)#:`, error, '\n#(QuestionMessage)#:', form.questionMessage);
+                            .catch((error: unknown) => {
+                                log.error('Erro ao deletar mensagem #(questionMessage)#',
+                                    `enquanto cancelava o formulário #(${form.name})#`,
+                                    `enquanto executava o comando #(${this.interaction.commandName})#,`,
+                                    `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                                    `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                    '\n#(Erro)#:', error,
+                                    '\n#(QuestionMessage)#:', form.questionMessage
+                                );
+
+                                BaseError.handle(error);
                                 throw error;
                             });
-                        
-                                
+
+
                         const messageOptions = {
                             content: '❌ Banheiro não criado. Cadastro cancelado!',
                             embeds: [],
                             components: []
                         };
-            
+
                         await this.interaction.editReply(messageOptions)
-                            .catch((error) => {
-                                log.error(`Erro ao usar #i(CommandInteraction)###(editReply(messageOptions))# enquanto cancelava o formulário #(${form.name})# enquanto executava o comando #(${this.interaction.commandName})#, executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#\n#(messageOptions)#:`, messageOptions, '\n#(Erro)#:', error);
+                            .catch((error: unknown) => {
+                                log.error('Erro ao usar #i(CommandInteraction)###(editReply(messageOptions))#',
+                                    `enquanto cancelava o formulário #(${form.name})#`,
+                                    `enquanto executava o comando #(${this.interaction.commandName})#,`,
+                                    `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                                    `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                    '\n#(messageOptions)#:', messageOptions,
+                                    '\n#(Erro)#:', error
+                                );
+
+                                BaseError.handle(error);
                                 throw error;
                             });
                     }
-                } catch (error) {
-                    log.error(`Erro ao executar listener #(collect)# do ComponentCollector #(previewMessageCollector)# enquanto executava o comando #(${this.interaction.commandName})# executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.\n#(Erro)#:`, error);
+                } catch (error: unknown) {
+                    if (!BaseError.isHandled(error)) {
+                        log.error('Erro ao executar listener #(collect)#',
+                            'do ComponentCollector #(previewMessageCollector)#',
+                            `enquanto executava o comando #(${this.interaction.commandName})#`,
+                            `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
+                            '\n#(Erro)#:', error
+                        );
+
+                        BaseError.handle(error);
+                    };
+
+
                     reject(error);
                 }
             });
-        
-        
+
+
             form.on('finishForm', async (reason, responses) => {
                 try {
                     previewMessageCollector.stop();
-            
+
                     if (reason) {
                         if (reason === 'idle') {
                             await this.interaction.deleteReply(form.questionMessage)
-                                .catch((error) => {
-                                    log.error(`Erro ao deletar mensagem #(questionMessage)# quando finalizado o formulário #(${form.name})# enquanto executava o comando #(${this.interaction.commandName})#, executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#\n#(Erro)#:`, error, '\n#(QuestionMessage)#:', form.questionMessage);
+                                .catch((error: unknown) => {
+                                    log.error('Erro ao deletar mensagem #(questionMessage)#',
+                                        `quando finalizado o formulário #(${form.name})#`,
+                                        `enquanto executava o comando #(${this.interaction.commandName})#,`,
+                                        `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                        '\n#(QuestionMessage)#:', form.questionMessage,
+                                        '\n#(Erro)#:', error,
+                                    );
+
+                                    BaseError.handle(error);
                                     throw error;
                                 });
-                        
-                                
+
+
                             const messageOptions = {
                                 content: '❌ Banheiro não criado. Formulário não completo!',
                                 embeds: [],
                                 components: []
                             };
-            
+
                             await this.interaction.editReply(messageOptions)
-                                .catch((error) => {
-                                    log.error(`Erro ao usar #i(CommandInteraction)###(editReply(messageOptions))# quando finalizado o formulário #(${form.name})# enquanto executava o comando #(${this.interaction.commandName})#, executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#\n#(messageOptions)#:`, messageOptions, '\n#(Erro)#:', error);
+                                .catch((error: unknown) => {
+                                    log.error('Erro ao usar #i(CommandInteraction)###(editReply(messageOptions))#',
+                                        `quando finalizado o formulário #(${form.name})#`,
+                                        `enquanto executava o comando #(${this.interaction.commandName})#,`,
+                                        `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                        '\n#(messageOptions)#:', messageOptions,
+                                        '\n#(Erro)#:', error
+                                    );
+
+                                    BaseError.handle(error);
                                     throw error;
                                 });
                         }
-            
+
                         return resolve('not created');
-                    } 
-            
-            
+                    }
+
+
                     /** Updates bathroomData with the responses of the form */
                     bathroomData = {
                         campus: (responses.get('campus')! as CampusValues[])[0],
@@ -325,8 +399,8 @@ export default class RegisterBathroomExecution extends CommandExecution {
                         mainImageUrl: (responses.get('mainImageUrl') as Attachment[] | [])[0]?.url,
                         imagesUrls: (responses.get('imagesUrls') as Attachment[] | []).map((attachment) => attachment.url)
                     };
-            
-            
+
+
                     /** Instace the new Bathroom */
                     const bathroom = new Bathroom(
                         {
@@ -337,13 +411,13 @@ export default class RegisterBathroomExecution extends CommandExecution {
                             ...bathroomData as Omit<Bathroom, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>,
                         }
                     );
-                
+
                     /** Saves the new Bathroom on the database */
                     await this.client.database?.bathroom.new(bathroom);
-                
-                    
+
+
                     !this.client.admins.includes(this.interaction.user.id) && limiter[this.interaction.user.id].successfullyTimes++;
-                
+
 
 
 
@@ -358,11 +432,20 @@ export default class RegisterBathroomExecution extends CommandExecution {
                     };
 
                     await this.interaction.editReply(messageOptions)
-                        .catch((error) => {
-                            log.error(`Erro ao usar #i(CommandInteraction)###(editReply(messageOptions))# quando finalizado o formulário #(${form.name})# enquanto executava o comando #(${this.interaction.commandName})#, executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#\n#(messageOptions)#:`, messageOptions, '\n#(Erro)#:', error);
+                        .catch((error: unknown) => {
+                            log.error('Erro ao usar #i(CommandInteraction)###(editReply(messageOptions))#',
+                                `quando finalizado o formulário #(${form.name})#`,
+                                `enquanto executava o comando #(${this.interaction.commandName})#,`,
+                                `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                '\n#(messageOptions)#:', messageOptions,
+                                '\n#(Erro)#:', error
+                            );
+
+                            BaseError.handle(error);
                             throw error;
                         });
-                
+
 
 
 
@@ -371,27 +454,55 @@ export default class RegisterBathroomExecution extends CommandExecution {
                     const registeredBathroomMessageOptions = { content: 'Banheiro cadastrado com sucesso!', ephemeral: true };
 
                     await this.interaction.followUp(registeredBathroomMessageOptions)
-                        .catch((error) => {
-                            log.error(`Erro ao usar #i(CommandInteraction)###(followUp(registeredBathroomMessageOptions))# quando finalizado o formulário #(${form.name})# enquanto executava o comando #(${this.interaction.commandName})#, executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#\n#(registeredBathroomMessageOptions)#:`, registeredBathroomMessageOptions, '\n#(Erro)#:', error);
+                        .catch((error: unknown) => {
+                            log.error('Erro ao usar #i(CommandInteraction)###(followUp(registeredBathroomMessageOptions))#',
+                                `quando finalizado o formulário #(${form.name})#`,
+                                `enquanto executava o comando #(${this.interaction.commandName})#,`,
+                                `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                '\n#(registeredBathroomMessageOptions)#:', registeredBathroomMessageOptions,
+                                '\n#(Erro)#:', error
+                            );
+
+                            BaseError.handle(error);
                             throw error;
                         });
 
-                    
+
                     resolve('created');
-                } catch (error) {
-                    log.error(`Erro ao executar listener #(finishForm)# do form #(${form.name})# enquanto executava o comando #(${this.interaction.commandName})# executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.\n#(Erro)#:`, error);
+                } catch (error: unknown) {
+                    if (!BaseError.isHandled(error)) {
+                        log.error('Erro ao executar listener #(finishForm)#',
+                            `do form #(${form.name})#`,
+                            `enquanto executava o comando #(${this.interaction.commandName})#`,
+                            `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
+                            '\n#(Erro)#:', error
+                        );
+
+                        BaseError.handle(error);
+                    }
+
+
                     reject(error);
                 }
             });
-        
+
             form.on('error', (...error) => {
                 if (isObject(error[0]) && (error[0].error === 'idle' || error[0].error === 'time')) return;
 
-                log.error(`Erro enquanto executava o formulário #(${form.name})# enquanto executava o comando #(${this.interaction.commandName})#, executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})# no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.\n#(Erro)#:`, ...error, '\n#(CommandInteraction)#:', this.interaction);
+                log.error(`Erro enquanto executava o formulário #(${form.name})#`,
+                    `enquanto executava o comando #(${this.interaction.commandName})#,`,
+                    `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
+                    `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
+                    '\n#(CommandInteraction)#:', this.interaction,
+                    '\n#(Erro)#:', ...error);
+
+                BaseError.handle(error);
                 reject(error);
             });
         });
-    
+
     };
 
 

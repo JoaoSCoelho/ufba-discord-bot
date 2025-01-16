@@ -7,12 +7,15 @@ import { FormEvents } from './Form.types';
 import isObject from '../utils/isObject';
 import discordAnsi from '../utils/discord-ansi';
 import { log } from './LogSystem';
+import { INodeEventEmitter } from '../utils/INodeEventEmitter';
+import BaseError from '../Errors/BaseError';
+import { Obj } from '../utils/Obj';
 
 
 
 
 
-export default class Form extends EventEmitter {
+export default class Form extends (EventEmitter as unknown as { new(): INodeEventEmitter }) {
     // Collectors savers ------------------------
 
     private collectors: (InteractionCollector<MappedInteractionTypes[MessageComponentType]> | MessageCollector)[] = [];
@@ -38,9 +41,8 @@ export default class Form extends EventEmitter {
         private client: LocalClient,
         /** A list of all the questions that should be asked */
         questions: (ParamQuestionStringSelect | ParamQuestionString | ParamQuestionInteger | ParamQuestionBoolean | ParamQuestionAttachments)[],
-        eventEmitterOptions?: ConstructorParameters<typeof EventEmitter>[0]
     ) {
-        super(eventEmitterOptions);
+        super();
 
         const DEFAULT_RESPONSES: { [Key in QuestionType]: () => Question<Key>['response'] } = {
             Attachments: () => [],
@@ -78,7 +80,7 @@ export default class Form extends EventEmitter {
     public async run(fromIndex?: number) {
         if (!this.interaction.deferred && !this.interaction.replied)
             await this.interaction.deferReply({ ephemeral: true })
-                .catch((error) => {
+                .catch((error: unknown) => {
                     log.error('Erro ao usar #i(CommandInteraction<CacheType>)###(deferReply())#',
                         `enquanto executava #(run())# no Form "#(${this.name})#",`,
                         `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
@@ -86,7 +88,7 @@ export default class Form extends EventEmitter {
                         '\n#(Erro)#:', error,
                         '\n#(CommandInteraction)#:', this.interaction
                     );
-                    error.handled = true;
+                    BaseError.handle(error);
 
                     this.emit('error', error);
                     throw error;
@@ -106,7 +108,7 @@ export default class Form extends EventEmitter {
         };
 
         this.questionMessage = await this.interaction.followUp(questionMessageOptions)
-            .catch((error) => {
+            .catch((error: unknown) => {
                 log.error('Erro ao usar #i(CommandInteraction<CacheType>)###(followUp(Options))#',
                     `enquanto executava #(run())# no Form "#(${this.name})#",`,
                     `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
@@ -115,7 +117,7 @@ export default class Form extends EventEmitter {
                     '\n#(MessageOptions)#:', questionMessageOptions,
                     '\n#(CommandInteraction)#:', this.interaction
                 );
-                error.handled = true;
+                BaseError.handle(error);
 
                 this.emit('error', error);
                 throw error;
@@ -231,7 +233,7 @@ export default class Form extends EventEmitter {
                     };
 
                     this.interaction.editReply(questionMessageOptions)
-                        .catch((error) => {
+                        .catch((error: unknown) => {
                             log.error('Erro ao usar #i(CommandInteraction<CacheType>)###(editReply(Message))#',
                                 `enquanto finalizava o Form "#(${this.name})#",`,
                                 `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
@@ -240,12 +242,12 @@ export default class Form extends EventEmitter {
                                 '\n#(MessageOptions)#:', questionMessageOptions,
                                 '\n#(CommandInteraction)#:', this.interaction
                             );
-                            error.handled = true;
+                            BaseError.handle(error);
                             this.emit('error', error);
                         });
 
                 })
-                .catch((error) => {
+                .catch((error: unknown) => {
                     this.emit('error', error);
                 });
 
@@ -393,8 +395,8 @@ export default class Form extends EventEmitter {
                                 .then((response) => {
                                     if (response !== null) resolve(response as Returned);
                                 })
-                                .catch((error) => {
-                                    if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                                .catch((error: unknown) => {
+                                    if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                                 });
 
                         }
@@ -411,8 +413,8 @@ export default class Form extends EventEmitter {
                                 .then((response) => {
                                     if (response !== null) resolve(response as Returned);
                                 })
-                                .catch((error) => {
-                                    if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                                .catch((error: unknown) => {
+                                    if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                                 });
 
                         }
@@ -428,8 +430,8 @@ export default class Form extends EventEmitter {
                                 .then((response) => {
                                     if (response !== null) resolve(response as Returned);
                                 })
-                                .catch((error) => {
-                                    if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                                .catch((error: unknown) => {
+                                    if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                                 });
                         }
 
@@ -443,8 +445,8 @@ export default class Form extends EventEmitter {
                                 .then((response) => {
                                     if (response !== null) resolve(response as Returned);
                                 })
-                                .catch((error) => {
-                                    if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                                .catch((error: unknown) => {
+                                    if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                                 });
                         }
 
@@ -469,7 +471,7 @@ export default class Form extends EventEmitter {
                 i: StringSelectMenuInteraction<CacheType>,
             ) {
                 if (i instanceof MessageComponentInteraction && !i.deferred && !i.replied) await i.deferUpdate()
-                    .catch((error) => {
+                    .catch((error: unknown) => {
                         log.error('Erro ao usar #i(StringSelectMenuInteraction<CacheType>)###(deferUpdate())#',
                             `enquanto executava #(defaultOnChange())# para a question "#(${options.name})#"`,
                             `no Form "#(${this.name})#",`,
@@ -479,7 +481,7 @@ export default class Form extends EventEmitter {
                             '\n#(StringSelectMenuInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
-                        error.handled = true;
+                        BaseError.handle(error);
                         throw error;
                     });
 
@@ -524,7 +526,7 @@ export default class Form extends EventEmitter {
                 i: ButtonInteraction<CacheType>,
             ) {
                 if (!i.deferred && !i.replied) await i.deferUpdate()
-                    .catch((error) => {
+                    .catch((error: unknown) => {
                         log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
                             'enquanto executava #(defaultOnCleanButtonClick())#',
                             `para a question "#(${options.name})#" no Form "#(${this.name})#",`,
@@ -534,7 +536,7 @@ export default class Form extends EventEmitter {
                             '\n#(ButtonInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
-                        error.handled = true;
+                        BaseError.handle(error);
                         throw error;
                     });
 
@@ -724,8 +726,8 @@ export default class Form extends EventEmitter {
                         .then((response) => {
                             if (response !== null) resolve(response as Returned);
                         })
-                        .catch((error) => {
-                            if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                        .catch((error: unknown) => {
+                            if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                         });
                 });
 
@@ -748,8 +750,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
 
                     }
@@ -765,8 +767,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
                     }
 
@@ -780,8 +782,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
                     }
                 });
@@ -802,7 +804,7 @@ export default class Form extends EventEmitter {
 
                 // [TASK 3.0] Verify if the bot has permission to delete messages on channel
                 if (m.deletable) m.delete()
-                    .catch((error) => {
+                    .catch((error: unknown) => {
                         log.error('Erro ao usar #i(Message<Boolean>)###(delete())#',
                             `enquanto executava #(defaultOnChange())# para a question "#(${options.name})#"`,
                             `no Form "#(${this.name})#",`,
@@ -812,7 +814,7 @@ export default class Form extends EventEmitter {
                             '\n#(Message)#:', m,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
-                        error.handled = true;
+                        BaseError.handle(error);
                         throw error;
                     });
 
@@ -862,7 +864,7 @@ export default class Form extends EventEmitter {
                 i: ButtonInteraction<CacheType>,
             ) {
                 if (!i.deferred && !i.replied) await i.deferUpdate()
-                    .catch((error) => {
+                    .catch((error: unknown) => {
                         log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
                             'enquanto executava #(defaultOnCleanButtonClick())#',
                             `para a question "#(${options.name})#" no Form "#(${this.name})#",`,
@@ -872,7 +874,7 @@ export default class Form extends EventEmitter {
                             '\n#(ButtonInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
-                        error.handled = true;
+                        BaseError.handle(error);
                         throw error;
                     });
 
@@ -1129,8 +1131,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
 
                     }
@@ -1147,8 +1149,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
 
                     }
@@ -1164,8 +1166,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
                     }
 
@@ -1179,8 +1181,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
                     }
 
@@ -1203,7 +1205,7 @@ export default class Form extends EventEmitter {
                 i: ButtonInteraction<CacheType>,
             ) {
                 if (i instanceof MessageComponentInteraction && !i.deferred && !i.replied) await i.deferUpdate()
-                    .catch((error) => {
+                    .catch((error: unknown) => {
                         log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
                             'enquanto executava #(defaultOnChange())#',
                             `para a question "#(${options.name})#"`,
@@ -1214,7 +1216,7 @@ export default class Form extends EventEmitter {
                             '\n#(ButtonInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
-                        error.handled = true;
+                        BaseError.handle(error);
                         throw error;
                     });
 
@@ -1258,7 +1260,7 @@ export default class Form extends EventEmitter {
                 i: ButtonInteraction<CacheType>,
             ) {
                 if (!i.deferred && !i.replied) await i.deferUpdate()
-                    .catch((error) => {
+                    .catch((error: unknown) => {
                         log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
                             'enquanto executava #(defaultOnCleanButtonClick())#',
                             `para a question "#(${options.name})#"`,
@@ -1269,7 +1271,7 @@ export default class Form extends EventEmitter {
                             '\n#(ButtonInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
-                        error.handled = true;
+                        BaseError.handle(error);
                         throw error;
                     });
 
@@ -1456,8 +1458,8 @@ export default class Form extends EventEmitter {
                         .then((response) => {
                             if (response !== null) resolve(response as Returned);
                         })
-                        .catch((error) => {
-                            if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                        .catch((error: unknown) => {
+                            if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                         });
                 });
 
@@ -1477,8 +1479,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
 
                     }
@@ -1494,8 +1496,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
                     }
 
@@ -1509,8 +1511,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
                     }
 
@@ -1525,8 +1527,8 @@ export default class Form extends EventEmitter {
                             .then((response) => {
                                 if (response !== null) resolve(response as Returned);
                             })
-                            .catch((error) => {
-                                if (isObject(error) && error.rejectReason) reject(error.rejectReason);
+                            .catch((error: unknown) => {
+                                if (isObject(error) && (error as Obj).rejectReason) reject((error as Obj).rejectReason);
                             });
                     }
                 });
@@ -1546,7 +1548,7 @@ export default class Form extends EventEmitter {
                 if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
                 if (m.deletable) m.delete()
-                    .catch((error) => {
+                    .catch((error: unknown) => {
                         log.error('Erro ao usar #i(Message<Boolean>)###(delete())#',
                             'enquanto executava #(defaultOnChange())#',
                             `para a question "#(${options.name})#"`,
@@ -1557,7 +1559,7 @@ export default class Form extends EventEmitter {
                             '\n#(Message)#:', m,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
-                        error.handled = true;
+                        BaseError.handle(error);
                         throw error;
                     });
 
@@ -1605,7 +1607,7 @@ export default class Form extends EventEmitter {
 
 
                 if (!i.deferred && !i.replied) await i.deferUpdate()
-                    .catch((error) => {
+                    .catch((error: unknown) => {
                         log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
                             'enquanto executava #(defaultOnCleanButtonClick())#',
                             `para a question "#(${options.name})#"`,
@@ -1616,7 +1618,7 @@ export default class Form extends EventEmitter {
                             '\n#(ButtonInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
-                        error.handled = true;
+                        BaseError.handle(error);
                         throw error;
                     });
 
@@ -1658,7 +1660,7 @@ export default class Form extends EventEmitter {
                 if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
                 if (!i.deferred && !i.replied) await i.deferUpdate()
-                    .catch((error) => {
+                    .catch((error: unknown) => {
                         log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
                             'enquanto executava #(defaultOnChangeAttachmentButtonClick)#',
                             `para a question "#(${options.name})#"`,
@@ -1669,7 +1671,7 @@ export default class Form extends EventEmitter {
                             '\n#(ButtonInteraction)#:', i,
                             '\n#(CommandInteraction)#:', this.interaction
                         );
-                        error.handled = true;
+                        BaseError.handle(error);
                         throw error;
                     });
 
@@ -1833,7 +1835,7 @@ export default class Form extends EventEmitter {
 
 
             if (!i.deferred && !i.replied) await i.deferUpdate()
-                .catch((error) => {
+                .catch((error: unknown) => {
                     log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
                         'enquanto executava #(defaultOnChangeQuestionButtonClick)#',
                         `para a question "#(${options.name})#"`,
@@ -1844,7 +1846,7 @@ export default class Form extends EventEmitter {
                         '\n#(ButtonInteraction)#:', i,
                         '\n#(CommandInteraction)#:', this.interaction
                     );
-                    error.handled = true;
+                    BaseError.handle(error);
                     throw error;
                 });
 
@@ -1875,7 +1877,7 @@ export default class Form extends EventEmitter {
 
 
             if (!i.deferred && !i.replied) await i.deferUpdate()
-                .catch((error) => {
+                .catch((error: unknown) => {
                     log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
                         'enquanto executava #(defaultOnFinishFormButtonClick)#',
                         `para a question "#(${options.name})#"`,
@@ -1886,7 +1888,7 @@ export default class Form extends EventEmitter {
                         '\n#(ButtonInteraction)#:', i,
                         '\n#(CommandInteraction)#:', this.interaction
                     );
-                    error.handled = true;
+                    BaseError.handle(error);
                     throw error;
                 });
 

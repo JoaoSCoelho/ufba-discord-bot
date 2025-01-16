@@ -3,6 +3,7 @@ import ClientEvent from '../classes/ClientEvent';
 import { client } from '..';
 import { log } from '../classes/LogSystem';
 import Member from '../classes/database/Member';
+import BaseError from '../Errors/BaseError';
 
 // Captures when a new member enter on a guild
 
@@ -35,10 +36,13 @@ export default new ClientEvent(Events.GuildMemberAdd, async (guildMember) => {
                 log.successh(`Membro #(@${guildMember.user.tag})#`,
                     `do servidor #(${guildMember.guild.name})# adicionado ao banco de dados`);
             })
-            .catch((error) => {
-                log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})#`,
-                    `do servidor #(${guildMember.guild.name})# ao banco de dados`, 
-                    error);
+            .catch((error: unknown) => {
+                if (!BaseError.isHandled(error)) {
+                    log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})#`,
+                        `do servidor #(${guildMember.guild.name})# ao banco de dados`,
+                        '\n#(Member)#:', member,
+                        '\n#(Erro)#:', error);
+                }
             });
     };
 

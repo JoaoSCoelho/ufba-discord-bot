@@ -331,6 +331,9 @@ describe('ScoreSystem', () => {
         });
     });
 
-
+    describe('addMemberWithScore', () => {
+        it('should call new() of database', () => { });
+        it('should [IMPLEMENT THIS TEST]');
+    });
 
 });

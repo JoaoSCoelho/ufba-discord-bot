@@ -2,6 +2,7 @@ import { Events, TextChannel } from 'discord.js';
 import { client } from '..';
 import ClientEvent from '../classes/ClientEvent';
 import { log } from '../classes/LogSystem';
+import BaseError from '../Errors/BaseError';
 
 
 // Captures when a new message is sent
@@ -68,16 +69,23 @@ export default new ClientEvent(Events.MessageCreate, async (message) => {
             `executado por #(@${message.author.tag})#`,
             `no canal #(#${(message.channel as TextChannel | undefined)?.name ?? message.channelId})#`,
             `do servidor #(${message.guild?.name ?? message.guildId})#`);
-    } catch (error) {
-        log.error(`Aconteceu um erro na execução do comando #(${client.prefix}${commandName})#`,
-            `pelo admin #(@${message.author.tag})#,`,
-            `no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})#`,
-            `do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`,
-            error);
+    } catch (error: unknown) {
+        if (!BaseError.isHandled(error)) {
+            log.error(`Aconteceu um erro na execução do comando #(${client.prefix}${commandName})#`,
+                `pelo admin #(@${message.author.tag})#,`,
+                `no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})#`,
+                `do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`,
+                '\n#(Erro)#:', error
+            );
+
+            BaseError.handle(error);
+        }
 
         await message.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!' })
-            .catch((error) => {
-                log.error(`Erro ao enviar mensagem de erro na execução do comando de admin #(${client.prefix}${commandName})#`, error);
+            .catch((error: unknown) => {
+                log.error(`Erro ao enviar mensagem de erro na execução do comando de admin #(${client.prefix}${commandName})#`,
+                    '\n#(Erro)#:', error
+                );
             });
     }
 });

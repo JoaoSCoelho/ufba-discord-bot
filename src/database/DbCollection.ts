@@ -2,6 +2,7 @@ import { Collection } from 'discord.js';
 import Database, { DatabaseInterface } from './Database';
 import ClassEntity from '../classes/database/Entity';
 import { log } from '../classes/LogSystem';
+import BaseError from '../Errors/BaseError';
 
 /** A extension of a Collection, but with methods of Database */
 export default class DbCollection<Entity extends ClassEntity> extends Collection<string, Entity> {
@@ -25,7 +26,7 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
         log.infoh(`Um novo registro, ID: #(${entity.id})#, foi adicionado à coleção #(${this.entityName})#`);
 
 
-        
+
         this.database.emit('entityCreate', this.entityName, entity);
 
 
@@ -35,8 +36,15 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
                 if (status === 'updated') log.infoh(`O novo registro, ID: #(${entity.id})#, foi globalmente incorporado`);
                 else if (status === 'buffer') log.infoh(`O novo registro, ID: #(${entity.id})#, está na fila para ser globalmente incorporado`);
             })
-            .catch ((error) => {
-                log.error(`Erro ao usar #g(globalUpdateSystem)# ao criar entidade ID: #(${entity.id})#`, error);
+            .catch((error: unknown) => {
+                if (!BaseError.isHandled(error)) {
+                    log.error(`Erro ao usar #g(globalUpdateSystem)# ao criar entidade ID: #(${entity.id})#`,
+                        '\n#(Erro)#:', error
+                    );
+
+                    BaseError.handle(error);
+                }
+
                 throw error;
             });
     }
@@ -61,8 +69,14 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
                 if (status === 'updated') log.infoh(`O registro, ID: #(${newEntity.id})#, foi globalmente atualizado`);
                 else if (status === 'buffer') log.infoh(`O registro, ID: #(${newEntity.id})#, está na fila para ser globalmente atualizado`);
             })
-            .catch ((error) => {
-                log.error(`Erro ao usar #g(globalUpdateSystem)# ao editar entidade ID: #(${newEntity.id})#`, error);
+            .catch((error: unknown) => {
+                if (!BaseError.isHandled(error)) {
+                    log.error(`Erro ao usar #g(globalUpdateSystem)# ao editar entidade ID: #(${newEntity.id})#`,
+                        '\n#(Erro)#:', error
+                    );
+
+                    BaseError.handle(error);
+                }
                 throw error;
             });
     }
@@ -86,8 +100,14 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
                 if (status === 'updated') log.infoh(`O registro, ID: #(${entityId})#, foi globalmente removido`);
                 else if (status === 'buffer') log.infoh(`O registro, ID: #(${entityId})#, está na fila para ser globalmente removido`);
             })
-            .catch ((error) => {
-                log.error(`Erro ao usar #g(globalUpdateSystem)# ao editar entidade ID: #(${entityId})#`, error);
+            .catch((error: unknown) => {
+                if (!BaseError.isHandled(error)) {
+                    log.error(`Erro ao usar #g(globalUpdateSystem)# ao editar entidade ID: #(${entityId})#`,
+                        '\n#(Erro)#:', error
+                    );
+
+                    BaseError.handle(error);
+                }
                 throw error;
             });
     }

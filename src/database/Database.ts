@@ -9,12 +9,11 @@ import Member from '../classes/database/Member';
 import prettyBytes from '../utils/prettyBytes';
 import { log } from '../classes/LogSystem';
 import { EventEmitter } from 'node:events';
+import { INodeEventEmitter } from '../utils/INodeEventEmitter';
+import BaseError from '../Errors/BaseError';
+import HandledError from '../Errors/HandledError';
 
-interface NodeEventEmitter {
-    on(event: string, listener: (...args: unknown[]) => void): this;
-    emit(event: string, ...args: unknown[]): boolean;
-    // Adicione os métodos que você usa
-}
+
 
 export interface DatabaseInterface {
     bathroom: Bathroom[];
@@ -24,7 +23,7 @@ export interface DatabaseInterface {
 
 export type EntityClasses = typeof Bathroom | typeof BathroomAvaliation | typeof Member
 
-export default class Database extends (EventEmitter as unknown as { new(): NodeEventEmitter }) {
+export default class Database extends (EventEmitter as unknown as { new(): INodeEventEmitter }) {
     public bathroom: DbCollection<Bathroom>;
     public bathroomAvaliation: DbCollection<BathroomAvaliation>;
     public member: DbCollection<Member>;
@@ -50,14 +49,20 @@ export default class Database extends (EventEmitter as unknown as { new(): NodeE
     /** Get discord channel of Database files posts */
     async getDbChannel() {
         const dbChannel = await this.client.channels.fetch(process.env.DATABASE_CHANNEL_ID!)
-            .catch((error) => {
-                log.error(`Erro ao buscar #(dbChannel)# com ID: #(${process.env.DATABASE_CHANNEL_ID})#`, error);
+            .catch((error: unknown) => {
+                log.error('Erro ao buscar #(dbChannel)#',
+                    `com ID: #(${process.env.DATABASE_CHANNEL_ID})#`,
+                    '\n#(Erro)#:', error
+                );
+
+                BaseError.handle(error);
                 throw error;
             });
 
         if (!dbChannel?.isTextBased() || dbChannel.type !== ChannelType.GuildText) {
             log.error(`Database channel "#(${dbChannel?.id ?? process.env.DATABASE_CHANNEL_ID})# is not a TextChannel"`);
-            throw new Error('Database channel is not a TextChannel');
+
+            throw new HandledError('Database channel is not a TextChannel');
         }
 
         return dbChannel;
@@ -75,14 +80,17 @@ export default class Database extends (EventEmitter as unknown as { new(): NodeE
         const dbChannel = await this.getDbChannel();
 
         const lastMessage = (await dbChannel.messages.fetch({ limit: 1 })
-            .catch((error) => {
-                log.error(`Erro ao buscar a última mensagem do dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`, error);
+            .catch((error: unknown) => {
+                log.error(`Erro ao buscar a última mensagem do dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`,
+                    '\n#(Erro)#:', error);
+
+                BaseError.handle(error);
                 throw error;
             })).first();
 
         if (!lastMessage) {
             log.error(`Não há nenhuma mensagem no dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`);
-            throw new Error('There is not a published database');
+            throw new HandledError('There is not a published database');
         }
 
 
@@ -92,7 +100,7 @@ export default class Database extends (EventEmitter as unknown as { new(): NodeE
 
         if (!file) {
             log.error(`Não há arquivos na última mensagem do dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`);
-            throw new Error('There is no file in last published database');
+            throw new HandledError('There is no file in last published database');
         }
 
 
@@ -125,12 +133,12 @@ export default class Database extends (EventEmitter as unknown as { new(): NodeE
         collectionsAndHisClasses.forEach(([entityName, entityClass]) => {
             if (!entityClass) {
                 log.error(`The #("entityClass")# for "#(${entityName})#" entity is undefined!`);
-                throw new Error(`"entityClass" for "${entityName}" entity is undefined!`);
+                throw new HandledError(`"entityClass" for "${entityName}" entity is undefined!`);
             }
 
             if (!this[entityName]) {
                 log.error(`The entityName "#(${entityName})#" is not a key of Database!`);
-                throw new Error(`entityName "${entityName}" is not a key of Database!`);
+                throw new HandledError(`entityName "${entityName}" is not a key of Database!`);
             }
 
 
@@ -188,8 +196,12 @@ export default class Database extends (EventEmitter as unknown as { new(): NodeE
 
         await dbChannel.send({ files: [new AttachmentBuilder(fileBuffer, { name: FILE_NAME })] })
             .then(() => log.infoh(`Banco de dados atualizado no Discord. Tamanho total #(${prettyBytes(fileBuffer.length)})#`))
-            .catch((error) => {
-                log.error(`Erro ao enviar arquivo #(${FILE_NAME})# no dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`, error);
+            .catch((error: unknown) => {
+                log.error(`Erro ao enviar arquivo #(${FILE_NAME})#`,
+                    `no dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`,
+                    '\n#(Erro)#:', error);
+
+                BaseError.handle(error);
                 throw error;
             });
     }

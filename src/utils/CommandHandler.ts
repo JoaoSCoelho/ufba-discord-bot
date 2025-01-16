@@ -5,6 +5,7 @@ import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes } from 'd
 import AdminCommand from '../classes/AdminCommand';
 import { log } from '../classes/LogSystem';
 import { client } from '..';
+import BaseError from '../Errors/BaseError';
 
 export default class CommandHandler {
     /** Controls whether when the commandHandler is being executed, the deployment of commands on discord should also be executed */
@@ -119,8 +120,12 @@ export default class CommandHandler {
 
             log.success(`Successfully reloaded #(${data.length})# application (/) commands.\n`,
                 `${commands.map((command, index) => `#g(${index + 1}º)# ${command.name}`).join('#g(, )#')}`);
-        } catch (error) {
-            log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord', error);
+        } catch (error: unknown) {
+            if (!BaseError.isHandled(error)) {
+                log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord',
+                    '\n#(Erro)#:', error
+                );
+            }
         }
     }
 }

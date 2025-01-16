@@ -3,6 +3,8 @@ import SlashCommand from '../../../classes/Command';
 import discordAnsi from '../../../utils/discord-ansi';
 import isObject from '../../../utils/isObject';
 import { log } from '../../../classes/LogSystem';
+import { Obj } from '../../../utils/Obj';
+import BaseError from '../../../Errors/BaseError';
 
 export default new SlashCommand(
     new SlashCommandBuilder()
@@ -37,10 +39,18 @@ export default new SlashCommand(
         /** Array of formatted lines of rank (using discord ansi codes) */
         const rankingLines = await Promise.all(top15Members.map(async (member, index) => {
             const discordMember = await client.guilds.cache.get(interaction.guildId)?.members.fetch(member.discordId)
-                .catch((error) => {
-                    if (isObject(error) && error.message === 'Unknown Member') return undefined;
+                .catch((error: unknown) => {
+                    if (isObject(error) && (error as Obj).message === 'Unknown Member') return undefined;
 
-                    log.error(`Erro ao dar fetch em membro de ID: #(${member.discordId})# enquanto executava o comando /#(ranking)# usado por #(@${interaction.user.tag})# no servidor #(${interaction.guild?.name ?? interaction.guildId})#\n#(Opções usadas)#:`, interaction.options.data, '\n#(Erro)#:', error);
+                    log.error(`Erro ao dar fetch em membro de ID: #(${member.discordId})#`,
+                        'enquanto executava o comando /#(ranking)#',
+                        `usado por #(@${interaction.user.tag})#`,
+                        `no servidor #(${interaction.guild?.name ?? interaction.guildId})#`,
+                        '\n#(Opções usadas)#:', interaction.options.data,
+                        '\n#(Erro)#:', error
+                    );
+
+                    BaseError.handle(error);
                     throw error;
                 });
 
