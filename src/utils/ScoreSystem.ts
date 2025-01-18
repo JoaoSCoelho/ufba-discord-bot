@@ -4,6 +4,8 @@ import { log } from '../classes/LogSystem';
 import Member from '../classes/database/Member';
 import BaseError from '../Errors/BaseError';
 
+
+/** @note use `init()` method to enable the `ScoreSystem` before starts it */
 export default class ScoreSystem<Initialized extends boolean = boolean> {
     static readonly levels = [
         { targetScore: 100 },
@@ -112,7 +114,8 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
                 });
             if (!createdMember) return;
         } else {
-            await this.addScoreToMember(dbMember, message.member)
+            const result = await this.addScoreToMember(dbMember, message.member)
+                .then(() => true)
                 .catch((error: unknown) => {
                     if (!BaseError.isHandled(error)) {
                         log.error('Erro ao adicionar score ao membro\n',
@@ -123,6 +126,8 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
 
                     return null;
                 });
+
+            if (!result) return;
         }
 
         const updatedMember = this.client.database.member.find((member) =>
@@ -132,20 +137,35 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         if (!updatedMember) {
             log.error(`Membro #(@${message.member.user.tag})#`,
                 `do servidor #(${message.member.guild.name})#`,
-                'não foi encontrado no banco de dados depois de computar seu score',
+                'não foi encontrado no banco de dados depois de computar seu score.',
                 '\n#(GuildMember)#:', message.member
             );
             return;
         };
 
         /**
- * The level that the member has achieved after updating their score.
- * This value is determined by checking if the member has passed to the next level.
- */
+         * The level that the member has achieved after updating their score.
+         * This value is determined by checking if the member has passed to the next level.
+         */
         const achievedLevel = this.havePassedToNextLevel(updatedMember, dbMember);
 
         if (achievedLevel > 0) {
-            await this.sendNextLevelMessage(message.member, message.channel, achievedLevel);
+            await this.sendNextLevelMessage(message.member, message.channel, achievedLevel)
+                .catch((error: unknown) => {
+                    if (!BaseError.isHandled(error)) {
+                        if (error instanceof Error && error.message === 'Bot doesn\'t have permission to send messages in the channel') {
+                            log.warnh(`O bot não tem permissão para enviar mensagens no canal #(#${message.channel.name})#`,
+                                `do servidor #(${message.member!.guild.name})#`,
+                                `para o usuário #(@${message.member!.user.tag})#`);
+                        } else {
+                            log.error('Erro ao enviar mensagem de proximo nivel',
+                                '\n#(Nível)#:', achievedLevel,
+                                '\n#(GuildMember)#:', message.member,
+                                '\n#(GuildTextBasedChannel)#:', message.channel,
+                                '\n#(Erro)#:', error);
+                        }
+                    }
+                });
         }
     }
 
@@ -179,7 +199,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
                     log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})#`,
                         `do servidor #(${guildMember.guild.name})# ao banco de dados`,
                         '\n#(Membro)#:', newMember,
-                        '\n#(Error)#:', error);
+                        '\n#(Erro)#:', error);
                     BaseError.handle(error);
                 }
                 throw error;
@@ -189,14 +209,14 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
     }
 
     /**
-     * Adiciona o score de um membro ao banco de dados.
+     * Adds the score of a member to the database.
      * 
-     * @param dbMember A instancia do membro do banco de dados.
-     * @param guildMember A instancia do membro do servidor.
+     * @param dbMember A instance of the member in the database.
+     * @param guildMember A instance of the member in the server.
      */
     private async addScoreToMember(this: ScoreSystem<true>, dbMember: Member, guildMember: GuildMember) {
-        log.loadingh(`Adicionando #(${this.scorePerMessage})# pontos de score ao membro #(@${guildMember.user.tag})#`,
-            `do servidor #(${guildMember.guild.name})#`);
+        log.loadingh(`Adding #(${this.scorePerMessage})# points of score to member #(@${guildMember.user.tag})#`,
+            `from server #(${guildMember.guild.name})#`);
 
         const newMemberData = {
             ...dbMember,
@@ -248,7 +268,9 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
             `do servidor #(${guildMember.guild.name})# passou para o nível #(${level})#`);
 
 
-        if (!guildMember.guild.members.me?.permissionsIn(channel).has(PermissionsBitField.Flags.SendMessages)) return;
+        if (!guildMember.guild.members.me?.permissionsIn(channel).has(PermissionsBitField.Flags.SendMessages)) {
+            throw new BaseError('Bot doesn\'t have permission to send messages in the channel');
+        };
 
         const messageContent = `Parabéns ${guildMember}, você passou para o level ${level}`;
 
@@ -259,6 +281,10 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
                     `no canal #(#${channel.name})#`,
                     `no servidor #(${guildMember.guild.name})#`,
                     '\n#(Erro)#:', error);
+
+                BaseError.handle(error);
+
+                throw error ?? new Error('Unknown error');
             });
     }
 }

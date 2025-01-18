@@ -1,4 +1,4 @@
-export default abstract class BaseError extends Error {
+export default class BaseError extends Error {
     /** If `true` indicates that this error was already handled in another part of the code.
      * 
      * A handled error means that the error was already logged or treated in another part of the code.
