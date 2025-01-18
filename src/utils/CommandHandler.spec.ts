@@ -214,5 +214,14 @@ describe('CommandHandler', () => {
 
             expect(restMock.put).toHaveBeenCalledWith('mockRoute', { body: [{ name: 'testCommand' }] });
         });
+
+        it('should throw an error if an error occurs while deploying commands', async () => {
+            restMock.put.mockImplementationOnce(() => { throw new Error(); });
+
+            const commandHandler = new CommandHandler();
+
+            expect(commandHandler.deployCommands([])).rejects.toThrow();
+            expect(log.error).toHaveBeenCalled();
+        });
     });
 });

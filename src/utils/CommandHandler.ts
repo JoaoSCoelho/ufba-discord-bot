@@ -125,7 +125,11 @@ export default class CommandHandler {
                 log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord',
                     '\n#(Erro)#:', error
                 );
+
+                BaseError.handle(error);
             }
+
+            throw error;
         }
     }
 }
