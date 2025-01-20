@@ -43,7 +43,9 @@ jest.mock('../classes/LogSystem', () => ({
         success: jest.fn(),
         successh: jest.fn(),
         warn: jest.fn(),
+        warnh: jest.fn(),
         info: jest.fn(),
+        infoh: jest.fn(),
         error: jest.fn(),
     },
 }));
@@ -98,7 +100,7 @@ describe('CommandHandler', () => {
             jest.mock('/mock/commands/category1/command1/index.ts', () => (mockCommand), { virtual: true });
 
             let ch = new CommandHandler(false);
-            ch.deployCommands = jest.fn();
+            ch.deployCommands = jest.fn(async () => { });
 
             await ch.handleCommands();
 
@@ -107,7 +109,7 @@ describe('CommandHandler', () => {
             expect(ch.deployCommands).not.toHaveBeenCalled();
 
             ch = new CommandHandler(true);
-            ch.deployCommands = jest.fn();
+            ch.deployCommands = jest.fn(async () => { });
 
             await ch.handleCommands();
 
@@ -119,7 +121,7 @@ describe('CommandHandler', () => {
 
             beforeEach(() => {
                 commandHandler = new CommandHandler(true);
-                commandHandler.deployCommands = jest.fn();
+                commandHandler.deployCommands = jest.fn(async () => { });
             });
 
             it('should skip non SlashCommand commands', async () => {
@@ -158,6 +160,54 @@ describe('CommandHandler', () => {
 
                 expect(client.commands.size).toBe(0);
                 expect(log.warn).toHaveBeenCalled();
+            });
+
+            it('should skip commands that the importCommandInPath fails', async () => {
+                (fs.readdirSync as jest.Mock).mockImplementation((p: string) => {
+                    if (p.endsWith('commands')) return ['category1'];
+                    if (p.endsWith('category1')) return [{ name: 'invalidCommand', isDirectory: () => true }];
+                    if (p.endsWith('invalidCommand')) return ['index.ts'];
+                });
+
+                client.commands.set = jest.fn();
+                const commandHandler = new CommandHandler();
+                commandHandler['importCommandInPath'] = jest.fn(async () => { throw new Error(); });
+
+                await commandHandler.handleCommands();
+
+                expect(log.error).toHaveBeenCalled();
+                expect(client.commands.size).toBe(0);
+                expect(client.commands.set).not.toHaveBeenCalled();
+            });
+
+            it('should skip commands that the import fails', async () => {
+                (fs.readdirSync as jest.Mock).mockImplementation((p: string) => {
+                    if (p.endsWith('commands')) return ['category1'];
+                    if (p.endsWith('category1')) return [{ name: 'invalidCommand', isDirectory: () => true }];
+                    if (p.endsWith('invalidCommand')) return ['index.ts'];
+                });
+
+                jest.unmock('/mock/commands/category1/invalidCommand/index.ts');
+
+                client.commands.set = jest.fn();
+                const commandHandler = new CommandHandler();
+
+                await commandHandler.handleCommands();
+
+                expect(log.error).toHaveBeenCalled();
+                expect(client.commands.size).toBe(0);
+                expect(client.commands.set).not.toHaveBeenCalled();
+            });
+
+            it('should throw an error if the deployCommands fails', async () => {
+                const commandHandler = new CommandHandler(true);
+
+                commandHandler.deployCommands = jest.fn(async () => { throw new Error(); });
+
+                await expect(commandHandler.handleCommands()).rejects.toThrow();
+
+                expect(log.error).toHaveBeenCalled();
+                expect(commandHandler.deployCommands).toHaveBeenCalled();
             });
         });
     });
@@ -202,6 +252,16 @@ describe('CommandHandler', () => {
 
             await commandHandler.handleAdminCommands();
 
+            expect(client.adminCommands.size).toBe(0);
+        });
+
+        it('should skip and log if the importCommandInPath fails', async () => {
+            const commandHandler = new CommandHandler();
+            commandHandler['importCommandInPath'] = jest.fn(async () => { throw new Error(); });
+
+            await commandHandler.handleAdminCommands();
+
+            expect(log.error).toHaveBeenCalled();
             expect(client.adminCommands.size).toBe(0);
         });
     });
