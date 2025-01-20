@@ -378,6 +378,60 @@ describe('ScoreSystem', () => {
             expect(scoreSystem['havePassedToNextLevel']).not.toHaveBeenCalled();
         });
 
+        it('should log error if after add/update the member, it is not found', async () => {
+            const mockGuild = {
+                id: '456'
+            };
+            const mockUser = {
+                tag: 'mockUser',
+            };
+            const mockGuildMember = {
+                id: '123',
+                guild: mockGuild,
+                user: mockUser
+            };
+            const mockChannel = {};
+            const mockMessage = {
+                inGuild: jest.fn().mockReturnValue(true),
+                author: {
+                    bot: false,
+                },
+                guild: mockGuild,
+                member: mockGuildMember,
+                content: 'test',
+                channel: mockChannel,
+            } as unknown as Message<boolean>;
+            const mockDatabase = {
+                member: new Collection([
+                    [
+                        '1',
+                        {
+                            discordId: '123',
+                            discordGuildId: '456',
+                            score: ScoreSystem.levels[0].targetScore - 1,
+                        }
+                    ]
+                ]),
+            };
+            const mockClient = {
+                database: mockDatabase,
+            } as unknown as LocalClient<true>;
+
+            const scoreSystem = new ScoreSystem();
+            scoreSystem['client'] = mockClient;
+
+            scoreSystem['addMemberWithScore'] = jest.fn();
+            scoreSystem['addScoreToMember'] = jest.fn(async () => {
+                mockDatabase.member.clear(); // Simulates a database drop at the same time of updating
+            });
+            scoreSystem['sendNextLevelMessage'] = jest.fn(async () => { });
+
+            await scoreSystem['onMessage'](mockMessage);
+
+            expect(log.error).toHaveBeenCalled();
+            expect(scoreSystem['sendNextLevelMessage']).not.toHaveBeenCalled();
+        });
+
         it('should call sendNextLevelMessage', async () => {
             const mockGuild = {
                 id: '456'
