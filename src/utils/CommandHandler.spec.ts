@@ -77,6 +77,11 @@ describe('CommandHandler', () => {
         });
     });
 
+    describe('handleAllCommands', () => {
+        it.todo('should handle all commands syncronously');
+        it.todo('should handle all commands asynchronously');
+    });
+
     describe('handleCommands', () => {
         it('should handle valid commands in the commands directory', async () => {
             // Mock estrutura de diretórios e arquivos
@@ -283,5 +288,14 @@ describe('CommandHandler', () => {
             expect(commandHandler.deployCommands([])).rejects.toThrow();
             expect(log.error).toHaveBeenCalled();
         });
+    });
+
+    describe('importCommandInPath', () => {
+        it.todo('should import command in the path');
+        it.todo('should throw an error if the command is not an instance of SlashCommand');
+        it.todo('should throw an error if the command does not have a default export');
+        it.todo('should throw an error if the command is not an instance of AdminCommand');
+        it.todo('should throw an error if the imported command is falsy');
+        it.todo('should throw an error if the imported command is not an object');
     });
 });
