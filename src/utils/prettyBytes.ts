@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 
@@ -22,115 +21,115 @@
 
 
 export type Options = {
-	/**
-	Include plus sign for positive numbers. If the difference is exactly zero a space character will be prepended instead for better alignment.
+    /**
+    Include plus sign for positive numbers. If the difference is exactly zero a space character will be prepended instead for better alignment.
 
-	@default false
-	*/
-	readonly signed?: boolean;
+    @default false
+    */
+    readonly signed?: boolean;
 
-	/**
-	- If `false`: Output won't be localized.
-	- If `true`: Localize the output using the system/browser locale.
-	- If `string`: Expects a [BCP 47 language tag](https://en.wikipedia.org/wiki/IETF_language_tag) (For example: `en`, `de`, …)
-	- If `string[]`: Expects a list of [BCP 47 language tags](https://en.wikipedia.org/wiki/IETF_language_tag) (For example: `en`, `de`, …)
+    /**
+    - If `false`: Output won't be localized.
+    - If `true`: Localize the output using the system/browser locale.
+    - If `string`: Expects a [BCP 47 language tag](https://en.wikipedia.org/wiki/IETF_language_tag) (For example: `en`, `de`, …)
+    - If `string[]`: Expects a list of [BCP 47 language tags](https://en.wikipedia.org/wiki/IETF_language_tag) (For example: `en`, `de`, …)
 
-	@default false
-	*/
-	readonly locale?: boolean | string | readonly string[];
+    @default false
+    */
+    readonly locale?: boolean | string | readonly string[];
 
-	/**
-	Format the number as [bits](https://en.wikipedia.org/wiki/Bit) instead of [bytes](https://en.wikipedia.org/wiki/Byte). This can be useful when, for example, referring to [bit rate](https://en.wikipedia.org/wiki/Bit_rate).
+    /**
+    Format the number as [bits](https://en.wikipedia.org/wiki/Bit) instead of [bytes](https://en.wikipedia.org/wiki/Byte). This can be useful when, for example, referring to [bit rate](https://en.wikipedia.org/wiki/Bit_rate).
 
-	@default false
+    @default false
 
-	@example
-	```
-	import prettyBytes from 'pretty-bytes';
+    @example
+    ```
+    import prettyBytes from 'pretty-bytes';
 
-	prettyBytes(1337, {bits: true});
-	//=> '1.34 kbit'
-	```
-	*/
-	readonly bits?: boolean;
+    prettyBytes(1337, {bits: true});
+    //=> '1.34 kbit'
+    ```
+    */
+    readonly bits?: boolean;
 
-	/**
-	Format the number using the [Binary Prefix](https://en.wikipedia.org/wiki/Binary_prefix) instead of the [SI Prefix](https://en.wikipedia.org/wiki/SI_prefix). This can be useful for presenting memory amounts. However, this should not be used for presenting file sizes.
+    /**
+    Format the number using the [Binary Prefix](https://en.wikipedia.org/wiki/Binary_prefix) instead of the [SI Prefix](https://en.wikipedia.org/wiki/SI_prefix). This can be useful for presenting memory amounts. However, this should not be used for presenting file sizes.
 
-	@default false
+    @default false
 
-	@example
-	```
-	import prettyBytes from 'pretty-bytes';
+    @example
+    ```
+    import prettyBytes from 'pretty-bytes';
 
-	prettyBytes(1000, {binary: true});
-	//=> '1000 bit'
+    prettyBytes(1000, {binary: true});
+    //=> '1000 bit'
 
-	prettyBytes(1024, {binary: true});
-	//=> '1 kiB'
-	```
-	*/
-	readonly binary?: boolean;
+    prettyBytes(1024, {binary: true});
+    //=> '1 kiB'
+    ```
+    */
+    readonly binary?: boolean;
 
-	/**
-	The minimum number of fraction digits to display.
+    /**
+    The minimum number of fraction digits to display.
 
-	If neither `minimumFractionDigits` or `maximumFractionDigits` are set, the default behavior is to round to 3 significant digits.
+    If neither `minimumFractionDigits` or `maximumFractionDigits` are set, the default behavior is to round to 3 significant digits.
 
-	@default undefined
+    @default undefined
 
-	@example
-	```
-	import prettyBytes from 'pretty-bytes';
+    @example
+    ```
+    import prettyBytes from 'pretty-bytes';
 
-	// Show the number with at least 3 fractional digits
-	prettyBytes(1900, {minimumFractionDigits: 3});
-	//=> '1.900 kB'
+    // Show the number with at least 3 fractional digits
+    prettyBytes(1900, {minimumFractionDigits: 3});
+    //=> '1.900 kB'
 
-	prettyBytes(1900);
-	//=> '1.9 kB'
-	```
-	*/
-	readonly minimumFractionDigits?: number;
+    prettyBytes(1900);
+    //=> '1.9 kB'
+    ```
+    */
+    readonly minimumFractionDigits?: number;
 
-	/**
-	The maximum number of fraction digits to display.
+    /**
+    The maximum number of fraction digits to display.
 
-	If neither `minimumFractionDigits` or `maximumFractionDigits` are set, the default behavior is to round to 3 significant digits.
+    If neither `minimumFractionDigits` or `maximumFractionDigits` are set, the default behavior is to round to 3 significant digits.
 
-	@default undefined
+    @default undefined
 
-	@example
-	```
-	import prettyBytes from 'pretty-bytes';
+    @example
+    ```
+    import prettyBytes from 'pretty-bytes';
 
-	// Show the number with at most 1 fractional digit
-	prettyBytes(1920, {maximumFractionDigits: 1});
-	//=> '1.9 kB'
+    // Show the number with at most 1 fractional digit
+    prettyBytes(1920, {maximumFractionDigits: 1});
+    //=> '1.9 kB'
 
-	prettyBytes(1920);
-	//=> '1.92 kB'
-	```
-	*/
-	readonly maximumFractionDigits?: number;
+    prettyBytes(1920);
+    //=> '1.92 kB'
+    ```
+    */
+    readonly maximumFractionDigits?: number;
 
-	/**
-	Put a space between the number and unit.
+    /**
+    Put a space between the number and unit.
 
-	@default true
+    @default true
 
-	@example
-	```
-	import prettyBytes from 'pretty-bytes';
+    @example
+    ```
+    import prettyBytes from 'pretty-bytes';
 
-	prettyBytes(1920, {space: false});
-	//=> '1.9kB'
+    prettyBytes(1920, {space: false});
+    //=> '1.9kB'
 
-	prettyBytes(1920);
-	//=> '1.92 kB'
-	```
-	*/
-	readonly space?: boolean;
+    prettyBytes(1920);
+    //=> '1.92 kB'
+    ```
+    */
+    readonly space?: boolean;
 };
 
 /**
@@ -213,8 +212,8 @@ Formats the given number using `Number#toLocaleString`.
 - If locale is true, the system default locale is used for translation.
 - If no value for locale is specified, the number is returned unmodified.
 */
-const toLocaleString = (number: any, locale: any, options: any) => {
-    let result = number;
+const toLocaleString = (number: number, locale: unknown, options?: Intl.NumberFormatOptions) => {
+    let result = String(number);
     if (typeof locale === 'string' || Array.isArray(locale)) {
         result = number.toLocaleString(locale, options);
     } else if (locale === true || options !== undefined) {
@@ -256,11 +255,11 @@ export default function prettyBytes(number: number, options?: Options) {
     let localeOptions;
 
     if (options.minimumFractionDigits !== undefined) {
-        localeOptions = {minimumFractionDigits: options.minimumFractionDigits};
+        localeOptions = { minimumFractionDigits: options.minimumFractionDigits };
     }
 
     if (options.maximumFractionDigits !== undefined) {
-        localeOptions = {maximumFractionDigits: options.maximumFractionDigits, ...localeOptions};
+        localeOptions = { maximumFractionDigits: options.maximumFractionDigits, ...localeOptions };
     }
 
     if (number < 1) {
@@ -272,10 +271,12 @@ export default function prettyBytes(number: number, options?: Options) {
     number /= (options.binary ? 1024 : 1000) ** exponent;
 
     if (!localeOptions) {
-        number = number.toPrecision(3) as any;
+        number = Number(number.toPrecision(3));
     }
 
-    const numberString = toLocaleString(Number(number), options.locale, localeOptions);
+    let numberString = toLocaleString(number, options.locale, localeOptions);
+
+    numberString = !options.locale ? numberString.replaceAll(',', '.') : numberString;
 
     const unit = UNITS[exponent];
 
