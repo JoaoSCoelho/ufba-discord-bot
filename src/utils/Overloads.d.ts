@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-
-
 /** 
  * The `Overloads<T>`, `OverloadedParameters<T>` and `OverloadedReturnType<T>` types below are made by jcalz (https://github.com/jcalz)
  * 
@@ -34,7 +30,7 @@ export type Overloads<T> =
     (...args: infer A1): infer R1
   } ? [
     (...args: A1) => R1
-  ] : any
+  ] : unknown
 
 
 /** 
@@ -44,7 +40,7 @@ export type Overloads<T> =
  */
 export type OverloadedParameters<T> =
   Overloads<T> extends infer O ?
-  { [K in keyof O]: Parameters<Extract<O[K], (...args: any) => any>> } : never
+  { [K in keyof O]: Parameters<Extract<O[K], (...args: unknown) => unknown>> } : never
 
 /** 
  * Made by jcalz (https://github.com/jcalz)
@@ -53,4 +49,4 @@ export type OverloadedParameters<T> =
  */
 export type OverloadedReturnType<T> =
   Overloads<T> extends infer O ?
-  { [K in keyof O]: ReturnType<Extract<O[K], (...args: any) => any>> } : never
+  { [K in keyof O]: ReturnType<Extract<O[K], (...args: unknown) => unknown>> } : never
