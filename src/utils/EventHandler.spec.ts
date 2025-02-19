@@ -121,7 +121,7 @@ describe('EventHandler', () => {
 
                 expect(client.on).toHaveBeenCalledWith('invalidEvent1', expect.any(Function));
                 expect(client.once).not.toHaveBeenCalled();
-                expect(log.warn).toHaveBeenCalledWith('O evento em #(invalidEvent2.ts)# não é uma instância de #(ClientEvent)#.');
+                expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(ClientEvent)#.'));
                 expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
             });
         });

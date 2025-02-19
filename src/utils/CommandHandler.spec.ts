@@ -292,7 +292,24 @@ describe('CommandHandler', () => {
 
     describe('importCommandInPath', () => {
         it.todo('should import command in the path');
-        it.todo('should throw an error if the command is not an instance of SlashCommand');
+        it('should throw an error if the command is not an instance of SlashCommand', async () => {
+            (fs.readdirSync as jest.Mock).mockImplementation((p: string) => {
+                if (p.endsWith('commands')) return ['category1'];
+                if (p.endsWith('category1')) return [{ name: 'command1', isDirectory: () => true }];
+                if (p.endsWith('command1')) return ['index.ts'];
+            });
+
+            jest.resetModules();
+            jest.mock(
+                '/mock/commands/category1/command1/index.ts',
+                () => new Date(),
+                { virtual: true });
+
+            const commandHandler = new CommandHandler();
+
+            await expect(commandHandler['importCommandInPath']('/mock/commands/category1/command1/index.ts', SlashCommand)).rejects.toThrow('The command is not an instance of SlashCommand');
+            expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(SlashCommand)#.'));
+        });
         it.todo('should throw an error if the command does not have a default export');
         it.todo('should throw an error if the command is not an instance of AdminCommand');
         it.todo('should throw an error if the imported command is falsy');

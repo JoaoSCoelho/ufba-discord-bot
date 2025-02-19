@@ -4,6 +4,8 @@ import ClientEvent from '../classes/ClientEvent';
 import { client } from '..';
 import { ClientEvents } from 'discord.js';
 import { log } from '../classes/LogSystem';
+import BaseError from '../Errors/BaseError';
+import HandledError from '../Errors/HandledError';
 
 export default class EventHandler {
     /** Map all events in `'/events'` directory and register in bot event listeners */
@@ -15,7 +17,20 @@ export default class EventHandler {
 
         for (const eventFile of eventsFiles) {
             const filePath = path.join(eventsPath, eventFile);
-            const event: ClientEvent<keyof ClientEvents> = (await import(filePath))?.default;
+            let event: ClientEvent<keyof ClientEvents>;
+
+            try {
+                event = await this.importEventInPath(filePath);
+            } catch (error: unknown) {
+                if (!BaseError.isHandled(error)) {
+                    log.error(`Erro ao importar o evento em (#(${filePath})#):`,
+                        '\n#(Erro)#:', error);
+
+                    BaseError.handle(error);
+                }
+
+                continue; // Ignore this event
+            }
 
             if (!(event instanceof ClientEvent)) {
                 log.warn(`O evento em #(${(eventFile)})# não é uma instância de #(ClientEvent)#.`);
@@ -30,5 +45,47 @@ export default class EventHandler {
         }
 
         log.successh(`#(${registeredEvents})# eventos cadastrados com sucesso`);
+    }
+
+    /** Make a import in the specified path and guarantees that the imported event is a ClientEvent
+         * @returns The imported ClientEvent
+         * @throws HandledError('Unknown error while importing the event)
+         * @throws HandledError('The event was not imported correctly')
+         * @throws HandledError('The event does not have a default export')
+         * @throws HandledError('The event is not an instance of ClientEvent')
+         */
+    private async importEventInPath(path: string) {
+        const module: unknown = await import(path)
+            .catch((error: unknown) => {
+                log.error(`Erro ao importar o evento em (#(${path})#):`,
+                    '\n#(Erro)#:', error);
+                BaseError.handle(error);
+
+                throw error ?? new HandledError('Unknown error while importing the event');
+            });
+
+
+
+        if (!module || typeof module !== 'object') {
+            log.error(`O evento em (#(${path})#) nao foi importado corretamente`,
+                '\n#(Esperado)#: { default: ClientEvent }',
+                '\n#(Recebido)#:', module
+            );
+            throw new HandledError('The event was not imported correctly');
+        }
+        if (!('default' in module)) {
+            log.warn(`O evento em (#(${path})#) nao tem exportação padrão`,
+                '\n#(Esperado)#: { default: ClientEvent }',
+                '\n#(Recebido)#:', module
+            );
+            throw new HandledError('The event does not have a default export');
+        }
+        // Check if the supposed event is a ClientEvent instance
+        if (!(module.default instanceof ClientEvent)) {
+            log.warn(`O evento em (#(${path})#) não é uma instância de #(ClientEvent)#.`);
+            throw new HandledError('The event is not an instance of ClientEvent');
+        }
+
+        return module.default as ClientEvent<keyof ClientEvents>;
     }
 }

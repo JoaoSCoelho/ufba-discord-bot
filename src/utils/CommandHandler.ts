@@ -154,8 +154,10 @@ export default class CommandHandler {
         }
     }
 
-    /** Make a import in the specified path and guarantees that the imported command is a SlashCommand
-     * @returns The imported SlashCommand
+    /** Make a import in the specified path and guarantees that the imported command is a SlashCommand or AdminCommand
+     * @param path The path of the command
+     * @param type The type of the command (SlashCommand or AdminCommand)
+     * @returns The imported command
      * @throws HandledError('Unknown error while importing the command)
      * @throws HandledError('The command was not imported correctly')
      * @throws HandledError('The command does not have a default export')
@@ -187,10 +189,11 @@ export default class CommandHandler {
             );
             throw new HandledError('The command does not have a default export');
         }
+
         // Check if the supposed command is a Command instance
         if (!(module.default instanceof type)) {
-            log.warn(`O comando em (#(${path})#) não é uma instância de #(SlashCommand)#.`);
-            throw new HandledError('The command is not an instance of SlashCommand');
+            log.warn(`O comando em (#(${path})#) não é uma instância de #(${type.name})#.`);
+            throw new HandledError(`The command is not an instance of ${type.name}`);
         }
 
         return module.default as InstanceType<Type>;
