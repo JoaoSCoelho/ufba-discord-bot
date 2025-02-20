@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { ClientOptions, Collection, Events, Guild, GuildMember, GuildMemberManager, GuildTextBasedChannel, Message, User } from 'discord.js';
 import LocalClient from '../classes/LocalClient';
 import ScoreSystem from './ScoreSystem';
@@ -37,8 +39,9 @@ describe('ScoreSystem', () => {
         it('should set the client in the ScoreSystem', () => {
             const client = new LocalClient({} as unknown as ClientOptions) as LocalClient<true>;
             const scoreSystem = new ScoreSystem();
-            scoreSystem.init(client);
+            const initedScoreSystem = scoreSystem.init(client);
             expect(scoreSystem['client']).toBe(client);
+            expect(initedScoreSystem).toBe(scoreSystem);
         });
     });
 
@@ -51,7 +54,8 @@ describe('ScoreSystem', () => {
             const scoreSystem = new ScoreSystem();
             scoreSystem['client'] = mockClient;
             scoreSystem['onMessage'] = jest.fn();
-            scoreSystem.start();
+            const startedScoreSystem = scoreSystem.start();
+            expect(startedScoreSystem).toBe(scoreSystem);
             expect(scoreSystem['running']).toBe(true);
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
             expect(mockClient.on).toHaveBeenCalledWith(Events.MessageCreate, expect.any(Function));
@@ -66,8 +70,8 @@ describe('ScoreSystem', () => {
             scoreSystem['client'] = mockClient;
             scoreSystem['running'] = true;
 
-            scoreSystem.start();
-
+            const startedScoreSystem = scoreSystem.start();
+            expect(startedScoreSystem).toBeUndefined();
             expect(mockClient.on).not.toHaveBeenCalled();
             expect(log.warnh).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação que está em andamento.', 'Inicialização do sistema de pontuação abortada.');
         });
@@ -75,14 +79,15 @@ describe('ScoreSystem', () => {
         it('should not start the score system if no client is set', () => {
             const scoreSystem = new ScoreSystem();
 
-            scoreSystem.start();
+            const startedScoreSystem = scoreSystem.start();
 
+            expect(startedScoreSystem).toBeUndefined();
             expect(log.warn).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação sem uma instância do client setada.', 'Inicialização do sistema de pontuação abortada.');
             expect(scoreSystem['running']).toBe(false);
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(false);
         });
 
-        it('should alert if has more than one score system running', () => {
+        it('should start but alert if has more than one score system running', () => {
             const mockClient = {
                 on: jest.fn(),
             } as unknown as LocalClient<true>;
@@ -99,8 +104,9 @@ describe('ScoreSystem', () => {
             const scoreSystem = new ScoreSystem();
             scoreSystem['client'] = mockClient;
 
-            scoreSystem.start();
+            const startedScoreSystem = scoreSystem.start();
 
+            expect(startedScoreSystem).toBe(scoreSystem);
             expect(log.warn).toHaveBeenCalledWith('Iniciando um novo sistema de pontuação.', 'Um outro sistema está em execução');
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
             expect(scoreSystem['running']).toBe(true);
@@ -120,11 +126,30 @@ describe('ScoreSystem', () => {
             scoreSystem['running'] = true;
             ScoreSystem['runningSystems'].add(scoreSystem);
 
-            scoreSystem.stop();
+            const stoppedScoreSystem = scoreSystem.stop();
 
+            expect(stoppedScoreSystem).toBe(scoreSystem);
             expect(mockClient.off).toHaveBeenCalledWith(Events.MessageCreate, expect.any(Function));
             expect(scoreSystem['running']).toBe(false);
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(false);
+        });
+
+        it('should stop the score system but alert if it is not in the running systems', () => {
+            const mockClient = {
+                off: jest.fn(),
+            } as unknown as LocalClient<true>;
+
+            const scoreSystem = new ScoreSystem();
+            scoreSystem['client'] = mockClient;
+            scoreSystem['running'] = true;
+
+            const stoppedScoreSystem = scoreSystem.stop();
+
+            expect(stoppedScoreSystem).toBe(scoreSystem);
+            expect(mockClient.off).toHaveBeenCalledWith(Events.MessageCreate, expect.any(Function));
+            expect(scoreSystem['running']).toBe(false);
+            expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(false);
+            expect(log.warnh).toHaveBeenCalledWith('Sistema de pontuação de membros não foi encontrado na lista de sistemas em execução');
         });
 
         it('should not stop the score system if it is not running', () => {
@@ -134,14 +159,31 @@ describe('ScoreSystem', () => {
             const scoreSystem = new ScoreSystem();
             scoreSystem['running'] = false;
             scoreSystem['client'] = mockClient;
+            ScoreSystem['runningSystems'].add(scoreSystem);
 
-            scoreSystem.stop();
+            const stoppedScoreSystem = scoreSystem.stop();
+
+            expect(stoppedScoreSystem).toBeUndefined();
+            expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
             expect(mockClient.off).not.toHaveBeenCalled();
             expect(log.infoh).not.toHaveBeenCalled();
             expect(log.warnh).toHaveBeenCalledWith(
                 'Tentativa de parar o sistema de pontuação que não está em andamento.',
                 'Parada do sistema de pontuação abortada.'
             );
+        });
+
+        it('should not stop the score system if it hasn\'t client set', () => {
+            const scoreSystem = new ScoreSystem();
+            scoreSystem['running'] = true;
+            ScoreSystem['runningSystems'].add(scoreSystem);
+
+            const stoppedScoreSystem = scoreSystem.stop();
+
+            expect(stoppedScoreSystem).toBeUndefined();
+            expect(log.warnh).toHaveBeenCalledWith('Tentativa de parar o sistema de pontuação sem uma instância do client setada.', 'Parada do sistema de pontuação abortada.');
+            expect(scoreSystem['running']).toBe(true);
+            expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
         });
     });
 
@@ -178,6 +220,8 @@ describe('ScoreSystem', () => {
             expect(scoreSystem['addMemberWithScore']).not.toHaveBeenCalled();
             expect(scoreSystem['addScoreToMember']).not.toHaveBeenCalled();
         });
+
+        it.todo('should ignore if the message is from a user that is not a guild member');
 
         it('should ignore if the message is less than 3 characters', async () => {
             const scoreSystem = new ScoreSystem();

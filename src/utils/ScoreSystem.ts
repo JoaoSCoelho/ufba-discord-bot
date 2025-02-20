@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { Events, GuildMember, GuildTextBasedChannel, If, Message, PermissionsBitField } from 'discord.js';
 import LocalClient from '../classes/LocalClient';
 import { log } from '../classes/LogSystem';
@@ -39,15 +41,19 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
     private running = false;
     private static runningSystems = new Set<ScoreSystem>();
 
-    /** Sets the client in the `ScoreSystem` */
-    public init(client: LocalClient<true>) {
+    /** Sets the client in the `ScoreSystem`
+     * @returns `ScoreSystem<true>` Reference to this instance
+     */
+    public init(client: LocalClient<true>): ScoreSystem<true> {
         this.client = client as If<Initialized, LocalClient<true>, undefined>;
+        return this as ScoreSystem<true>;
     }
 
     /** Starts the score system registering a message listener that computes a new score to a member when he sends a message
-     * @note Requires a client to be set
+     * @note Requires the client attribute to be set
+     * @returns `ScoreSystem<True>` Reference to this instance
      */
-    public start() {
+    public start(): ScoreSystem<true> | void {
         if (this.running) {
             log.warnh('Tentativa de iniciar o sistema de pontuação que está em andamento.',
                 'Inicialização do sistema de pontuação abortada.');
@@ -71,19 +77,34 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         ScoreSystem.runningSystems.add(this);
 
         log.infoh(`Sistema de pontuação de membros iniciado com #(${this.scorePerMessage})# pontos por mensagem`);
+        return this as ScoreSystem<true>;
     }
 
-    /** Stops the score system unregistering the message listener that computes a new score to a member when he sends a message */
-    public stop() {
+    /** Stops the score system unregistering the message listener that computes a new score to a member when he sends a message 
+     * @returns `ScoreSystem<True>` Reference to this instance
+    */
+    public stop(): ScoreSystem<true> | void {
         if (!this.running) {
             log.warnh('Tentativa de parar o sistema de pontuação que não está em andamento.',
                 'Parada do sistema de pontuação abortada.');
             return;
         }
-        ScoreSystem.runningSystems.delete(this);
-        this.client!.off(Events.MessageCreate, this.onMessage);
+        if (!this.client) {
+            log.warnh('Tentativa de parar o sistema de pontuação sem uma instância do client setada.',
+                'Parada do sistema de pontuação abortada.'
+            );
+            return;
+        }
+
+        const removedFromRunningSystems = ScoreSystem.runningSystems.delete(this);
+        if (!removedFromRunningSystems) {
+            log.warnh('Sistema de pontuação de membros não foi encontrado na lista de sistemas em execução');
+        }
+
+        this.client.off(Events.MessageCreate, this.onMessage);
         this.running = false;
         log.infoh('Sistema de pontuação de membros parado');
+        return this as ScoreSystem<true>;
     }
 
     /** Computes a new pontuation to a member when he sends a message
