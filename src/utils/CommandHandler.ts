@@ -166,11 +166,11 @@ export default class CommandHandler {
     private async importCommandInPath<Type extends typeof SlashCommand | typeof AdminCommand>(path: string, type: Type) {
         const module: unknown = await import(path)
             .catch((error: unknown) => {
-                log.error(`Erro ao importar o comando em (#(${path})#):`,
+                log.error(`Erro ao importar o arquivo do comando em (#(${path})#):`,
                     '\n#(Erro)#:', error);
                 BaseError.handle(error);
 
-                throw error ?? new HandledError('Unknown error while importing the command');
+                throw error ?? new HandledError('Unknown error while importing the command file');
             });
 
 
