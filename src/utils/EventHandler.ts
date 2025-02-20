@@ -32,11 +32,6 @@ export default class EventHandler {
                 continue; // Ignore this event
             }
 
-            if (!(event instanceof ClientEvent)) {
-                log.warn(`O evento em #(${(eventFile)})# não é uma instância de #(ClientEvent)#.`);
-                continue;
-            }
-
             client[event.once ? 'once' : 'on'](event.eventName, event.listener);
 
             registeredEvents++;
@@ -57,24 +52,23 @@ export default class EventHandler {
     private async importEventInPath(path: string) {
         const module: unknown = await import(path)
             .catch((error: unknown) => {
-                log.error(`Erro ao importar o evento em (#(${path})#):`,
+                log.error(`Erro ao importar o arquivo do evento em (#(${path})#):`,
                     '\n#(Erro)#:', error);
                 BaseError.handle(error);
 
-                throw error ?? new HandledError('Unknown error while importing the event');
+                throw error ?? new HandledError('Unknown error while importing the event file');
             });
 
 
-
         if (!module || typeof module !== 'object') {
-            log.error(`O evento em (#(${path})#) nao foi importado corretamente`,
+            log.error(`O evento em (#(${path})#) não foi importado corretamente`,
                 '\n#(Esperado)#: { default: ClientEvent }',
                 '\n#(Recebido)#:', module
             );
             throw new HandledError('The event was not imported correctly');
         }
         if (!('default' in module)) {
-            log.warn(`O evento em (#(${path})#) nao tem exportação padrão`,
+            log.warn(`O evento em (#(${path})#) não tem exportação padrão`,
                 '\n#(Esperado)#: { default: ClientEvent }',
                 '\n#(Recebido)#:', module
             );

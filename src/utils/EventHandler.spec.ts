@@ -35,6 +35,7 @@ describe('EventHandler', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         jest.resetAllMocks();
+        jest.resetModules();
     });
 
 
@@ -95,23 +96,24 @@ describe('EventHandler', () => {
         });
 
         describe('should skip invalid events in the events directory', () => {
-            it('1 valid and 1 invalid events', async () => {
+            it('1 valid and 1 invalid events by event is not a instance of ClientEvent', async () => {
                 (path.join as jest.Mock).mockImplementation((...args) => {
-                    if (args.join('/').endsWith('events/invalidEvent1.ts')) {
-                        return '/mock/events/invalidEvent1.ts';
+                    if (args.join('/').endsWith('events/validEvent1.ts')) {
+                        return '/mock/events/validEvent1.ts';
                     }
                     if (args.join('/').endsWith('events/invalidEvent2.ts')) {
                         return '/mock/events/invalidEvent2.ts';
                     }
                     return args.join('/');
                 });
-                (fs.readdirSync as jest.Mock).mockReturnValue(['invalidEvent1.ts', 'invalidEvent2.ts']);
-                jest.mock('/mock/events/invalidEvent1.ts', () => ({
+                (fs.readdirSync as jest.Mock).mockReturnValue(['validEvent1.ts', 'invalidEvent2.ts']);
+                jest.mock('/mock/events/validEvent1.ts', () => ({
                     __esModule: true,
-                    default: new ClientEvent('invalidEvent1' as keyof ClientEvents, () => { }),
+                    default: new ClientEvent('validEvent1' as keyof ClientEvents, () => { }),
                 }), { virtual: true });
 
                 jest.mock('/mock/events/invalidEvent2.ts', () => ({
+                    __esModule: true,
                     default: {},
                 }), { virtual: true });
 
@@ -119,10 +121,69 @@ describe('EventHandler', () => {
                 await eventHandler.handleAllEvents();
 
 
-                expect(client.on).toHaveBeenCalledWith('invalidEvent1', expect.any(Function));
+                expect(client.on).toHaveBeenCalledWith('validEvent1', expect.any(Function));
                 expect(client.once).not.toHaveBeenCalled();
                 expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(ClientEvent)#.'));
                 expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
+            });
+
+            it('invalid event by not having a default export', async () => {
+                (path.join as jest.Mock).mockImplementation((...args) => {
+                    if (args.join('/').endsWith('events/invalidEvent.ts')) {
+                        return '/mock/events/invalidEvent.ts';
+                    }
+                    return args.join('/');
+                });
+                (fs.readdirSync as jest.Mock).mockReturnValue(['invalidEvent.ts']);
+                jest.mock('/mock/events/invalidEvent.ts', () => ({ __esModule: true }), { virtual: true });
+
+                const eventHandler = new EventHandler();
+                await eventHandler.handleAllEvents();
+
+                expect(client.on).not.toHaveBeenCalled();
+                expect(client.once).not.toHaveBeenCalled();
+                expect((log.warn as jest.Mock).mock.calls[0][0]).toContain('não tem exportação padrão');
+                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
+            });
+
+            it('invalid event by not found file', async () => {
+                (path.join as jest.Mock).mockImplementation((...args) => {
+                    if (args.join('/').endsWith('events/invalidEvent.ts')) {
+                        return '/mock/events/invalidEvent.ts';
+                    }
+                    return args.join('/');
+                });
+                (fs.readdirSync as jest.Mock).mockReturnValue(['invalidEvent.ts']);
+                jest.unmock('/mock/events/invalidEvent.ts');
+
+                const eventHandler = new EventHandler();
+                await eventHandler.handleAllEvents();
+
+                expect(client.on).not.toHaveBeenCalled();
+                expect(client.once).not.toHaveBeenCalled();
+                expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o arquivo do evento em');
+                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
+            });
+
+            it('invalid event by unknown error', async () => {
+                (path.join as jest.Mock).mockImplementation((...args) => {
+                    if (args.join('/').endsWith('events/invalidEvent.ts')) {
+                        return '/mock/events/invalidEvent.ts';
+                    }
+                    return args.join('/');
+                });
+                (fs.readdirSync as jest.Mock).mockReturnValue(['invalidEvent.ts']);
+
+
+                const eventHandler = new EventHandler();
+                eventHandler['importEventInPath'] = jest.fn().mockRejectedValue(new Error('Unknown error'));
+
+                await eventHandler.handleAllEvents();
+
+                expect(client.on).not.toHaveBeenCalled();
+                expect(client.once).not.toHaveBeenCalled();
+                expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o evento em');
+                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
             });
         });
 
