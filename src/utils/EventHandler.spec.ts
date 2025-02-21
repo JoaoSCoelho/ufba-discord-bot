@@ -151,7 +151,7 @@ describe('EventHandler', () => {
 
                 expect(client.on).not.toHaveBeenCalled();
                 expect(client.once).not.toHaveBeenCalled();
-                expect((log.warn as jest.Mock).mock.calls[0][0]).toContain('não tem exportação padrão');
+                if (!VIEW_LOGS) expect((log.warn as jest.Mock).mock.calls[0][0]).toContain('não tem exportação padrão');
                 if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
             });
 
@@ -170,7 +170,7 @@ describe('EventHandler', () => {
 
                 expect(client.on).not.toHaveBeenCalled();
                 expect(client.once).not.toHaveBeenCalled();
-                expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o arquivo do evento em');
+                if (!VIEW_LOGS) expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o arquivo do evento em');
                 if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
             });
 
@@ -191,7 +191,7 @@ describe('EventHandler', () => {
 
                 expect(client.on).not.toHaveBeenCalled();
                 expect(client.once).not.toHaveBeenCalled();
-                expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o evento em');
+                if (!VIEW_LOGS) expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o evento em');
                 if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
             });
         });
