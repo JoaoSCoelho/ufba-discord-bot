@@ -9,13 +9,22 @@ import DbCollection from '../database/DbCollection';
 import Database from '../database/Database';
 import BaseError from '../Errors/BaseError';
 
+const VIEW_LOGS = process.env.VIEW_LOGS === 'true';
+
+if (VIEW_LOGS) {
+    console.log = jest.requireActual('console').log;
+    console.error = jest.requireActual('console').error;
+    console.warn = jest.requireActual('console').warn;
+    console.info = jest.requireActual('console').info;
+}
+
 jest.mock('../classes/LocalClient', () => ({
     __esModule: true,
     default: class LocalClient {
         constructor(options: unknown) { options; }
     }
 }));
-jest.mock('../classes/LogSystem', () => ({
+if (!VIEW_LOGS) jest.mock('../classes/LogSystem', () => ({
     log: {
         loading: jest.fn(),
         loadingh: jest.fn(),
@@ -73,7 +82,7 @@ describe('ScoreSystem', () => {
             const startedScoreSystem = scoreSystem.start();
             expect(startedScoreSystem).toBeUndefined();
             expect(mockClient.on).not.toHaveBeenCalled();
-            expect(log.warnh).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação que está em andamento.', 'Inicialização do sistema de pontuação abortada.');
+            if (!VIEW_LOGS) expect(log.warnh).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação que está em andamento.', 'Inicialização do sistema de pontuação abortada.');
         });
 
         it('should not start the score system if no client is set', () => {
@@ -82,7 +91,7 @@ describe('ScoreSystem', () => {
             const startedScoreSystem = scoreSystem.start();
 
             expect(startedScoreSystem).toBeUndefined();
-            expect(log.warn).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação sem uma instância do client setada.', 'Inicialização do sistema de pontuação abortada.');
+            if (!VIEW_LOGS) expect(log.warn).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação sem uma instância do client setada.', 'Inicialização do sistema de pontuação abortada.');
             expect(scoreSystem['running']).toBe(false);
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(false);
         });
@@ -107,7 +116,7 @@ describe('ScoreSystem', () => {
             const startedScoreSystem = scoreSystem.start();
 
             expect(startedScoreSystem).toBe(scoreSystem);
-            expect(log.warn).toHaveBeenCalledWith('Iniciando um novo sistema de pontuação.', 'Um outro sistema está em execução');
+            if (!VIEW_LOGS) expect(log.warn).toHaveBeenCalledWith('Iniciando um novo sistema de pontuação.', 'Um outro sistema está em execução');
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
             expect(scoreSystem['running']).toBe(true);
             expect(ScoreSystem['runningSystems'].has(scoreSystem2)).toBe(true);
@@ -149,7 +158,7 @@ describe('ScoreSystem', () => {
             expect(mockClient.off).toHaveBeenCalledWith(Events.MessageCreate, expect.any(Function));
             expect(scoreSystem['running']).toBe(false);
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(false);
-            expect(log.warnh).toHaveBeenCalledWith('Sistema de pontuação de membros não foi encontrado na lista de sistemas em execução');
+            if (!VIEW_LOGS) expect(log.warnh).toHaveBeenCalledWith('Sistema de pontuação de membros não foi encontrado na lista de sistemas em execução');
         });
 
         it('should not stop the score system if it is not running', () => {
@@ -166,8 +175,8 @@ describe('ScoreSystem', () => {
             expect(stoppedScoreSystem).toBeUndefined();
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
             expect(mockClient.off).not.toHaveBeenCalled();
-            expect(log.infoh).not.toHaveBeenCalled();
-            expect(log.warnh).toHaveBeenCalledWith(
+            if (!VIEW_LOGS) expect(log.infoh).not.toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.warnh).toHaveBeenCalledWith(
                 'Tentativa de parar o sistema de pontuação que não está em andamento.',
                 'Parada do sistema de pontuação abortada.'
             );
@@ -181,7 +190,7 @@ describe('ScoreSystem', () => {
             const stoppedScoreSystem = scoreSystem.stop();
 
             expect(stoppedScoreSystem).toBeUndefined();
-            expect(log.warnh).toHaveBeenCalledWith('Tentativa de parar o sistema de pontuação sem uma instância do client setada.', 'Parada do sistema de pontuação abortada.');
+            if (!VIEW_LOGS) expect(log.warnh).toHaveBeenCalledWith('Tentativa de parar o sistema de pontuação sem uma instância do client setada.', 'Parada do sistema de pontuação abortada.');
             expect(scoreSystem['running']).toBe(true);
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
         });
@@ -331,7 +340,7 @@ describe('ScoreSystem', () => {
             await scoreSystem['onMessage'](mockMessage);
 
             expect(scoreSystem['addScoreToMember']).toHaveBeenCalled();
-            expect(log.error).toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
             expect(scoreSystem['havePassedToNextLevel']).not.toHaveBeenCalled();
         });
 
@@ -418,7 +427,7 @@ describe('ScoreSystem', () => {
             await scoreSystem['onMessage'](mockMessage);
 
             expect(scoreSystem['addMemberWithScore']).toHaveBeenCalled();
-            expect(log.error).toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
             expect(scoreSystem['havePassedToNextLevel']).not.toHaveBeenCalled();
         });
 
@@ -472,7 +481,7 @@ describe('ScoreSystem', () => {
 
             await scoreSystem['onMessage'](mockMessage);
 
-            expect(log.error).toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
             expect(scoreSystem['sendNextLevelMessage']).not.toHaveBeenCalled();
         });
 
@@ -585,8 +594,8 @@ describe('ScoreSystem', () => {
             await scoreSystem['onMessage'](mockMessage);
 
             expect(scoreSystem['sendNextLevelMessage']).toHaveBeenCalledWith(mockGuildMember, mockChannel, 1);
-            expect(log.error).not.toHaveBeenCalled();
-            expect(log.warnh).toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.error).not.toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.warnh).toHaveBeenCalled();
         });
 
         it('should log error if sendNextLevelMessage fails', async () => {
@@ -640,8 +649,8 @@ describe('ScoreSystem', () => {
             await scoreSystem['onMessage'](mockMessage);
 
             expect(scoreSystem['sendNextLevelMessage']).toHaveBeenCalledWith(mockGuildMember, mockChannel, 1);
-            expect(log.error).toHaveBeenCalled();
-            expect(log.warn).not.toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.warn).not.toHaveBeenCalled();
         });
     });
 
@@ -683,7 +692,7 @@ describe('ScoreSystem', () => {
                 discordGuildId: mockGuild.id,
                 score: resultMember.score
             }));
-            expect(log.successh).toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalled();
         });
 
         it('should throw an error if new() of database fails', async () => {
@@ -778,7 +787,7 @@ describe('ScoreSystem', () => {
             scoreSystem.init(mockClient);
 
             await expect(scoreSystem['addScoreToMember'](mockMember, mockGuildMember)).rejects.toThrow();
-            expect(log.error).toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
         });
     });
 
@@ -860,7 +869,7 @@ describe('ScoreSystem', () => {
             await scoreSystem['sendNextLevelMessage'](mockGuildMember, mockChannel, 1);
 
             expect(mockChannel.send).toHaveBeenCalled();
-            expect(log.error).not.toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.error).not.toHaveBeenCalled();
         });
 
         it('should throw an error if the bot does\'t have permissions to send messages in the channel', async () => {
@@ -924,7 +933,7 @@ describe('ScoreSystem', () => {
             await expect(scoreSystem['sendNextLevelMessage'](mockGuildMember, mockChannel, 1)).rejects.toThrow();
 
             expect(mockChannel.send).toHaveBeenCalled();
-            expect(log.error).toHaveBeenCalled();
+            if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
         });
     });
 });

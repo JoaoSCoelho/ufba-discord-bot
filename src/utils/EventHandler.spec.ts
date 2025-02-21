@@ -6,9 +6,18 @@ import { client } from '..';
 import { ClientEvents } from 'discord.js';
 import { log } from '../classes/LogSystem';
 
+const VIEW_LOGS = process.env.VIEW_LOGS === 'true';
+
+if (VIEW_LOGS) {
+    console.log = jest.requireActual('console').log;
+    console.error = jest.requireActual('console').error;
+    console.warn = jest.requireActual('console').warn;
+    console.info = jest.requireActual('console').info;
+}
+
 jest.mock('path');
 jest.mock('fs');
-jest.mock('../classes/LogSystem', () => ({
+if (!VIEW_LOGS) jest.mock('../classes/LogSystem', () => ({
     log: {
         loading: jest.fn(),
         success: jest.fn(),
@@ -60,7 +69,7 @@ describe('EventHandler', () => {
 
 
                 expect(client.on).toHaveBeenNthCalledWith(1, 'validEvent1', expect.any(Function));
-                expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
+                if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
             });
 
             it('multiple events', async () => {
@@ -91,7 +100,7 @@ describe('EventHandler', () => {
 
                 expect(client.on).toHaveBeenNthCalledWith(1, 'vEvent1', expect.any(Function));
                 expect(client.once).toHaveBeenNthCalledWith(1, 'vEvent2', expect.any(Function));
-                expect(log.successh).toHaveBeenCalledWith('#(2)# eventos cadastrados com sucesso');
+                if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalledWith('#(2)# eventos cadastrados com sucesso');
             });
         });
 
@@ -123,8 +132,8 @@ describe('EventHandler', () => {
 
                 expect(client.on).toHaveBeenCalledWith('validEvent1', expect.any(Function));
                 expect(client.once).not.toHaveBeenCalled();
-                expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(ClientEvent)#.'));
-                expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
+                if (!VIEW_LOGS) expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(ClientEvent)#.'));
+                if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
             });
 
             it('invalid event by not having a default export', async () => {
@@ -143,7 +152,7 @@ describe('EventHandler', () => {
                 expect(client.on).not.toHaveBeenCalled();
                 expect(client.once).not.toHaveBeenCalled();
                 expect((log.warn as jest.Mock).mock.calls[0][0]).toContain('não tem exportação padrão');
-                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
+                if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
             });
 
             it('invalid event by not found file', async () => {
@@ -162,7 +171,7 @@ describe('EventHandler', () => {
                 expect(client.on).not.toHaveBeenCalled();
                 expect(client.once).not.toHaveBeenCalled();
                 expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o arquivo do evento em');
-                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
+                if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
             });
 
             it('invalid event by unknown error', async () => {
@@ -183,7 +192,7 @@ describe('EventHandler', () => {
                 expect(client.on).not.toHaveBeenCalled();
                 expect(client.once).not.toHaveBeenCalled();
                 expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o evento em');
-                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
+                if (!VIEW_LOGS) expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
             });
         });
 

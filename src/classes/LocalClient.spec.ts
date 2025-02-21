@@ -3,7 +3,16 @@ import LocalClient from './LocalClient';
 import { log } from './LogSystem';
 import ScoreSystem from '../utils/ScoreSystem';
 
-jest.mock('./LogSystem', () => ({
+const VIEW_LOGS = process.env.VIEW_LOGS === 'true';
+
+if (VIEW_LOGS) {
+    console.log = jest.requireActual('console').log;
+    console.error = jest.requireActual('console').error;
+    console.warn = jest.requireActual('console').warn;
+    console.info = jest.requireActual('console').info;
+}
+
+if (!VIEW_LOGS) jest.mock('./LogSystem', () => ({
     log: {
         infoh: jest.fn(),
         loadingh: jest.fn(),
@@ -31,7 +40,7 @@ describe('LocalClient', () => {
         expect(client.database).toBeUndefined();
         expect(client.scoreSystem).toBeInstanceOf(ScoreSystem);
 
-        expect(log.infoh).toHaveBeenCalledWith(
+        if (!VIEW_LOGS) expect(log.infoh).toHaveBeenCalledWith(
             'Client instanciado com as seguintes intents:',
             '#(Guilds)#, #(GuildMessages)#.'
         );
