@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 process.env.FORCE_COLOR = '1';
 process.env.NO_COLOR = '0';
 
@@ -240,7 +242,7 @@ export default class LogSystem {
             try {
                 const stacks = /(?:src|build)(?:\\|\/)([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename))?.trim() ?? '')?.[1];
 
-                return this(`${chalk[chalkMethod]('>')} [${chalk[chalkMethod](typeName)}] [${chalk[chalkMethod](logMoment)}] [${chalk[chalkMethod](stacks)}]:`, ...data);
+                return this(`${chalk.gray('→')} [${chalk[chalkMethod](typeName)}][${chalk[chalkMethod](logMoment)}][${chalk[chalkMethod](stacks)}]:`, ...data);
             } catch (err: unknown) {
                 return this(...data);
             }
@@ -358,13 +360,13 @@ export default class LogSystem {
 
 
     private getTypeName<Type extends LogType>(type: Type) {
-        if (type === 'I') return 'ⓘ';
-        else if (type === 'E') return 'ⓧ';
-        else if (type === 'W') return '⚠';
+        if (type === 'I') return 'i';
+        else if (type === 'E') return 'x';
+        else if (type === 'W') return '!';
         else if (type === 'S') return '✓';
-        else if (type === 'L') return '↻';
-        else if (type === 'O') return '㏒';
-        return 'ⓘ';
+        else if (type === 'L') return '⋰';
+        else if (type === 'O') return '•';
+        return 'i';
     }
     private getChalkMethod<Type extends LogType | 'D' | 'G'>(type: Type) {
         if (type === 'D') return 'reset';
