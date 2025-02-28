@@ -43,6 +43,20 @@ To run all jest tests, you can run:
 $ npm run test
 ```
 
+> ***We recommend to install jest globally by using npm install jest -G and using direct the command `jest` in your terminal.***
+
+### Seeing if the logs are printed correctly
+To run tests seeing the logs, primarly delete the file "*log-persistent.ansi*" and "*log-persistent.txt*".
+After that run (for Windows):
+```bash
+$ VIEW_LOGS=true PERSISTENT_LOGS=true jest --coverage --runInBand
+```
+
+After runned, see all the logs in "*log-persistent.txt*" or run the file "*readLogs.js*" (to see with colors):
+```bash
+$ node readLogs.js log-persistent.ansi
+```
+
 > See more of Jest in: [https://jestjs.io/docs/getting-started](https://jestjs.io/docs/getting-started)
 
 ## How to use commands
