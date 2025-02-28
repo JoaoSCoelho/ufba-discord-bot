@@ -1,1 +1,1 @@
-require('fs').readFileSync('log.ansi', { encoding: 'utf8' }).split(/\n|\r/g).forEach((logLine) => console.log(logLine));
+require('fs').readFileSync(process.argv[2] || 'log.ansi', { encoding: 'utf8' }).split(/\n|\r/g).forEach((logLine) => console.log(logLine));
