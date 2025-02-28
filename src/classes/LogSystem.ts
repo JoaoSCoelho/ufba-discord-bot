@@ -24,6 +24,8 @@ const originalStderrWrite = process.stderr.write.bind(process.stderr);
 
 
 export default class LogSystem {
+    static globalLogSystem = new LogSystem();
+
     /** Informs if it is the first log of the current process. This variable will receive `false` as soon as unknown log function is triggered
      */
     private firstOfProcess = true;
@@ -151,6 +153,8 @@ export default class LogSystem {
         /** The data to be logged */
         ...data: unknown[]
     ) {
+        terminalHidden = !(process.env.VIEW_LOGS === 'true') && terminalHidden;
+
         const currentDate = new Date();
         const logMoment = Intl.DateTimeFormat('pt-br', { dateStyle: 'short', timeStyle: 'medium' }).format(currentDate).replace(', ', '-') + ':' + currentDate.getMilliseconds().toString().padStart(3, '0');
 
@@ -303,6 +307,10 @@ export default class LogSystem {
 
             fs.appendFileSync('log.txt', stripAnsi(chunk));
             fs.appendFileSync('log.ansi', chunk);
+            if (process.env.PERSIST_LOGS === 'true') {
+                fs.appendFileSync('log-persistent.txt', stripAnsi(chunk));
+                fs.appendFileSync('log-persistent.ansi', chunk);
+            }
             fs.writeFileSync(`logs/log-${this.executionDateString}.txt`, fs.readFileSync('log.txt'));
             fs.writeFileSync(`logs/log-${this.executionDateString}.ansi`, fs.readFileSync('log.ansi'));
         }
@@ -400,4 +408,4 @@ function configInspectDefaultOptions() {
     util.inspect.defaultOptions.maxArrayLength = 500;
 }
 
-export const log = new LogSystem();
+export const log = LogSystem.globalLogSystem;
