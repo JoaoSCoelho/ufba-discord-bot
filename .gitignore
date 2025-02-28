@@ -1,8 +1,8 @@
 node_modules
 coverage
 logs
-log.txt
-log.ansi
+log*.txt
+log*.ansi
 .env
 oficial.env
 /build
