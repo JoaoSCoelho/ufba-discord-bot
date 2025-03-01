@@ -14,10 +14,16 @@ module.exports = {
                 'node': true
             },
             'files': [
-                '.eslintrc.{js,cjs}'
+                '.eslintrc.{js,cjs}',
             ],
             'parserOptions': {
                 'sourceType': 'script'
+            }
+        },
+        {
+            'files': ['*.js'],
+            'rules': {
+                '@typescript-eslint/no-var-requires': 'off'
             }
         }
     ],
