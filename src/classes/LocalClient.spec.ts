@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { IntentsBitField, Collection } from 'discord.js';
 import LocalClient from './LocalClient';
 import { log } from './LogSystem';
@@ -36,6 +38,20 @@ describe('LocalClient', () => {
         const client = new LocalClient({ intents: mockIntents });
 
         expect(client.prefix).toBe('_');
+    });
+
+    it('should use default admins if not set in environment variables', () => {
+        delete process.env.BOT_ADMINS;
+
+        const client = new LocalClient({ intents: mockIntents });
+
+        expect(client.admins).toEqual([]);
+    });
+
+    it('should use default intents if not array in environment variables', () => {
+        const client = new LocalClient({ intents: 32 });
+
+        expect(client).toBeInstanceOf(LocalClient);
     });
 
     it('should split admins correctly based on environment variable', () => {
