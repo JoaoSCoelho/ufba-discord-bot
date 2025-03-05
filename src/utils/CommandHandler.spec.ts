@@ -158,6 +158,13 @@ describe('CommandHandler', () => {
                     if (p.endsWith('command1')) return ['indexx.ts']; // invalid file name
                 });
 
+                (path.join as jest.Mock).mockImplementation((...args) => {
+                    if (args.join('/').endsWith('command1/index.ts')) {
+                        return '/mock/commands/category1/command1/index.ts';
+                    }
+                    return args.join('/');
+                });
+
                 await commandHandler.handleCommands();
 
                 expect(client.commands.size).toBe(0);
@@ -169,6 +176,13 @@ describe('CommandHandler', () => {
                     if (p.endsWith('commands')) return ['category1'];
                     if (p.endsWith('category1')) return [{ name: 'invalidCommand', isDirectory: () => true }];
                     if (p.endsWith('invalidCommand')) return ['index.ts'];
+                });
+
+                (path.join as jest.Mock).mockImplementation((...args) => {
+                    if (args.join('/').endsWith('invalidCommand/index.ts')) {
+                        return '/mock/commands/category1/invalidCommand/index.ts';
+                    }
+                    return args.join('/');
                 });
 
                 client.commands.set = jest.fn();
@@ -189,6 +203,12 @@ describe('CommandHandler', () => {
                     if (p.endsWith('invalidCommand')) return ['index.ts'];
                 });
 
+                (path.join as jest.Mock).mockImplementation((...args) => {
+                    if (args.join('/').endsWith('invalidCommand/index.ts')) {
+                        return '/mock/commands/category1/invalidCommand/index.ts';
+                    }
+                    return args.join('/');
+                });
 
                 client.commands.set = jest.fn();
                 const commandHandler = new CommandHandler();
@@ -201,14 +221,16 @@ describe('CommandHandler', () => {
             });
 
             it('should throw an error if the deployCommands fails', async () => {
-                const commandHandler = new CommandHandler(true);
+                (fs.readdirSync as jest.Mock).mockImplementation(() => []);
 
-                commandHandler.deployCommands = jest.fn(async () => { throw new Error(); });
+                const ch = new CommandHandler(true);
 
-                await expect(commandHandler.handleCommands()).rejects.toThrow();
+                ch.deployCommands = jest.fn(async () => { throw new Error(); });
 
-                expect(commandHandler.deployCommands).toHaveBeenCalled();
+                await expect(ch.handleCommands()).rejects.toThrow();
+
                 expect(log.error).toHaveBeenCalled();
+                expect(ch.deployCommands).toHaveBeenCalled();
             });
         });
     });
@@ -259,6 +281,7 @@ describe('CommandHandler', () => {
         });
 
         it('should skip and log if the importCommandInPath fails', async () => {
+            (fs.readdirSync as jest.Mock).mockReturnValue(['adminCommand.ts']);
             const commandHandler = new CommandHandler();
             commandHandler['importCommandInPath'] = jest.fn(async () => { throw new Error(); });
 
@@ -301,7 +324,8 @@ describe('CommandHandler', () => {
             jest.doMock(
                 '/mock/commands/category1/command1/index.ts',
                 () => new Date(),
-                { virtual: true });
+                { virtual: true }
+            );
 
             const commandHandler = new CommandHandler();
 
