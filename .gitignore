@@ -8,3 +8,4 @@ oficial.env
 /build
 discloud.config
 *.zip
+jest-results.json
