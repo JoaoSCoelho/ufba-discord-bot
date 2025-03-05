@@ -12,14 +12,14 @@ describe('configEnv', () => {
         jest.clearAllMocks();
     });
 
-    it('should call config() and log.successh() when no error occurs', () => {
+    it('should call config and log.successh when no error occurs', () => {
         configEnv();
         expect(config).toHaveBeenCalled();
         expect(log.successh).toHaveBeenCalled();
         expect(log.error).not.toHaveBeenCalled();
     });
 
-    it('should call log.error() when an error occurs', () => {
+    it('should call log.error when an error occurs', () => {
         (config as jest.Mock).mockImplementationOnce(() => {
             throw new Error('Test Error');
         });

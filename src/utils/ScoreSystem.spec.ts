@@ -633,7 +633,7 @@ describe('ScoreSystem', () => {
     });
 
     describe('addMemberWithScore', () => {
-        it('should call new() of database and return the new member', async () => {
+        it('should call new of database and return the new member', async () => {
             const mockUser = {
                 tag: 'mockUserTag'
             } as unknown as User;
@@ -673,7 +673,7 @@ describe('ScoreSystem', () => {
             expect(log.successh).toHaveBeenCalled();
         });
 
-        it('should throw an error if new() of database fails', async () => {
+        it('should throw an error if new of database fails', async () => {
             const mockUser = {
                 tag: 'mockUserTag'
             } as unknown as User;
@@ -705,7 +705,7 @@ describe('ScoreSystem', () => {
     });
 
     describe('addScoreToMember', () => {
-        it('should call edit() of database', async () => {
+        it('should call edit of database', async () => {
             const mockGuild = {
                 name: 'mockGuildName',
             } as Guild;
@@ -738,7 +738,7 @@ describe('ScoreSystem', () => {
             }));
         });
 
-        it('should throw an error if edit() of database fails', async () => {
+        it('should throw an error if edit of database fails', async () => {
             const mockGuild = {
                 name: 'mockGuildName',
             } as Guild;
@@ -881,7 +881,7 @@ describe('ScoreSystem', () => {
             expect(mockChannel.send).not.toHaveBeenCalled();
         });
 
-        it('should throw an error if send() of channel fails', async () => {
+        it('should throw an error if send of channel fails', async () => {
             const mockUser = {
                 tag: 'mockUserTag'
             } as User;
