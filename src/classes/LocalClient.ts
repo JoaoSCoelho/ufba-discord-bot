@@ -1,4 +1,4 @@
-// File Version: 0.0.
+// File Version: 0.0.1
 
 import { Client, ClientOptions, Collection, If, IntentsBitField, Snowflake } from 'discord.js';
 import SlashCommand from './Command';
