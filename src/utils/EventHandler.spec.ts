@@ -40,7 +40,7 @@ describe('EventHandler', () => {
                     return args.join('/');
                 });
                 (fs.readdirSync as jest.Mock).mockReturnValue(['validEvent1.ts']);
-                jest.mock('/mock/events/validEvent1.ts', () => ({
+                jest.doMock('/mock/events/validEvent1.ts', () => ({
                     __esModule: true,
                     default: new ClientEvent('validEvent1' as keyof ClientEvents, () => { }),
                 }), { virtual: true });
@@ -51,6 +51,8 @@ describe('EventHandler', () => {
 
                 expect(client.on).toHaveBeenNthCalledWith(1, 'validEvent1', expect.any(Function));
                 expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
+
+                jest.dontMock('/mock/events/validEvent1.ts');
             });
 
             it('multiple events', async () => {
@@ -66,11 +68,11 @@ describe('EventHandler', () => {
 
                 });
                 (fs.readdirSync as jest.Mock).mockReturnValue(['vEvent1.ts', 'vEvent2.ts']);
-                jest.mock('/mock/events/vEvent1.ts', () => ({
+                jest.doMock('/mock/events/vEvent1.ts', () => ({
                     __esModule: true,
                     default: new ClientEvent('vEvent1' as keyof ClientEvents, () => { }),
                 }), { virtual: true });
-                jest.mock('/mock/events/vEvent2.ts', () => ({
+                jest.doMock('/mock/events/vEvent2.ts', () => ({
                     __esModule: true,
                     default: new ClientEvent('vEvent2' as keyof ClientEvents, () => { }, true),
                 }), { virtual: true });
@@ -82,6 +84,9 @@ describe('EventHandler', () => {
                 expect(client.on).toHaveBeenNthCalledWith(1, 'vEvent1', expect.any(Function));
                 expect(client.once).toHaveBeenNthCalledWith(1, 'vEvent2', expect.any(Function));
                 expect(log.successh).toHaveBeenCalledWith('#(2)# eventos cadastrados com sucesso');
+
+                jest.dontMock('/mock/events/vEvent1.ts');
+                jest.dontMock('/mock/events/vEvent2.ts');
             });
         });
 
@@ -97,12 +102,12 @@ describe('EventHandler', () => {
                     return args.join('/');
                 });
                 (fs.readdirSync as jest.Mock).mockReturnValue(['validEvent1.ts', 'invalidEvent2.ts']);
-                jest.mock('/mock/events/validEvent1.ts', () => ({
+                jest.doMock('/mock/events/validEvent1.ts', () => ({
                     __esModule: true,
                     default: new ClientEvent('validEvent1' as keyof ClientEvents, () => { }),
                 }), { virtual: true });
 
-                jest.mock('/mock/events/invalidEvent2.ts', () => ({
+                jest.doMock('/mock/events/invalidEvent2.ts', () => ({
                     __esModule: true,
                     default: {},
                 }), { virtual: true });
@@ -115,6 +120,9 @@ describe('EventHandler', () => {
                 expect(client.once).not.toHaveBeenCalled();
                 expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(ClientEvent)#.'));
                 expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
+
+                jest.dontMock('/mock/events/validEvent1.ts');
+                jest.dontMock('/mock/events/invalidEvent2.ts');
             });
 
             it('invalid event by not having a default export', async () => {
@@ -125,7 +133,7 @@ describe('EventHandler', () => {
                     return args.join('/');
                 });
                 (fs.readdirSync as jest.Mock).mockReturnValue(['invalidEvent.ts']);
-                jest.mock('/mock/events/invalidEvent.ts', () => ({ __esModule: true }), { virtual: true });
+                jest.doMock('/mock/events/invalidEvent.ts', () => ({ __esModule: true }), { virtual: true });
 
                 const eventHandler = new EventHandler();
                 await eventHandler.handleAllEvents();
@@ -134,6 +142,8 @@ describe('EventHandler', () => {
                 expect(client.once).not.toHaveBeenCalled();
                 expect((log.warn as jest.Mock).mock.calls[0][0]).toContain('não tem exportação padrão');
                 expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
+
+                jest.dontMock('/mock/events/invalidEvent.ts');
             });
 
             it('invalid event by not found file', async () => {
@@ -144,7 +154,6 @@ describe('EventHandler', () => {
                     return args.join('/');
                 });
                 (fs.readdirSync as jest.Mock).mockReturnValue(['invalidEvent.ts']);
-                jest.unmock('/mock/events/invalidEvent.ts');
 
                 const eventHandler = new EventHandler();
                 await eventHandler.handleAllEvents();

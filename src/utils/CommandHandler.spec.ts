@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import * as fs from 'fs';
 import CommandHandler from './CommandHandler';
 import SlashCommand from '../classes/Command';
@@ -91,7 +93,11 @@ describe('CommandHandler', () => {
                 return args.join('/');
             });
 
-            jest.mock('/mock/commands/category1/command1/index.ts', () => (mockCommand), { virtual: true });
+            jest.doMock(
+                '/mock/commands/category1/command1/index.ts',
+                () => ({ __esModule: true, default: mockCommand }),
+                { virtual: true }
+            );
 
             let ch = new CommandHandler(false);
             ch.deployCommands = jest.fn(async () => { });
@@ -108,6 +114,7 @@ describe('CommandHandler', () => {
             await ch.handleCommands();
 
             expect(ch.deployCommands).toHaveBeenNthCalledWith(1, [mockCommandData]);
+            jest.dontMock('/mock/commands/category1/command1/index.ts');
         });
 
         describe('should skip invalid commands', () => {
@@ -132,7 +139,7 @@ describe('CommandHandler', () => {
                     return args.join('/');
                 });
 
-                jest.mock('/mock/commands/category1/invalidCommand/index.ts', () => ({
+                jest.doMock('/mock/commands/category1/invalidCommand/index.ts', () => ({
                     __esModule: true,
                     default: {},
                 }), { virtual: true });
@@ -141,6 +148,7 @@ describe('CommandHandler', () => {
 
                 expect(client.commands.size).toBe(0);
                 expect(log.warn).toHaveBeenCalled();
+                jest.dontMock('/mock/commands/category1/invalidCommand/index.ts');
             });
 
             it('should skip commands without index file', async () => {
@@ -181,7 +189,6 @@ describe('CommandHandler', () => {
                     if (p.endsWith('invalidCommand')) return ['index.ts'];
                 });
 
-                jest.unmock('/mock/commands/category1/invalidCommand/index.ts');
 
                 client.commands.set = jest.fn();
                 const commandHandler = new CommandHandler();
@@ -223,7 +230,7 @@ describe('CommandHandler', () => {
             const adminCommandData = { name: 'mockAdminCommand' };
             const mockAdminCommand = new AdminCommand(adminCommandData, async () => { });
 
-            jest.mock('/mock/admin-commands/adminCommand.ts', () => ({
+            jest.doMock('/mock/admin-commands/adminCommand.ts', () => ({
                 __esModule: true,
                 default: mockAdminCommand,
             }), { virtual: true });
@@ -234,11 +241,12 @@ describe('CommandHandler', () => {
 
             expect(client.adminCommands.size).toBe(1);
             expect(client.adminCommands.get('mockAdminCommand')).toBe(mockAdminCommand);
+            jest.dontMock('/mock/admin-commands/adminCommand.ts');
         });
 
         it('should skip invalid admin commands', async () => {
             (fs.readdirSync as jest.Mock).mockReturnValue(['invalidAdminCommand.ts']);
-            jest.mock('/mock/admin-commands/invalidAdminCommand.ts', () => ({
+            jest.doMock('/mock/admin-commands/invalidAdminCommand.ts', () => ({
                 default: {},
             }), { virtual: true });
 
@@ -247,6 +255,7 @@ describe('CommandHandler', () => {
             await commandHandler.handleAdminCommands();
 
             expect(client.adminCommands.size).toBe(0);
+            jest.dontMock('/mock/admin-commands/invalidAdminCommand.ts');
         });
 
         it('should skip and log if the importCommandInPath fails', async () => {
@@ -289,7 +298,7 @@ describe('CommandHandler', () => {
             });
 
             jest.resetModules();
-            jest.mock(
+            jest.doMock(
                 '/mock/commands/category1/command1/index.ts',
                 () => new Date(),
                 { virtual: true });
@@ -298,6 +307,7 @@ describe('CommandHandler', () => {
 
             await expect(commandHandler['importCommandInPath']('/mock/commands/category1/command1/index.ts', SlashCommand)).rejects.toThrow('The command is not an instance of SlashCommand');
             expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(SlashCommand)#.'));
+            jest.dontMock('/mock/commands/category1/command1/index.ts');
         });
         it.todo('should throw an error if the command does not have a default export');
         it.todo('should throw an error if the command is not an instance of AdminCommand');
