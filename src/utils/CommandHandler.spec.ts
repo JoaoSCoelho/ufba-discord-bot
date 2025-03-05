@@ -7,15 +7,6 @@ import path from 'path';
 import { log } from '../classes/LogSystem';
 import AdminCommand from '../classes/AdminCommand';
 
-const VIEW_LOGS = process.env.VIEW_LOGS === 'true';
-
-if (VIEW_LOGS) {
-    console.log = jest.requireActual('console').log;
-    console.error = jest.requireActual('console').error;
-    console.warn = jest.requireActual('console').warn;
-    console.info = jest.requireActual('console').info;
-}
-
 jest.mock('fs');
 jest.mock('path');
 jest.mock('../classes/Command', () => ({
@@ -46,20 +37,7 @@ jest.mock('../', () => ({
         adminCommands: new Map(),
     },
 }));
-if (!VIEW_LOGS) {
-    jest.mock('../classes/LogSystem', () => ({
-        log: {
-            loading: jest.fn(),
-            success: jest.fn(),
-            successh: jest.fn(),
-            warn: jest.fn(),
-            warnh: jest.fn(),
-            info: jest.fn(),
-            infoh: jest.fn(),
-            error: jest.fn(),
-        },
-    }));
-}
+
 
 describe('CommandHandler', () => {
     beforeEach(() => {
@@ -162,7 +140,7 @@ describe('CommandHandler', () => {
                 await commandHandler.handleCommands();
 
                 expect(client.commands.size).toBe(0);
-                if (!VIEW_LOGS) expect(log.warn).toHaveBeenCalled();
+                expect(log.warn).toHaveBeenCalled();
             });
 
             it('should skip commands without index file', async () => {
@@ -175,7 +153,7 @@ describe('CommandHandler', () => {
                 await commandHandler.handleCommands();
 
                 expect(client.commands.size).toBe(0);
-                if (!VIEW_LOGS) expect(log.warn).toHaveBeenCalled();
+                expect(log.warn).toHaveBeenCalled();
             });
 
             it('should skip commands that the importCommandInPath fails', async () => {
@@ -191,7 +169,7 @@ describe('CommandHandler', () => {
 
                 await commandHandler.handleCommands();
 
-                if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
+                expect(log.error).toHaveBeenCalled();
                 expect(client.commands.size).toBe(0);
                 expect(client.commands.set).not.toHaveBeenCalled();
             });
@@ -210,7 +188,7 @@ describe('CommandHandler', () => {
 
                 await commandHandler.handleCommands();
 
-                if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
+                expect(log.error).toHaveBeenCalled();
                 expect(client.commands.size).toBe(0);
                 expect(client.commands.set).not.toHaveBeenCalled();
             });
@@ -222,8 +200,8 @@ describe('CommandHandler', () => {
 
                 await expect(commandHandler.handleCommands()).rejects.toThrow();
 
-                if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
                 expect(commandHandler.deployCommands).toHaveBeenCalled();
+                expect(log.error).toHaveBeenCalled();
             });
         });
     });
@@ -277,7 +255,7 @@ describe('CommandHandler', () => {
 
             await commandHandler.handleAdminCommands();
 
-            if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
+            expect(log.error).toHaveBeenCalled();
             expect(client.adminCommands.size).toBe(0);
         });
     });
@@ -297,7 +275,7 @@ describe('CommandHandler', () => {
             const commandHandler = new CommandHandler();
 
             expect(commandHandler.deployCommands([])).rejects.toThrow();
-            if (!VIEW_LOGS) expect(log.error).toHaveBeenCalled();
+            expect(log.error).toHaveBeenCalled();
         });
     });
 
@@ -319,7 +297,7 @@ describe('CommandHandler', () => {
             const commandHandler = new CommandHandler();
 
             await expect(commandHandler['importCommandInPath']('/mock/commands/category1/command1/index.ts', SlashCommand)).rejects.toThrow('The command is not an instance of SlashCommand');
-            if (!VIEW_LOGS) expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(SlashCommand)#.'));
+            expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(SlashCommand)#.'));
         });
         it.todo('should throw an error if the command does not have a default export');
         it.todo('should throw an error if the command is not an instance of AdminCommand');

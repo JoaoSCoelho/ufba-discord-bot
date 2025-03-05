@@ -244,7 +244,7 @@ export default class LogSystem {
             }
 
             try {
-                const stacks = /(?:src|build)(?:\\|\/)([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename))?.trim() ?? '')?.[1];
+                const stacks = /(?:src|build)(?:\\|\/)([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename) && !stack.includes('node_modules'))?.trim() ?? '')?.[1];
 
                 return this(`${chalk.gray('→')} [${chalk[chalkMethod](typeName)}][${chalk[chalkMethod](logMoment)}][${chalk[chalkMethod](stacks)}]:`, ...data);
             } catch (err: unknown) {
