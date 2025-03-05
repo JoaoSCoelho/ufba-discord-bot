@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import * as path from 'path';
 import * as fs from 'fs';
 import SlashCommand from '../classes/Command';
@@ -122,7 +124,7 @@ export default class CommandHandler {
             log.successh(`Comando de admin #(${command.data.name})# (#(${commandFile})#) cadastrado com sucesso`);
         }
 
-        log.successh(`#(${client.adminCommands.size})# comandos de admin cadastrados com sucesso`);
+        log.successh(`#(${client.adminCommands.size})# comandos de #(admin)# cadastrados com sucesso`);
     }
 
     /** Deploys the commands to the Discord API (to show them in the Discord UI)
@@ -131,7 +133,7 @@ export default class CommandHandler {
         const rest = new REST().setToken(process.env.TOKEN!);
 
         try {
-            log.loading(`Started refreshing #(${commands.length})# application (/) commands.`);
+            log.loading(`Começando a atualizar #(${commands.length})# comandos (#(/)#) no Discord.`);
 
             // The PUT method is used to fully refresh all commands with the current set
             const data = await rest.put(
@@ -139,8 +141,8 @@ export default class CommandHandler {
                 { body: commands },
             ) as SlashCommand[];
 
-            log.success(`Successfully reloaded #(${data.length})# application (/) commands.\n`,
-                `${commands.map((command, index) => `#g(${index + 1}º)# ${command.name}`).join('#g(, )#')}`);
+            log.success(`#(${data.length})# comandos (#(/)#) atualizados com sucesso no Discord.\n`,
+                `${commands.map((command, index) => `${index + 1}º #(${command.name})#`).join('#g(, )#')}`);
         } catch (error: unknown) {
             if (!BaseError.isHandled(error)) {
                 log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord',
