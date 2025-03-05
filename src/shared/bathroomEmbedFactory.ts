@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { APIEmbedField, Collection, Colors, EmbedBuilder } from 'discord.js';
 import LocalClient from '../classes/LocalClient';
 import Bathroom, { CampusNames, GenderNames } from '../classes/database/Bathroom';
