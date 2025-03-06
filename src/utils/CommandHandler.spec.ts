@@ -187,7 +187,7 @@ describe('CommandHandler', () => {
 
                 client.commands.set = jest.fn();
                 const commandHandler = new CommandHandler();
-                commandHandler['importCommandInPath'] = jest.fn(async () => { throw new Error(); });
+                commandHandler['importCommandInPath'] = jest.fn(async () => { throw new Error('Test Error'); });
 
                 await commandHandler.handleCommands();
 
@@ -225,7 +225,7 @@ describe('CommandHandler', () => {
 
                 const ch = new CommandHandler(true);
 
-                ch.deployCommands = jest.fn(async () => { throw new Error(); });
+                ch.deployCommands = jest.fn(async () => { throw new Error('Test Error'); });
 
                 await expect(ch.handleCommands()).rejects.toThrow();
 
@@ -283,7 +283,7 @@ describe('CommandHandler', () => {
         it('should skip and log if the importCommandInPath fails', async () => {
             (fs.readdirSync as jest.Mock).mockReturnValue(['adminCommand.ts']);
             const commandHandler = new CommandHandler();
-            commandHandler['importCommandInPath'] = jest.fn(async () => { throw new Error(); });
+            commandHandler['importCommandInPath'] = jest.fn(async () => { throw new Error('Test Error'); });
 
             await commandHandler.handleAdminCommands();
 
@@ -302,7 +302,7 @@ describe('CommandHandler', () => {
         });
 
         it('should throw an error if an error occurs while deploying commands', async () => {
-            restMock.put.mockImplementationOnce(() => { throw new Error(); });
+            restMock.put.mockImplementationOnce(() => { throw new Error('Test Error'); });
 
             const commandHandler = new CommandHandler();
 

@@ -399,7 +399,7 @@ describe('ScoreSystem', () => {
             const scoreSystem = new ScoreSystem();
             scoreSystem['client'] = mockClient;
             scoreSystem['havePassedToNextLevel'] = jest.fn();
-            scoreSystem['addMemberWithScore'] = jest.fn(async () => { throw new Error(); });
+            scoreSystem['addMemberWithScore'] = jest.fn(async () => { throw new Error('Test Error'); });
             scoreSystem['addScoreToMember'] = jest.fn();
 
             await scoreSystem['onMessage'](mockMessage);
@@ -622,7 +622,7 @@ describe('ScoreSystem', () => {
                 });
             });
 
-            scoreSystem['sendNextLevelMessage'] = jest.fn(async () => { throw new Error(); });
+            scoreSystem['sendNextLevelMessage'] = jest.fn(async () => { throw new Error('Test Error'); });
 
             await scoreSystem['onMessage'](mockMessage);
 
@@ -687,7 +687,7 @@ describe('ScoreSystem', () => {
                 user: mockUser
             } as unknown as GuildMember;
             const mockDatabaseMember = {
-                new: jest.fn(async () => { throw new Error(); })
+                new: jest.fn(async () => { throw new Error('Test Error'); })
             } as unknown as DbCollection<Member>;
             const mockDatabase = {
                 member: mockDatabaseMember
@@ -753,7 +753,7 @@ describe('ScoreSystem', () => {
                 score: 46
             } as Member;
             const mockDatabaseMember = {
-                edit: jest.fn().mockRejectedValue(new Error()),
+                edit: jest.fn().mockRejectedValue(new Error('Test Error')),
             } as unknown as DbCollection<Member>;
             const mockDatabase = {
                 member: mockDatabaseMember

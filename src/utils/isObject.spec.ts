@@ -20,7 +20,7 @@ describe('isObject', () => {
         class Test2 { public 1 = 5; private a = 3; protected b = 4; public static c = 5; }
 
         expect(isObject(new Date())).toBe(true);
-        expect(isObject(new Error())).toBe(true);
+        expect(isObject(new Error('Test Error'))).toBe(true);
         expect(isObject(new Test())).toBe(true);
         expect(isObject(new Test2())).toBe(true);
         expect(isObject(new Map())).toBe(true);
