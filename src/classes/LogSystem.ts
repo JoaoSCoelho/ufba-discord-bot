@@ -1,4 +1,4 @@
-// File Version: 0.0.1
+// File Version: 0.0.2
 
 process.env.FORCE_COLOR = '1';
 process.env.NO_COLOR = '0';
@@ -153,7 +153,7 @@ export default class LogSystem {
         /** The data to be logged */
         ...data: unknown[]
     ) {
-        terminalHidden = !(process.env.VIEW_LOGS === 'true') && terminalHidden;
+        const hideTerminal = !(process.env.VIEW_LOGS === 'true') && terminalHidden;
 
         const currentDate = new Date();
         const logMoment = Intl.DateTimeFormat('pt-br', { dateStyle: 'short', timeStyle: 'medium' }).format(currentDate).replace(', ', '-') + ':' + currentDate.getMilliseconds().toString().padStart(3, '0');
@@ -192,12 +192,12 @@ export default class LogSystem {
         // @ts-expect-error Error because we are overwriting the function with another signature
         process.stdout.write = (chunk, encoding, callback) => {
             chunk = writeLogs.bind(this)(chunk);
-            return terminalHidden ? undefined : originalStdoutWrite(chunk, encoding, callback);
+            return hideTerminal ? undefined : originalStdoutWrite(chunk, encoding, callback);
         };
         // @ts-expect-error Error because we are overwriting the function with another signature
         process.stderr.write = (chunk, encoding, callback) => {
             chunk = writeLogs.bind(this)(chunk, true);
-            return terminalHidden ? undefined : originalStderrWrite(chunk, encoding, callback);
+            return hideTerminal ? undefined : originalStderrWrite(chunk, encoding, callback);
         };
 
 
@@ -246,7 +246,7 @@ export default class LogSystem {
             try {
                 const stacks = /(?:src|build)(?:\\|\/)([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename) && !stack.includes('node_modules'))?.trim() ?? '')?.[1];
 
-                return this(`${chalk.gray('→')} [${chalk[chalkMethod](typeName)}][${chalk[chalkMethod](logMoment)}][${chalk[chalkMethod](stacks)}]:`, ...data);
+                return this(`${chalk.gray(terminalHidden ? ' ' : '→')} [${chalk[chalkMethod](typeName)}][${chalk[chalkMethod](logMoment)}][${chalk[chalkMethod](stacks)}]:`, ...data);
             } catch (err: unknown) {
                 return this(...data);
             }
@@ -346,7 +346,7 @@ export default class LogSystem {
 
 
             // `PT`: Obtem os canais de log padrão e envia o log como mensagem
-            !terminalHidden && this.getLogChannel().then(sendLogMessage);
+            !hideTerminal && this.getLogChannel().then(sendLogMessage);
             this.getLogChannel(true).then(sendLogMessage);
         }
     }
