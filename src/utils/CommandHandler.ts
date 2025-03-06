@@ -49,7 +49,7 @@ export default class CommandHandler {
 
                 // If the command does not have an index file, it will not be registered
                 if (!indexFile) {
-                    log.warn(`Comando em (#(${categoryFolder}/${commandFolder.name}/)#) não possui arquivo #(index)#`);
+                    log.warn(`Comando em (#(${commandPath}/)#) não possui arquivo #(index)#.`);
                     continue;
                 }
 
