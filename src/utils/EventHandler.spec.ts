@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import * as path from 'path';
 import * as fs from 'fs';
 import ClientEvent from '../classes/ClientEvent';
@@ -50,7 +52,7 @@ describe('EventHandler', () => {
 
 
                 expect(client.on).toHaveBeenNthCalledWith(1, 'validEvent1', expect.any(Function));
-                expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
+                expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso.');
 
                 jest.dontMock('/mock/events/validEvent1.ts');
             });
@@ -83,7 +85,7 @@ describe('EventHandler', () => {
 
                 expect(client.on).toHaveBeenNthCalledWith(1, 'vEvent1', expect.any(Function));
                 expect(client.once).toHaveBeenNthCalledWith(1, 'vEvent2', expect.any(Function));
-                expect(log.successh).toHaveBeenCalledWith('#(2)# eventos cadastrados com sucesso');
+                expect(log.successh).toHaveBeenCalledWith('#(2)# eventos cadastrados com sucesso.');
 
                 jest.dontMock('/mock/events/vEvent1.ts');
                 jest.dontMock('/mock/events/vEvent2.ts');
@@ -119,7 +121,7 @@ describe('EventHandler', () => {
                 expect(client.on).toHaveBeenCalledWith('validEvent1', expect.any(Function));
                 expect(client.once).not.toHaveBeenCalled();
                 expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(ClientEvent)#.'));
-                expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso');
+                expect(log.successh).toHaveBeenCalledWith('#(1)# eventos cadastrados com sucesso.');
 
                 jest.dontMock('/mock/events/validEvent1.ts');
                 jest.dontMock('/mock/events/invalidEvent2.ts');
@@ -140,8 +142,8 @@ describe('EventHandler', () => {
 
                 expect(client.on).not.toHaveBeenCalled();
                 expect(client.once).not.toHaveBeenCalled();
-                expect((log.warn as jest.Mock).mock.calls[0][0]).toContain('não tem exportação padrão');
-                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
+                expect((log.warn as jest.Mock).mock.calls[0][0]).toContain('não tem exportação padrão.');
+                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso.');
 
                 jest.dontMock('/mock/events/invalidEvent.ts');
             });
@@ -161,7 +163,7 @@ describe('EventHandler', () => {
                 expect(client.on).not.toHaveBeenCalled();
                 expect(client.once).not.toHaveBeenCalled();
                 expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o arquivo do evento em');
-                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
+                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso.');
             });
 
             it('invalid event by unknown error', async () => {
@@ -182,7 +184,7 @@ describe('EventHandler', () => {
                 expect(client.on).not.toHaveBeenCalled();
                 expect(client.once).not.toHaveBeenCalled();
                 expect((log.error as jest.Mock).mock.calls[0][0]).toContain('Erro ao importar o evento em');
-                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso');
+                expect(log.successh).toHaveBeenCalledWith('#(0)# eventos cadastrados com sucesso.');
             });
         });
 

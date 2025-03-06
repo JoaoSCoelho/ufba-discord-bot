@@ -1,4 +1,4 @@
-// File Version: 0.0.1
+// File Version: 0.0.2
 
 import { ClientOptions, Collection, Events, Guild, GuildMember, GuildMemberManager, GuildTextBasedChannel, Message, User } from 'discord.js';
 import LocalClient from '../classes/LocalClient';
@@ -94,7 +94,7 @@ describe('ScoreSystem', () => {
             const startedScoreSystem = scoreSystem.start();
 
             expect(startedScoreSystem).toBe(scoreSystem);
-            expect(log.warn).toHaveBeenCalledWith('Iniciando um novo sistema de pontuação.', 'Um outro sistema está em execução');
+            expect(log.warn).toHaveBeenCalledWith('Iniciando um novo sistema de pontuação.', 'Um outro sistema está em execução.');
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
             expect(scoreSystem['running']).toBe(true);
             expect(ScoreSystem['runningSystems'].has(scoreSystem2)).toBe(true);
@@ -136,7 +136,7 @@ describe('ScoreSystem', () => {
             expect(mockClient.off).toHaveBeenCalledWith(Events.MessageCreate, expect.any(Function));
             expect(scoreSystem['running']).toBe(false);
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(false);
-            expect(log.warnh).toHaveBeenCalledWith('Sistema de pontuação de membros não foi encontrado na lista de sistemas em execução');
+            expect(log.warnh).toHaveBeenCalledWith('Sistema de pontuação de membros não foi encontrado na lista de sistemas em execução.');
         });
 
         it('should not stop the score system if it is not running', () => {
@@ -312,7 +312,7 @@ describe('ScoreSystem', () => {
             const scoreSystem = new ScoreSystem();
             scoreSystem['client'] = mockClient;
             scoreSystem['addMemberWithScore'] = jest.fn(async () => ({} as Member));
-            scoreSystem['addScoreToMember'] = jest.fn(async () => { throw new Error(); });
+            scoreSystem['addScoreToMember'] = jest.fn(async () => { throw new Error('Test Error'); });
             scoreSystem['havePassedToNextLevel'] = jest.fn();
 
             await scoreSystem['onMessage'](mockMessage);
