@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
 import SlashCommand from '../../../classes/Command';
 import discordAnsi from '../../../utils/discord-ansi';
@@ -45,7 +47,7 @@ export default new SlashCommand(
                     log.error(`Erro ao dar fetch em membro de ID: #(${member.discordId})#`,
                         'enquanto executava o comando /#(ranking)#',
                         `usado por #(@${interaction.user.tag})#`,
-                        `no servidor #(${interaction.guild?.name ?? interaction.guildId})#`,
+                        `no servidor #(${interaction.guild?.name ?? interaction.guildId})#.`,
                         '\n#(Opções usadas)#:', interaction.options.data,
                         '\n#(Erro)#:', error
                     );

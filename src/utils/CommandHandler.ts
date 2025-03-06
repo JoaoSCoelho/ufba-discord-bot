@@ -1,4 +1,4 @@
-// File Version: 0.0.1
+// File Version: 0.0.2
 
 import * as path from 'path';
 import * as fs from 'fs';
@@ -70,22 +70,22 @@ export default class CommandHandler {
                 }
 
                 client.commands.set(command.data.name, command);
-                log.successh(`Comando #(${command.data.name})# (#(${categoryFolder}/${commandFolder.name}/${indexFile})#) cadastrado com sucesso`);
+                log.successh(`Comando #(${command.data.name})# (#(${categoryFolder}/${commandFolder.name}/${indexFile})#) cadastrado com sucesso.`);
 
 
                 if (this.shouldDeploy) {
                     commandsToDeploy.push(command.data.toJSON());
-                    log.info(`Comando #(${command.data.name})# (#(${categoryFolder}/${commandFolder.name}/${indexFile})#) cadastrado para deploy`);
+                    log.info(`Comando #(${command.data.name})# (#(${categoryFolder}/${commandFolder.name}/${indexFile})#) cadastrado para deploy.`);
                 }
             }
         }
 
-        log.successh(`#(${client.commands.size})# comandos cadastrados com sucesso`);
+        log.successh(`#(${client.commands.size})# comandos cadastrados com sucesso.`);
 
         if (this.shouldDeploy) await this.deployCommands(commandsToDeploy)
             .catch((error: unknown) => {
                 if (!BaseError.isHandled(error)) {
-                    log.error('Erro enquanto estava sendo feito o deploy dos comandos no discord',
+                    log.error('Erro enquanto estava sendo feito o deploy dos comandos no discord:',
                         '\n#(Erro)#:', error
                     );
 
@@ -121,10 +121,10 @@ export default class CommandHandler {
             }
 
             client.adminCommands.set(command.data.name, command);
-            log.successh(`Comando de admin #(${command.data.name})# (#(${commandFile})#) cadastrado com sucesso`);
+            log.successh(`Comando de admin #(${command.data.name})# (#(${commandFile})#) cadastrado com sucesso.`);
         }
 
-        log.successh(`#(${client.adminCommands.size})# comandos de #(admin)# cadastrados com sucesso`);
+        log.successh(`#(${client.adminCommands.size})# comandos de #(admin)# cadastrados com sucesso.`);
     }
 
     /** Deploys the commands to the Discord API (to show them in the Discord UI)
@@ -145,7 +145,7 @@ export default class CommandHandler {
                 `${commands.map((command, index) => `${index + 1}º #(${command.name})#`).join('#g(, )#')}`);
         } catch (error: unknown) {
             if (!BaseError.isHandled(error)) {
-                log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord',
+                log.error('Aconteceu um erro enquanto estava sendo feito o deploy dos comandos no discord:',
                     '\n#(Erro)#:', error
                 );
 
@@ -178,14 +178,14 @@ export default class CommandHandler {
 
 
         if (!module || typeof module !== 'object') {
-            log.error(`O comando em (#(${path})#) nao foi importado corretamente`,
+            log.error(`O comando em (#(${path})#) nao foi importado corretamente.`,
                 '\n#(Esperado)#: { default: SlashCommand }',
                 '\n#(Recebido)#:', module
             );
             throw new HandledError('The command was not imported correctly');
         }
         if (!('default' in module)) {
-            log.warn(`O comando em (#(${path})#) nao tem exportação padrão`,
+            log.warn(`O comando em (#(${path})#) nao tem exportação padrão.`,
                 '\n#(Esperado)#: { default: SlashCommand }',
                 '\n#(Recebido)#:', module
             );

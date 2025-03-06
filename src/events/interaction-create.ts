@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { CommandInteraction, Events } from 'discord.js';
 import ClientEvent from '../classes/ClientEvent';
 import { log } from '../classes/LogSystem';
@@ -15,12 +17,12 @@ export default new ClientEvent(
 
         log.infoh(`#(@${interaction.user.tag})# usou o comando #(/${interaction.commandName})#`,
             `no canal #(#${interaction.channel?.name ?? interaction.channelId})#`,
-            `do servidor #(${interaction.guild?.name ?? interaction.guildId})#`);
+            `do servidor #(${interaction.guild?.name ?? interaction.guildId})#.`);
 
         const command = client.commands.get(interaction.commandName);
 
         if (!command) {
-            log.error(`Não foi encontrado o comando /#(${interaction.commandName})# na lista de comandos do bot`);
+            log.error(`Não foi encontrado o comando /#(${interaction.commandName})# na lista de comandos do bot.`);
             return;
         }
 
@@ -36,13 +38,13 @@ export default new ClientEvent(
             log.infoh(`Fim da execução do comando #(/${interaction.commandName})#`,
                 `executado por #(@${interaction.user.tag})#`,
                 `no canal #(#${interaction.channel?.name ?? interaction.channelId})#`,
-                `do servidor #(${interaction.guild?.name ?? interaction.guildId})#`);
+                `do servidor #(${interaction.guild?.name ?? interaction.guildId})#.`);
         } catch (error: unknown) {
             if (!BaseError.isHandled(error)) {
                 log.error(`Aconteceu um erro na execução do comando /#(${interaction.commandName})#`,
                     `pelo usuário #(@${interaction.user.tag})#,`,
                     `no canal #(@${interaction.channel?.name ?? interaction.channelId})#`,
-                    `do servidor #(${interaction.guild?.name ?? interaction.guildId})#`,
+                    `do servidor #(${interaction.guild?.name ?? interaction.guildId})#.`,
                     '\n#(Erro)#:', error
                 );
 
@@ -52,14 +54,14 @@ export default new ClientEvent(
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true })
                     .catch((error: unknown) => {
-                        log.error(`Erro ao enviar mensagem de erro na execução do comando #(${interaction.commandName})#`,
+                        log.error(`Erro ao enviar mensagem de erro na execução do comando #(${interaction.commandName})#.`,
                             '\n#(Erro)#:', error
                         );
                     });
             } else {
                 await interaction.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!', ephemeral: true })
                     .catch((error: unknown) => {
-                        log.error(`Erro ao enviar mensagem de erro na execução do comando #(${interaction.commandName})#`,
+                        log.error(`Erro ao enviar mensagem de erro na execução do comando #(${interaction.commandName})#.`,
                             '\n#(Erro)#:', error
                         );
                     });

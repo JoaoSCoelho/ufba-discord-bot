@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { Collection } from 'discord.js';
 import Database, { DatabaseInterface } from './Database';
 import ClassEntity from '../classes/database/Entity';
@@ -23,7 +25,7 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
 
 
         this.set(entity.id, entity);
-        log.infoh(`Um novo registro, ID: #(${entity.id})#, foi adicionado à coleção #(${this.entityName})#`);
+        log.infoh(`Um novo registro, ID: #(${entity.id})#, foi adicionado à coleção #(${this.entityName})#.`);
 
 
 
@@ -33,12 +35,12 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
 
         await this.database.globalUpdateSystem()
             .then((status) => {
-                if (status === 'updated') log.infoh(`O novo registro, ID: #(${entity.id})#, foi globalmente incorporado`);
-                else if (status === 'buffer') log.infoh(`O novo registro, ID: #(${entity.id})#, está na fila para ser globalmente incorporado`);
+                if (status === 'updated') log.infoh(`O novo registro, ID: #(${entity.id})#, foi globalmente incorporado.`);
+                else if (status === 'buffer') log.infoh(`O novo registro, ID: #(${entity.id})#, está na fila para ser globalmente incorporado.`);
             })
             .catch((error: unknown) => {
                 if (!BaseError.isHandled(error)) {
-                    log.error(`Erro ao usar #g(globalUpdateSystem)# ao criar entidade ID: #(${entity.id})#`,
+                    log.error(`Erro ao usar #g(globalUpdateSystem)# ao criar entidade ID: #(${entity.id})#.`,
                         '\n#(Erro)#:', error
                     );
 
@@ -58,7 +60,7 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
 
 
         this.set(newEntity.id, newEntity);
-        log.infoh(`O registro ID: #(${newEntity.id})# da coleção #(${this.entityName})# foi editado`);
+        log.infoh(`O registro ID: #(${newEntity.id})# da coleção #(${this.entityName})# foi editado.`);
 
 
         this.database.emit('entityUpdate', this.entityName, newEntity);
@@ -66,12 +68,12 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
 
         await this.database.globalUpdateSystem()
             .then((status) => {
-                if (status === 'updated') log.infoh(`O registro, ID: #(${newEntity.id})#, foi globalmente atualizado`);
-                else if (status === 'buffer') log.infoh(`O registro, ID: #(${newEntity.id})#, está na fila para ser globalmente atualizado`);
+                if (status === 'updated') log.infoh(`O registro, ID: #(${newEntity.id})#, foi globalmente atualizado.`);
+                else if (status === 'buffer') log.infoh(`O registro, ID: #(${newEntity.id})#, está na fila para ser globalmente atualizado.`);
             })
             .catch((error: unknown) => {
                 if (!BaseError.isHandled(error)) {
-                    log.error(`Erro ao usar #g(globalUpdateSystem)# ao editar entidade ID: #(${newEntity.id})#`,
+                    log.error(`Erro ao usar #g(globalUpdateSystem)# ao editar entidade ID: #(${newEntity.id})#.`,
                         '\n#(Erro)#:', error
                     );
 
@@ -89,7 +91,7 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
         const deletedEntity = this.get(entityId)!;
 
         this.delete(entityId);
-        log.infoh(`O registro ID: #(${entityId})# da coleção #(${this.entityName})# foi removido`);
+        log.infoh(`O registro ID: #(${entityId})# da coleção #(${this.entityName})# foi removido.`);
 
 
         this.database.emit('entityDelete', this.entityName, deletedEntity);
@@ -97,12 +99,12 @@ export default class DbCollection<Entity extends ClassEntity> extends Collection
 
         await this.database.globalUpdateSystem()
             .then((status) => {
-                if (status === 'updated') log.infoh(`O registro, ID: #(${entityId})#, foi globalmente removido`);
-                else if (status === 'buffer') log.infoh(`O registro, ID: #(${entityId})#, está na fila para ser globalmente removido`);
+                if (status === 'updated') log.infoh(`O registro, ID: #(${entityId})#, foi globalmente removido.`);
+                else if (status === 'buffer') log.infoh(`O registro, ID: #(${entityId})#, está na fila para ser globalmente removido.`);
             })
             .catch((error: unknown) => {
                 if (!BaseError.isHandled(error)) {
-                    log.error(`Erro ao usar #g(globalUpdateSystem)# ao editar entidade ID: #(${entityId})#`,
+                    log.error(`Erro ao usar #g(globalUpdateSystem)# ao editar entidade ID: #(${entityId})#.`,
                         '\n#(Erro)#:', error
                     );
 

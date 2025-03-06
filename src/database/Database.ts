@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { AttachmentBuilder, ChannelType } from 'discord.js';
 import Bathroom from '../classes/database/Bathroom';
 import DbCollection from './DbCollection';
@@ -51,7 +53,7 @@ export default class Database extends (EventEmitter as unknown as { new(): INode
         const dbChannel = await this.client.channels.fetch(process.env.DATABASE_CHANNEL_ID!)
             .catch((error: unknown) => {
                 log.error('Erro ao buscar #(dbChannel)#',
-                    `com ID: #(${process.env.DATABASE_CHANNEL_ID})#`,
+                    `com ID: #(${process.env.DATABASE_CHANNEL_ID})#.`,
                     '\n#(Erro)#:', error
                 );
 
@@ -60,7 +62,7 @@ export default class Database extends (EventEmitter as unknown as { new(): INode
             });
 
         if (!dbChannel?.isTextBased() || dbChannel.type !== ChannelType.GuildText) {
-            log.error(`Database channel "#(${dbChannel?.id ?? process.env.DATABASE_CHANNEL_ID})# is not a TextChannel"`);
+            log.error(`Database channel "#(${dbChannel?.id ?? process.env.DATABASE_CHANNEL_ID})# is not a TextChannel".`);
 
             throw new HandledError('Database channel is not a TextChannel');
         }
@@ -81,7 +83,7 @@ export default class Database extends (EventEmitter as unknown as { new(): INode
 
         const lastMessage = (await dbChannel.messages.fetch({ limit: 1 })
             .catch((error: unknown) => {
-                log.error(`Erro ao buscar a última mensagem do dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`,
+                log.error(`Erro ao buscar a última mensagem do dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#).`,
                     '\n#(Erro)#:', error);
 
                 BaseError.handle(error);
@@ -89,7 +91,7 @@ export default class Database extends (EventEmitter as unknown as { new(): INode
             })).first();
 
         if (!lastMessage) {
-            log.error(`Não há nenhuma mensagem no dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`);
+            log.error(`Não há nenhuma mensagem no dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#).`);
             throw new HandledError('There is not a published database');
         }
 
@@ -99,7 +101,7 @@ export default class Database extends (EventEmitter as unknown as { new(): INode
         const file = lastMessage.attachments.find((att) => att.contentType?.startsWith('application/json'));
 
         if (!file) {
-            log.error(`Não há arquivos na última mensagem do dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`);
+            log.error(`Não há arquivos na última mensagem do dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#).`);
             throw new HandledError('There is no file in last published database');
         }
 
@@ -111,7 +113,7 @@ export default class Database extends (EventEmitter as unknown as { new(): INode
 
 
         this.setCache(json, entityName ? [entityName] : undefined);
-        log.success('Database successfully fetched');
+        log.success('Database successfully fetched.');
 
         if (entityName) return this[entityName as keyof DatabaseInterface] as unknown as DbCollection<Entity>;
     }
@@ -195,10 +197,10 @@ export default class Database extends (EventEmitter as unknown as { new(): INode
         const fileBuffer = Buffer.from(JSON.stringify(this.toJSON(), null, 4));
 
         await dbChannel.send({ files: [new AttachmentBuilder(fileBuffer, { name: FILE_NAME })] })
-            .then(() => log.infoh(`Banco de dados atualizado no Discord. Tamanho total #(${prettyBytes(fileBuffer.length)})#`))
+            .then(() => log.infoh(`Banco de dados atualizado no Discord. Tamanho total #(${prettyBytes(fileBuffer.length)})#.`))
             .catch((error: unknown) => {
                 log.error(`Erro ao enviar arquivo #(${FILE_NAME})#`,
-                    `no dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#)`,
+                    `no dbChannel #(#${dbChannel.name})# (#(${dbChannel.id})#).`,
                     '\n#(Erro)#:', error);
 
                 BaseError.handle(error);

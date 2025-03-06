@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { Events } from 'discord.js';
 import { client } from '..';
 import ClientEvent from '../classes/ClientEvent';
@@ -10,7 +12,7 @@ import BaseError from '../Errors/BaseError';
 export default new ClientEvent(Events.GuildDelete, async (guild) => {
     if (!client.database) return;
 
-    log.info(`O bot acabou de sair do servidor "#(${guild.name || guild.id})#"`);
+    log.info(`O bot acabou de sair do servidor "#(${guild.name || guild.id})#".`);
 
     // Removes all members from database with this guild.id
     await Promise.all(
@@ -25,18 +27,18 @@ export default new ClientEvent(Events.GuildDelete, async (guild) => {
                     .then(() => {
                         log.successh(`#(${index + 1})#/#(${array.length})# Member #(${member.id})#`,
                             `from server #(${guild.name || guild.id})#,`,
-                            'successfully removed from database');
+                            'successfully removed from database.');
                     })
                     .catch((error: unknown) => {
                         if (!BaseError.isHandled(error)) {
                             log.error(`#(${index + 1})#/#(${array.length})#`,
                                 `Erro ao remover membro #(${member.id})#`,
-                                `do servidor #(${guild.name || guild.id})#`,
+                                `do servidor #(${guild.name || guild.id})#.`,
                                 '\n#(Erro)#:', error);
                         }
                     });
             })
     );
 
-    log.info(`Members from server #(${guild.name || guild.id})# removed from database`);
+    log.info(`Members from server #(${guild.name || guild.id})# removed from database.`);
 });

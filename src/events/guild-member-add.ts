@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { Events } from 'discord.js';
 import ClientEvent from '../classes/ClientEvent';
 import { client } from '..';
@@ -10,7 +12,7 @@ import BaseError from '../Errors/BaseError';
 export default new ClientEvent(Events.GuildMemberAdd, async (guildMember) => {
     if (!client.database) return;
 
-    log.infoh(`O membro #(@${guildMember.user.tag})# foi adicionado ao servidor #(${guildMember.guild.name})#`);
+    log.infoh(`O membro #(@${guildMember.user.tag})# foi adicionado ao servidor #(${guildMember.guild.name})#.`);
 
     /** `true` if the member has already on database */
     const alreadyHasTheMember = !!client.database.member.find((member) =>
@@ -34,12 +36,12 @@ export default new ClientEvent(Events.GuildMemberAdd, async (guildMember) => {
         await client.database.member.new(member)
             .then(() => {
                 log.successh(`Membro #(@${guildMember.user.tag})#`,
-                    `do servidor #(${guildMember.guild.name})# adicionado ao banco de dados`);
+                    `do servidor #(${guildMember.guild.name})# adicionado ao banco de dados.`);
             })
             .catch((error: unknown) => {
                 if (!BaseError.isHandled(error)) {
                     log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})#`,
-                        `do servidor #(${guildMember.guild.name})# ao banco de dados`,
+                        `do servidor #(${guildMember.guild.name})# ao banco de dados.`,
                         '\n#(Member)#:', member,
                         '\n#(Erro)#:', error);
                 }

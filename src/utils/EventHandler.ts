@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import * as path from 'path';
 import * as fs from 'fs';
 import ClientEvent from '../classes/ClientEvent';
@@ -36,10 +38,10 @@ export default class EventHandler {
 
             registeredEvents++;
 
-            log.successh(`Evento #(${event.eventName})# (#(${eventFile})#) cadastrado com sucesso`);
+            log.successh(`Evento #(${event.eventName})# (#(${eventFile})#) cadastrado com sucesso.`);
         }
 
-        log.successh(`#(${registeredEvents})# eventos cadastrados com sucesso`);
+        log.successh(`#(${registeredEvents})# eventos cadastrados com sucesso.`);
     }
 
     /** Make a import in the specified path and guarantees that the imported event is a ClientEvent
@@ -61,14 +63,14 @@ export default class EventHandler {
 
 
         if (!module || typeof module !== 'object') {
-            log.error(`O evento em (#(${path})#) não foi importado corretamente`,
+            log.error(`O evento em (#(${path})#) não foi importado corretamente.`,
                 '\n#(Esperado)#: { default: ClientEvent }',
                 '\n#(Recebido)#:', module
             );
             throw new HandledError('The event was not imported correctly');
         }
         if (!('default' in module)) {
-            log.warn(`O evento em (#(${path})#) não tem exportação padrão`,
+            log.warn(`O evento em (#(${path})#) não tem exportação padrão.`,
                 '\n#(Esperado)#: { default: ClientEvent }',
                 '\n#(Recebido)#:', module
             );

@@ -1,4 +1,4 @@
-// File Version: 0.0.1
+// File Version: 0.0.2
 
 import { Events, GuildMember, GuildTextBasedChannel, If, Message, PermissionsBitField } from 'discord.js';
 import LocalClient from '../classes/LocalClient';
@@ -68,7 +68,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
 
         if (ScoreSystem.runningSystems.size > 0) {
             log.warn('Iniciando um novo sistema de pontuação.',
-                'Um outro sistema está em execução');
+                'Um outro sistema está em execução.');
         }
 
         this.client.on(Events.MessageCreate, this.onMessage.bind(this as ScoreSystem<true>));
@@ -98,12 +98,12 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
 
         const removedFromRunningSystems = ScoreSystem.runningSystems.delete(this);
         if (!removedFromRunningSystems) {
-            log.warnh('Sistema de pontuação de membros não foi encontrado na lista de sistemas em execução');
+            log.warnh('Sistema de pontuação de membros não foi encontrado na lista de sistemas em execução.');
         }
 
         this.client.off(Events.MessageCreate, this.onMessage);
         this.running = false;
-        log.infoh('Sistema de pontuação de membros parado');
+        log.infoh('Sistema de pontuação de membros parado.');
         return this as ScoreSystem<true>;
     }
 
@@ -126,9 +126,9 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
             const createdMember = await this.addMemberWithScore(message.member)
                 .catch((error: unknown) => {
                     if (!BaseError.isHandled(error)) {
-                        log.error('Erro ao adicionar membro ao banco de dados ao computar seu score\n',
-                            '#(GuildMember)#:', message.member,
-                            '#(Erro)#:', error);
+                        log.error('Erro ao adicionar membro ao banco de dados ao computar seu score.',
+                            '\n#(GuildMember)#:', message.member,
+                            '\n#(Erro)#:', error);
                     }
 
                     return null;
@@ -139,10 +139,10 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
                 .then(() => true)
                 .catch((error: unknown) => {
                     if (!BaseError.isHandled(error)) {
-                        log.error('Erro ao adicionar score ao membro\n',
-                            '#(Member)#:', dbMember,
-                            '#(GuildMember)#:', message.member,
-                            '#(Erro)#:', error);
+                        log.error('Erro ao adicionar score ao membro.',
+                            '\n#(Member)#:', dbMember,
+                            '\n#(GuildMember)#:', message.member,
+                            '\n#(Erro)#:', error);
                     }
 
                     return null;
@@ -177,9 +177,9 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
                         if (error instanceof Error && error.message === 'Bot doesn\'t have permission to send messages in the channel') {
                             log.warnh(`O bot não tem permissão para enviar mensagens no canal #(#${message.channel.name})#`,
                                 `do servidor #(${message.member!.guild.name})#`,
-                                `para o usuário #(@${message.member!.user.tag})#`);
+                                `para o usuário #(@${message.member!.user.tag})#.`);
                         } else {
-                            log.error('Erro ao enviar mensagem de proximo nivel',
+                            log.error('Erro ao enviar mensagem de proximo nivel.',
                                 '\n#(Nível)#:', achievedLevel,
                                 '\n#(GuildMember)#:', message.member,
                                 '\n#(GuildTextBasedChannel)#:', message.channel,
@@ -198,7 +198,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
      */
     private async addMemberWithScore(this: ScoreSystem<true>, guildMember: GuildMember) {
         log.loadingh(`Adicionando membro #(@${guildMember.user.tag})#`,
-            `do servidor #(${guildMember.guild.name})# ao banco de dados`);
+            `do servidor #(${guildMember.guild.name})# ao banco de dados.`);
 
         const newMember = new Member({
             id: Date.now().toString(),
@@ -213,12 +213,12 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
             .then(() => {
                 log.successh(`Membro #(@${guildMember.user.tag})#`,
                     `do servidor #(${guildMember.guild.name})# adicionado ao banco de dados`,
-                    `com #(${newMember.score})# pontos de score`);
+                    `com #(${newMember.score})# pontos de score.`);
             })
             .catch((error: unknown) => {
                 if (!BaseError.isHandled(error)) {
                     log.error(`Erro ao adicionar membro #(@${guildMember.user.tag})#`,
-                        `do servidor #(${guildMember.guild.name})# ao banco de dados`,
+                        `do servidor #(${guildMember.guild.name})# ao banco de dados.`,
                         '\n#(Membro)#:', newMember,
                         '\n#(Erro)#:', error);
                     BaseError.handle(error);
@@ -237,7 +237,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
      */
     private async addScoreToMember(this: ScoreSystem<true>, dbMember: Member, guildMember: GuildMember) {
         log.loadingh(`Adding #(${this.scorePerMessage})# points of score to member #(@${guildMember.user.tag})#`,
-            `from server #(${guildMember.guild.name})#`);
+            `from server #(${guildMember.guild.name})#.`);
 
         const newMemberData = {
             ...dbMember,
@@ -249,12 +249,12 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
             .then(() => {
                 log.successh(`Membro #(@${guildMember.user.tag})#`,
                     `do servidor #(${guildMember.guild.name})# recebeu #(${this.scorePerMessage})# pontos de score`,
-                    `e possui agora #(${newMemberData.score})# ao total`);
+                    `e possui agora #(${newMemberData.score})# ao total.`);
             })
             .catch((error: unknown) => {
                 if (!BaseError.isHandled(error)) {
                     log.error(`Erro ao adicionar score ao membro #(@${guildMember.user.tag})#`,
-                        `do servidor #(${guildMember.guild.name})#`,
+                        `do servidor #(${guildMember.guild.name})#.`,
                         '\n#(Data)#:', newMemberData,
                         '\n#(Erro)#:', error
                     );
@@ -286,7 +286,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
      */
     private async sendNextLevelMessage(guildMember: GuildMember, channel: GuildTextBasedChannel, level: number) {
         log.infoh(`O membro #(@${guildMember.user.tag})#`,
-            `do servidor #(${guildMember.guild.name})# passou para o nível #(${level})#`);
+            `do servidor #(${guildMember.guild.name})# passou para o nível #(${level})#.`);
 
 
         if (!guildMember.guild.members.me?.permissionsIn(channel).has(PermissionsBitField.Flags.SendMessages)) {
@@ -300,7 +300,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
                 log.error(`Erro ao enviar resposta "#(${messageContent})#"`,
                     `para o usuário #(@${guildMember.user.tag})#`,
                     `no canal #(#${channel.name})#`,
-                    `no servidor #(${guildMember.guild.name})#`,
+                    `no servidor #(${guildMember.guild.name})#.`,
                     '\n#(Erro)#:', error);
 
                 BaseError.handle(error);

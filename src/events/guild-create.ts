@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { Events } from 'discord.js';
 import { client } from '..';
 import ClientEvent from '../classes/ClientEvent';
@@ -7,7 +9,7 @@ import BaseError from '../Errors/BaseError';
 
 // Captures when the client enter on a guild
 export default new ClientEvent(Events.GuildCreate, async (guild) => {
-    log.info(`O bot acabou de entrar no servidor "#(${guild.name})#" - #(${guild.id})#`);
+    log.info(`O bot acabou de entrar no servidor "#(${guild.name})#" - #(${guild.id})#.`);
 
     if (client.database) {
         let addedMembersCount = 0;
@@ -42,14 +44,14 @@ export default new ClientEvent(Events.GuildCreate, async (guild) => {
                     await client.database!.member.new(member)
                         .then(() => {
                             log.successh(`#(${index + 1})#/#(${array.length})# Membro #(@${guildMember.user.tag})#`,
-                                `do servidor #(${guild.name})# adicionado ao banco de dados`);
+                                `do servidor #(${guild.name})# adicionado ao banco de dados.`);
 
                             addedMembersCount++;
                         })
                         .catch((error: unknown) => {
                             if (!BaseError.isHandled(error)) {
                                 log.error(`#(${index + 1})#/#(${array.length})# Erro ao adicionar membro #(@${guildMember.user.tag})#`,
-                                    `do servidor #(${guild.name})# ao banco de dados`,
+                                    `do servidor #(${guild.name})# ao banco de dados.`,
                                     '\n#(Membro)#:', member,
                                     '\n#(Erro)#:', error
                                 );

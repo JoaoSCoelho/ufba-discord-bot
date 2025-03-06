@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import { Events, TextChannel } from 'discord.js';
 import { client } from '..';
 import ClientEvent from '../classes/ClientEvent';
@@ -51,7 +53,7 @@ export default new ClientEvent(Events.MessageCreate, async (message) => {
     log.infoh(
         `O admin #(@${message.author.tag})# usou o comando de admin #(${client.prefix}${commandName})#,`,
         `no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})#`,
-        `do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`,
+        `do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#.`,
         ...(Object.values(params).length ? ['\nParâmetros:', params] : []),
         ...(words.length ? ['\nArgumentos:', words] : [])
     );
@@ -68,13 +70,13 @@ export default new ClientEvent(Events.MessageCreate, async (message) => {
         log.infoh(`Fim da execução do comando de admin #(${client.prefix}${commandName})#`,
             `executado por #(@${message.author.tag})#`,
             `no canal #(#${(message.channel as TextChannel | undefined)?.name ?? message.channelId})#`,
-            `do servidor #(${message.guild?.name ?? message.guildId})#`);
+            `do servidor #(${message.guild?.name ?? message.guildId})#.`);
     } catch (error: unknown) {
         if (!BaseError.isHandled(error)) {
             log.error(`Aconteceu um erro na execução do comando #(${client.prefix}${commandName})#`,
                 `pelo admin #(@${message.author.tag})#,`,
                 `no canal #(@${message.channel.isDMBased() ? 'DM' : message.channel.name})#`,
-                `do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#`,
+                `do servidor #(${message.channel.isDMBased() ? 'DM' : (message.guild?.name ?? message.guildId)})#.`,
                 '\n#(Erro)#:', error
             );
 
@@ -83,7 +85,7 @@ export default new ClientEvent(Events.MessageCreate, async (message) => {
 
         await message.reply({ content: '‼️ Ocorreu um erro enquanto este comando estava sendo executado!' })
             .catch((error: unknown) => {
-                log.error(`Erro ao enviar mensagem de erro na execução do comando de admin #(${client.prefix}${commandName})#`,
+                log.error(`Erro ao enviar mensagem de erro na execução do comando de admin #(${client.prefix}${commandName})#.`,
                     '\n#(Erro)#:', error
                 );
             });

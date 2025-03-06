@@ -1,3 +1,5 @@
+// File Version: 0.0.1
+
 import CommandExecution from '../../../classes/CommandExecution';
 import { ActionRowBuilder, Attachment, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ChannelSelectMenuInteraction, Collection, CollectorFilter, MentionableSelectMenuInteraction, RoleSelectMenuInteraction, StringSelectMenuInteraction, UserSelectMenuInteraction } from 'discord.js';
 import Bathroom, { CampusNames, CampusValues, GenderNames, GenderValues } from '../../../classes/database/Bathroom';
@@ -287,7 +289,7 @@ export default class RegisterBathroomExecution extends CommandExecution {
                                     `enquanto cancelava o formulário #(${form.name})#`,
                                     `enquanto executava o comando #(${this.interaction.commandName})#,`,
                                     `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
-                                    `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                    `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
                                     '\n#(Erro)#:', error,
                                     '\n#(QuestionMessage)#:', form.questionMessage
                                 );
@@ -309,7 +311,7 @@ export default class RegisterBathroomExecution extends CommandExecution {
                                     `enquanto cancelava o formulário #(${form.name})#`,
                                     `enquanto executava o comando #(${this.interaction.commandName})#,`,
                                     `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
-                                    `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                    `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
                                     '\n#(messageOptions)#:', messageOptions,
                                     '\n#(Erro)#:', error
                                 );
@@ -349,7 +351,7 @@ export default class RegisterBathroomExecution extends CommandExecution {
                                         `quando finalizado o formulário #(${form.name})#`,
                                         `enquanto executava o comando #(${this.interaction.commandName})#,`,
                                         `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
-                                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
                                         '\n#(QuestionMessage)#:', form.questionMessage,
                                         '\n#(Erro)#:', error,
                                     );
@@ -371,7 +373,7 @@ export default class RegisterBathroomExecution extends CommandExecution {
                                         `quando finalizado o formulário #(${form.name})#`,
                                         `enquanto executava o comando #(${this.interaction.commandName})#,`,
                                         `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
-                                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
                                         '\n#(messageOptions)#:', messageOptions,
                                         '\n#(Erro)#:', error
                                     );
@@ -437,7 +439,7 @@ export default class RegisterBathroomExecution extends CommandExecution {
                                 `quando finalizado o formulário #(${form.name})#`,
                                 `enquanto executava o comando #(${this.interaction.commandName})#,`,
                                 `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
-                                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
                                 '\n#(messageOptions)#:', messageOptions,
                                 '\n#(Erro)#:', error
                             );
@@ -459,7 +461,7 @@ export default class RegisterBathroomExecution extends CommandExecution {
                                 `quando finalizado o formulário #(${form.name})#`,
                                 `enquanto executava o comando #(${this.interaction.commandName})#,`,
                                 `executado pelo usuário #(@${this.interaction.user.tag ?? this.interaction.user.id})#`,
-                                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#`,
+                                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId})#.`,
                                 '\n#(registeredBathroomMessageOptions)#:', registeredBathroomMessageOptions,
                                 '\n#(Erro)#:', error
                             );
