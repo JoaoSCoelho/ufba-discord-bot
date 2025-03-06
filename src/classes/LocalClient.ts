@@ -1,4 +1,4 @@
-// File Version: 0.0.1
+// File Version: 0.0.2
 
 import { Client, ClientOptions, Collection, If, IntentsBitField, Snowflake } from 'discord.js';
 import SlashCommand from './Command';
@@ -20,7 +20,7 @@ export default class LocalClient<Ready extends boolean = boolean> extends Client
         super(options);
 
         log.infoh('Client instanciado com as seguintes intents:',
-            `${(Array.isArray(options.intents) ? options.intents : [])
-                .map((intent) => `#(${IntentsBitField.Flags[intent]})#`).join(', ')}.`);
+            `${(Array.isArray(options.intents) ? options.intents : [options.intents])
+                .map((intent) => `#(${typeof intent !== 'number' ? intent : IntentsBitField.Flags[intent]})#`).join(', ')}.`);
     }
 }
