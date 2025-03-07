@@ -26,8 +26,6 @@ jest.mock('..', () => ({
 describe('EventHandler', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        jest.resetAllMocks();
-        jest.resetModules();
     });
 
 
