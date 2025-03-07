@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import CommandHandler from './CommandHandler';
 import SlashCommand from '../classes/Command';
 import { client } from '..';
-import { RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js';
+import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes, SlashCommandBuilder } from 'discord.js';
 import path from 'path';
 import { log } from '../classes/LogSystem';
 import AdminCommand from '../classes/AdminCommand';
@@ -23,23 +23,18 @@ jest.mock('../classes/AdminCommand', () => ({
         constructor(public data: unknown, public execute: unknown) { }
     },
 }));
-const restMock = {
-    put: jest.fn().mockResolvedValue([{ name: 'testCommand' }]),
-    setToken: jest.fn().mockReturnThis(),
-};
-jest.mock('discord.js', () => ({
-    REST: jest.fn().mockImplementation(() => restMock),
-    Routes: {
-        applicationCommands: jest.fn(() => 'mockRoute'),
-    },
-}));
 jest.mock('../', () => ({
     client: {
         commands: new Map(),
         adminCommands: new Map(),
     },
 }));
-
+jest.mock('discord.js', () => ({
+    REST: jest.fn(),
+    Routes: {
+        applicationCommands: jest.fn(),
+    },
+}));
 
 describe('CommandHandler', () => {
     beforeEach(() => {
@@ -187,6 +182,7 @@ describe('CommandHandler', () => {
 
                 client.commands.set = jest.fn();
                 const commandHandler = new CommandHandler();
+                commandHandler.deployCommands = jest.fn(async () => { });
                 commandHandler['importCommandInPath'] = jest.fn(async () => { throw new Error('Test Error'); });
 
                 await commandHandler.handleCommands();
@@ -212,6 +208,7 @@ describe('CommandHandler', () => {
 
                 client.commands.set = jest.fn();
                 const commandHandler = new CommandHandler();
+                commandHandler.deployCommands = jest.fn(async () => { });
 
                 await commandHandler.handleCommands();
 
@@ -294,19 +291,38 @@ describe('CommandHandler', () => {
 
     describe('deployCommands', () => {
         it('should deploy commands to Discord API', async () => {
+            jest.resetModules();
+
+            const restMock = {
+                put: jest.fn(async () => [{ name: 'testCommand' }]),
+                setToken: jest.fn().mockReturnThis(),
+            };
+
+            (REST as unknown as jest.Mock).mockImplementation(() => restMock);
+            (Routes.applicationCommands as jest.Mock).mockReturnValue('mockRoute');
+
+
             const commandsToDeploy = [{ name: 'testCommand' } as RESTPostAPIChatInputApplicationCommandsJSONBody];
 
             await new CommandHandler().deployCommands(commandsToDeploy);
 
             expect(restMock.put).toHaveBeenCalledWith('mockRoute', { body: [{ name: 'testCommand' }] });
+
+            (Routes.applicationCommands as jest.Mock).mockRestore();
+            (restMock.put as jest.Mock).mockRestore();
         });
 
         it('should throw an error if an error occurs while deploying commands', async () => {
-            restMock.put.mockImplementationOnce(() => { throw new Error('Test Error'); });
+            const restMock = {
+                put: jest.fn().mockRejectedValue(new Error('Test Error')),
+                setToken: jest.fn().mockReturnThis(),
+            };
+
+            (REST as unknown as jest.Mock).mockImplementation(() => restMock);
 
             const commandHandler = new CommandHandler();
 
-            expect(commandHandler.deployCommands([])).rejects.toThrow();
+            await expect(commandHandler.deployCommands([])).rejects.toThrow();
             expect(log.error).toHaveBeenCalled();
         });
     });
