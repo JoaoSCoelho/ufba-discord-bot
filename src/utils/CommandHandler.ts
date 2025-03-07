@@ -19,7 +19,7 @@ export default class CommandHandler {
     }
 
     /** Maps all the commands in the directories `'/commands/[type]'`|`'/admin_commands'` and puts them in the attributes `.commands`|`.adminCommands` of the client
-     * @param sync If true, the commands will be handled synchronously
+     * @param sync If `true`, the commands will be handled synchronously, one after the other.
      */
     public async handleAllCommands(sync: boolean = false) {
         if (sync) {
@@ -66,7 +66,7 @@ export default class CommandHandler {
                         BaseError.handle(error);
                     }
 
-                    continue; // Ignore this command
+                    continue; // Ignore this command if could not be imported
                 }
 
                 client.commands.set(command.data.name, command);
@@ -117,7 +117,7 @@ export default class CommandHandler {
                     BaseError.handle(error);
                 }
 
-                continue; // Ignore this command
+                continue; // Ignore this command if could not be imported
             }
 
             client.adminCommands.set(command.data.name, command);
@@ -128,6 +128,7 @@ export default class CommandHandler {
     }
 
     /** Deploys the commands to the Discord API (to show them in the Discord UI)
+     * @param commands The array of commands to deploy
      */
     public async deployCommands(commands: RESTPostAPIChatInputApplicationCommandsJSONBody[]) {
         const rest = new REST().setToken(process.env.TOKEN!);
@@ -160,10 +161,10 @@ export default class CommandHandler {
      * @param path The path of the command
      * @param type The type of the command (SlashCommand or AdminCommand)
      * @returns The imported command
-     * @throws HandledError('Unknown error while importing the command)
+     * @throws HandledError('Unknown error while importing the command file')
      * @throws HandledError('The command was not imported correctly')
      * @throws HandledError('The command does not have a default export')
-     * @throws HandledError('The command is not an instance of SlashCommand')
+     * @throws HandledError('The command is not an instance of SlashCommand/AdminCommand')
      */
     private async importCommandInPath<Type extends typeof SlashCommand | typeof AdminCommand>(path: string, type: Type) {
         const module: unknown = await import(path)
