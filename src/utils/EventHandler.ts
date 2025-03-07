@@ -31,7 +31,7 @@ export default class EventHandler {
                     BaseError.handle(error);
                 }
 
-                continue; // Ignore this event
+                continue; // Ignore this event if could not be imported
             }
 
             client[event.once ? 'once' : 'on'](event.eventName, event.listener);
@@ -45,12 +45,13 @@ export default class EventHandler {
     }
 
     /** Make a import in the specified path and guarantees that the imported event is a ClientEvent
-         * @returns The imported ClientEvent
-         * @throws HandledError('Unknown error while importing the event)
-         * @throws HandledError('The event was not imported correctly')
-         * @throws HandledError('The event does not have a default export')
-         * @throws HandledError('The event is not an instance of ClientEvent')
-         */
+     * @param path The path of the event
+     * @returns The imported ClientEvent
+     * @throws HandledError('Unknown error while importing the event file')
+     * @throws HandledError('The event was not imported correctly')
+     * @throws HandledError('The event does not have a default export')
+     * @throws HandledError('The event is not an instance of ClientEvent')
+     */
     private async importEventInPath(path: string) {
         const module: unknown = await import(path)
             .catch((error: unknown) => {
