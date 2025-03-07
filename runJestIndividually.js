@@ -1,6 +1,8 @@
 const fs = require('fs');
-const { execSync } = require('child_process');
-
+const { execSync, exec } = require('child_process');
+const util = require('util');
+require('ts-node').register();
+const LogSystem = require('./src/classes/LogSystem.ts').default;
 
 try {
     console.log(`Running tests that match with the pattern: ${process.argv[2] || '.'}`);
@@ -19,33 +21,70 @@ const json = JSON.parse(jsonFile);
 fs.writeFileSync('jest-results.json', JSON.stringify(json, null, 4));
 const testNames = json.testResults.map(file => ({
     name: file.assertionResults[0].ancestorTitles[0],
-    tests: file.assertionResults.map(test =>
-        [test.ancestorTitles.join(' > '), test.title]
-    )
+    tests: file.assertionResults.map(test => ({
+        prefix: test.ancestorTitles.join(' > '),
+        title: test.title,
+        file: file.name.replaceAll('\\', '/').replaceAll('\\\\', '/').slice(file.name.lastIndexOf('/') + 1)
+    }))
 }));
-console.log(testNames, testNames.length);
+
+const logger = new LogSystem('TESTER');
+const execPromise = util.promisify(exec);
 
 async function runAllTests() {
     for (const testSuite of testNames) {
-        console.info(testSuite.name);
+        logger.info(testSuite.name);
 
-        for (const testName of testSuite.tests) {
-            console.log('⊢   [RUNNING] ' + testName.join(' > '));
+        if (process.env.PARALLEL === 'true') {
+            const commands = [];
 
-            if (process.env.PERSIST_LOGS === 'true') {
-                fs.appendFileSync('log-persistent.ansi', `\n⊢   [RUNNING] ${testName.join(' > ')}\n`);
-                fs.appendFileSync('log-persistent.txt', `\n⊢   [RUNNING] ${testName.join(' > ')}\n`);
+            for (const testName of testSuite.tests) {
+                const fullTitle = testName.prefix + ' > ' + testName.title;
+                logger.loading(fullTitle);
+                if (process.env.PERSIST_LOGS === 'true') {
+                    fs.appendFileSync('log-persistent.ansi', `\n⊢   [RUNNING] ${fullTitle}\n`);
+                    fs.appendFileSync('log-persistent.txt', `\n⊢   [RUNNING] ${fullTitle}\n`);
+                }
+                commands.push([fullTitle, execPromise(`jest ${testName.file} --testNamePattern "${testName.title.replace('"', '\\"')}"`)]);
             }
 
-            try {
-                execSync(`jest --testNamePattern "${testName[1].replace('"', '\\"')}"`, { stdio: 'inherit' });
-                console.log('⊢   [SUCCESS] ' + testName.join(' > '));
-            } catch (e) {
-                console.error(`Erro no teste "${testName.join(' > ')}"`, e);
+
+            const results = await Promise.allSettled(commands.map((command) => command[1]));
+
+            results.forEach((result, index) => {
+                const testTitle = commands.map((command) => command[0])[index];
+
+                if (result.status === 'fulfilled') {
+                    logger.success(testTitle);
+                } else {
+                    throw new Error(`Erro no teste "${testTitle}" ${result.reason}`);
+                }
+            });
+        } else {
+            for (const testName of testSuite.tests) {
+
+                const fullTitle = testName.prefix + ' > ' + testName.title;
+                logger.loading(fullTitle);
+
+                if (process.env.PERSIST_LOGS === 'true') {
+                    fs.appendFileSync('log-persistent.ansi', `\n⊢   [RUNNING] ${fullTitle}\n`);
+                    fs.appendFileSync('log-persistent.txt', `\n⊢   [RUNNING] ${fullTitle}\n`);
+                }
+
+                const [result] = await Promise.allSettled([execPromise(`jest ${testName.file} --testNamePattern "${testName.title.replace('"', '\\"')}"`)]);
+
+                if (result.status === 'fulfilled') {
+                    logger.success(fullTitle);
+                } else {
+                    throw new Error(`Erro no teste "${fullTitle}" ${result.reason}`);
+                }
             }
         }
 
+
+
     }
 }
+
 
 runAllTests();
