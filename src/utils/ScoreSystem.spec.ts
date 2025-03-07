@@ -19,7 +19,6 @@ jest.mock('../classes/LocalClient', () => ({
 describe('ScoreSystem', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        jest.resetAllMocks();
     });
 
     describe('init', () => {
