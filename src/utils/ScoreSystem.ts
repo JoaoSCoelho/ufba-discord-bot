@@ -1,4 +1,4 @@
-// File Version: 0.0.3
+// File Version: 0.0.4
 
 import { Events, GuildMember, GuildTextBasedChannel, If, Message, PermissionsBitField } from 'discord.js';
 import LocalClient from '../classes/LocalClient';
@@ -117,7 +117,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         if (message.content.length < 3) return; // Filter only significative messages
 
 
-        /** The database member that match with the message member */
+        /** The database member register for message member */
         const dbMember = this.client.database.member.find((member) =>
             member.discordId === message.member!.id && member.discordGuildId === message.guild.id
         );
@@ -135,7 +135,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
                 });
             if (!createdMember) return;
         } else {
-            const result = await this.addScoreToMember(dbMember, message.member)
+            const scoreAdded = await this.addScoreToMember(dbMember, message.member)
                 .then(() => true)
                 .catch((error: unknown) => {
                     if (!BaseError.isHandled(error)) {
@@ -148,7 +148,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
                     return null;
                 });
 
-            if (!result) return;
+            if (!scoreAdded) return;
         }
 
         const updatedMember = this.client.database.member.find((member) =>
@@ -171,6 +171,9 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         const achievedLevel = this.havePassedToNextLevel(updatedMember, dbMember);
 
         if (achievedLevel > 0) {
+            log.infoh(`O membro #(@${message.member.user.tag})#`,
+                `do servidor #(${message.member.guild.name})# passou para o nível #(${achievedLevel})#.`);
+
             await this.sendNextLevelMessage(message.member, message.channel, achievedLevel)
                 .catch((error: unknown) => {
                     if (!BaseError.isHandled(error)) {
@@ -245,7 +248,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
             score: dbMember.score + this.scorePerMessage,
         };
 
-        await this.client.database?.member.edit(newMemberData)
+        await this.client.database.member.edit(newMemberData)
             .then(() => {
                 log.successh(`Membro #(@${guildMember.user.tag})#`,
                     `do servidor #(${guildMember.guild.name})# recebeu #(${this.scorePerMessage})# pontos de score`,
@@ -268,8 +271,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
      * Verifies if the member has passed to the next level.
      * @param updatedMember The instance of the member with the updated score
      * @param oldMember The instance of the member with the old score
-     * @returns `number` The level that the member passed to.\
-     * If the member has not passed to any level, returns `0`.
+     * @returns `number` The level that the member passed to. If the member has not passed to any level, returns `0`.
      */
     private havePassedToNextLevel(updatedMember: Member, oldMember: Member | undefined) {
         const oldScore = oldMember?.score ?? 0;
@@ -283,12 +285,9 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
      * @param guildMember The instance of the member that passed to the next level
      * @param channel The channel where the message will be sent
      * @param level The level that the member passed to
+     * @throws `BaseError("Bot doesn't have permission to send messages in the channel")`
      */
     private async sendNextLevelMessage(guildMember: GuildMember, channel: GuildTextBasedChannel, level: number) {
-        log.infoh(`O membro #(@${guildMember.user.tag})#`,
-            `do servidor #(${guildMember.guild.name})# passou para o nível #(${level})#.`);
-
-
         if (!guildMember.guild.members.me?.permissionsIn(channel).has(PermissionsBitField.Flags.SendMessages)) {
             throw new BaseError('Bot doesn\'t have permission to send messages in the channel');
         };

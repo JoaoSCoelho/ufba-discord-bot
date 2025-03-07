@@ -1,4 +1,4 @@
-// File Version: 0.0.3
+// File Version: 0.0.4
 
 import { ClientOptions, Collection, Events, Guild, GuildMember, GuildMemberManager, GuildTextBasedChannel, Message, User } from 'discord.js';
 import LocalClient from '../classes/LocalClient';
@@ -464,11 +464,16 @@ describe('ScoreSystem', () => {
 
         it('should call sendNextLevelMessage', async () => {
             const mockGuild = {
-                id: '456'
+                id: '456',
+                name: 'mockGuild'
+            };
+            const mockUser = {
+                tag: 'mockUser'
             };
             const mockGuildMember = {
                 id: '123',
-                guild: mockGuild
+                guild: mockGuild,
+                user: mockUser
             };
             const mockChannel = {};
             const mockMessage = {
@@ -580,11 +585,16 @@ describe('ScoreSystem', () => {
 
         it('should log error if sendNextLevelMessage fails', async () => {
             const mockGuild = {
-                id: '456'
+                id: '456',
+                name: 'mockGuild'
+            };
+            const mockUser = {
+                tag: 'mockUser'
             };
             const mockGuildMember = {
                 id: '123',
-                guild: mockGuild
+                guild: mockGuild,
+                user: mockUser
             };
             const mockChannel = {};
             const mockMessage = {
