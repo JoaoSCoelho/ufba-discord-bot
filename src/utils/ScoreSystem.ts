@@ -1,4 +1,4 @@
-// File Version: 0.0.2
+// File Version: 0.0.3
 
 import { Events, GuildMember, GuildTextBasedChannel, If, Message, PermissionsBitField } from 'discord.js';
 import LocalClient from '../classes/LocalClient';
@@ -56,19 +56,19 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
     public start(): ScoreSystem<true> | void {
         if (this.running) {
             log.warnh('Tentativa de iniciar o sistema de pontuação que está em andamento.',
-                'Inicialização do sistema de pontuação abortada.');
+                'Inicialização do sistema de pontuação #(abortada)#.');
             return;
         }
         if (!this.client) {
             log.warn('Tentativa de iniciar o sistema de pontuação sem uma instância do client setada.',
-                'Inicialização do sistema de pontuação abortada.'
+                'Inicialização do sistema de pontuação #(abortada)#.'
             );
             return;
         }
 
         if (ScoreSystem.runningSystems.size > 0) {
             log.warn('Iniciando um novo sistema de pontuação.',
-                'Um outro sistema está em execução.');
+                '#(Um outro sistema está em execução)#.');
         }
 
         this.client.on(Events.MessageCreate, this.onMessage.bind(this as ScoreSystem<true>));
@@ -76,7 +76,7 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
         this.running = true;
         ScoreSystem.runningSystems.add(this);
 
-        log.infoh(`Sistema de pontuação de membros iniciado com #(${this.scorePerMessage})# pontos por mensagem`);
+        log.infoh(`Sistema de pontuação de membros iniciado com #(${this.scorePerMessage})# pontos por mensagem.`);
         return this as ScoreSystem<true>;
     }
 
@@ -86,12 +86,12 @@ export default class ScoreSystem<Initialized extends boolean = boolean> {
     public stop(): ScoreSystem<true> | void {
         if (!this.running) {
             log.warnh('Tentativa de parar o sistema de pontuação que não está em andamento.',
-                'Parada do sistema de pontuação abortada.');
+                'Parada do sistema de pontuação #(abortada)#.');
             return;
         }
         if (!this.client) {
             log.warnh('Tentativa de parar o sistema de pontuação sem uma instância do client setada.',
-                'Parada do sistema de pontuação abortada.'
+                'Parada do sistema de pontuação #(abortada)#.'
             );
             return;
         }

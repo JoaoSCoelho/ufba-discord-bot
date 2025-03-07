@@ -1,4 +1,4 @@
-// File Version: 0.0.2
+// File Version: 0.0.3
 
 import { ClientOptions, Collection, Events, Guild, GuildMember, GuildMemberManager, GuildTextBasedChannel, Message, User } from 'discord.js';
 import LocalClient from '../classes/LocalClient';
@@ -59,7 +59,7 @@ describe('ScoreSystem', () => {
             const startedScoreSystem = scoreSystem.start();
             expect(startedScoreSystem).toBeUndefined();
             expect(mockClient.on).not.toHaveBeenCalled();
-            expect(log.warnh).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação que está em andamento.', 'Inicialização do sistema de pontuação abortada.');
+            expect(log.warnh).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação que está em andamento.', 'Inicialização do sistema de pontuação #(abortada)#.');
         });
 
         it('should not start the score system if no client is set', () => {
@@ -68,7 +68,7 @@ describe('ScoreSystem', () => {
             const startedScoreSystem = scoreSystem.start();
 
             expect(startedScoreSystem).toBeUndefined();
-            expect(log.warn).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação sem uma instância do client setada.', 'Inicialização do sistema de pontuação abortada.');
+            expect(log.warn).toHaveBeenCalledWith('Tentativa de iniciar o sistema de pontuação sem uma instância do client setada.', 'Inicialização do sistema de pontuação #(abortada)#.');
             expect(scoreSystem['running']).toBe(false);
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(false);
         });
@@ -92,7 +92,7 @@ describe('ScoreSystem', () => {
             const startedScoreSystem = scoreSystem.start();
 
             expect(startedScoreSystem).toBe(scoreSystem);
-            expect(log.warn).toHaveBeenCalledWith('Iniciando um novo sistema de pontuação.', 'Um outro sistema está em execução.');
+            expect(log.warn).toHaveBeenCalledWith('Iniciando um novo sistema de pontuação.', '#(Um outro sistema está em execução)#.');
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
             expect(scoreSystem['running']).toBe(true);
             expect(ScoreSystem['runningSystems'].has(scoreSystem2)).toBe(true);
@@ -154,7 +154,7 @@ describe('ScoreSystem', () => {
             expect(log.infoh).not.toHaveBeenCalled();
             expect(log.warnh).toHaveBeenCalledWith(
                 'Tentativa de parar o sistema de pontuação que não está em andamento.',
-                'Parada do sistema de pontuação abortada.'
+                'Parada do sistema de pontuação #(abortada)#.'
             );
         });
 
@@ -166,7 +166,7 @@ describe('ScoreSystem', () => {
             const stoppedScoreSystem = scoreSystem.stop();
 
             expect(stoppedScoreSystem).toBeUndefined();
-            expect(log.warnh).toHaveBeenCalledWith('Tentativa de parar o sistema de pontuação sem uma instância do client setada.', 'Parada do sistema de pontuação abortada.');
+            expect(log.warnh).toHaveBeenCalledWith('Tentativa de parar o sistema de pontuação sem uma instância do client setada.', 'Parada do sistema de pontuação #(abortada)#.');
             expect(scoreSystem['running']).toBe(true);
             expect(ScoreSystem['runningSystems'].has(scoreSystem)).toBe(true);
         });
@@ -409,7 +409,8 @@ describe('ScoreSystem', () => {
 
         it('should log error if after add/update the member, it is not found', async () => {
             const mockGuild = {
-                id: '456'
+                id: '456',
+                name: 'mockGuild',
             };
             const mockUser = {
                 tag: 'mockUser',
@@ -517,7 +518,8 @@ describe('ScoreSystem', () => {
 
         it('should alert if the bot doesn\'t have permissions to send messages in the channel when sending next level message', async () => {
             const mockGuild = {
-                id: '456'
+                id: '456',
+                name: 'mockGuild',
             };
             const mockUser = {
                 tag: 'mockUser',
@@ -527,7 +529,9 @@ describe('ScoreSystem', () => {
                 guild: mockGuild,
                 user: mockUser
             };
-            const mockChannel = {};
+            const mockChannel = {
+                name: 'mockChannelName',
+            };
             const mockMessage = {
                 inGuild: jest.fn().mockReturnValue(true),
                 author: {
@@ -902,7 +906,7 @@ describe('ScoreSystem', () => {
             } as GuildMember;
             const mockChannel = {
                 name: 'mockChannelName',
-                send: jest.fn(() => Promise.reject())
+                send: jest.fn(async () => { throw new Error('Test Error'); })
             } as unknown as GuildTextBasedChannel;
             const scoreSystem = new ScoreSystem();
 
