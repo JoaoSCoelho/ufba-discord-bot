@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import SlashCommand from '../../../classes/Command';
+import SlashCommand from '../../../classes/SlashCommand';
 import prettyTime from 'pretty-time';
 
 export default new SlashCommand(

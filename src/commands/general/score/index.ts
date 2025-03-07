@@ -1,7 +1,7 @@
 // File Version: 0.0.1
 
 import { SlashCommandBuilder, SlashCommandUserOption } from 'discord.js';
-import SlashCommand from '../../../classes/Command';
+import SlashCommand from '../../../classes/SlashCommand';
 import ScoreSystem from '../../../utils/ScoreSystem';
 import isObject from '../../../utils/isObject';
 import discordAnsi from '../../../utils/discord-ansi';

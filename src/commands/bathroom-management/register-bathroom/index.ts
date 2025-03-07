@@ -1,4 +1,4 @@
-import SlashCommand from '../../../classes/Command';
+import SlashCommand from '../../../classes/SlashCommand';
 import registerBathroomData from './data';
 import RegisterBathroomExecution from './execution';
 

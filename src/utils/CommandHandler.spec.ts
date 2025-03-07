@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 import CommandHandler from './CommandHandler';
-import SlashCommand from '../classes/Command';
+import SlashCommand from '../classes/SlashCommand';
 import { client } from '..';
 import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes, SlashCommandBuilder } from 'discord.js';
 import path from 'path';
@@ -11,7 +11,7 @@ import AdminCommand from '../classes/AdminCommand';
 
 jest.mock('fs');
 jest.mock('path');
-jest.mock('../classes/Command', () => ({
+jest.mock('../classes/SlashCommand', () => ({
     __esModule: true,
     default: class SlashCommand {
         constructor(public data: unknown, public execute: unknown) { }

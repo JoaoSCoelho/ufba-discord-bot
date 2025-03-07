@@ -1,7 +1,7 @@
 // File Version: 0.0.2
 
 import { Client, ClientOptions, Collection, If, IntentsBitField, Snowflake } from 'discord.js';
-import SlashCommand from './Command';
+import SlashCommand from './SlashCommand';
 import Database from '../database/Database';
 import AdminCommand from './AdminCommand';
 import { log } from './LogSystem';
