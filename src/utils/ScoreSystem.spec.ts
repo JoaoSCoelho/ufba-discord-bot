@@ -85,7 +85,6 @@ describe('ScoreSystem', () => {
             scoreSystem2.start(); // Leave a system running
 
             jest.clearAllMocks();
-            jest.resetAllMocks();
 
             const scoreSystem = new ScoreSystem();
             scoreSystem['client'] = mockClient;
