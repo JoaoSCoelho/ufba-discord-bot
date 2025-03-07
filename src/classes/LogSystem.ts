@@ -44,7 +44,7 @@ export default class LogSystem {
 
     client: LocalClient | undefined;
 
-    constructor() {
+    constructor(public readonly system: string = 'global') {
         this.executionDateString = Intl.DateTimeFormat('pt-br', { dateStyle: 'short', timeStyle: 'medium' })
             .format(new Date())
             .replaceAll(', ', '--')
@@ -157,7 +157,7 @@ export default class LogSystem {
 
         const currentDate = new Date();
         const logMoment = Intl.DateTimeFormat('pt-br', { dateStyle: 'short', timeStyle: 'medium' }).format(currentDate).replace(', ', '-') + ':' + currentDate.getMilliseconds().toString().padStart(3, '0');
-
+        const currentSystem = this.system;
 
 
 
@@ -246,7 +246,7 @@ export default class LogSystem {
             try {
                 const stacks = /(?:src|build)(?:\\|\/)([^)\n\r]+)\)?/g.exec(err.stack?.split('\n').slice(1).find((stack) => !stack.includes(__filename) && !stack.includes('node_modules'))?.trim() ?? '')?.[1];
 
-                return this(`${chalk.gray(terminalHidden ? ' ' : '→')} [${chalk[chalkMethod](typeName)}][${chalk[chalkMethod](logMoment)}][${chalk[chalkMethod](stacks)}]:`, ...data);
+                return this(`${chalk.gray(terminalHidden ? ' ' : '→')} [${chalk[chalkMethod](typeName)}]${currentSystem === 'global' ? '' : `[${chalk[chalkMethod](currentSystem)}]`}[${chalk[chalkMethod](logMoment)}]${stacks ? `[${chalk[chalkMethod](stacks)}]` : ''}:`, ...data);
             } catch (err: unknown) {
                 return this(...data);
             }
@@ -378,14 +378,14 @@ export default class LogSystem {
     }
     private getChalkMethod<Type extends LogType | 'D' | 'G'>(type: Type) {
         if (type === 'D') return 'reset';
-        else if (type === 'I') return 'cyan';
+        else if (type === 'I') return 'blue';
         else if (type === 'E') return 'red';
         else if (type === 'W') return 'yellow';
         else if (type === 'S') return 'green';
-        else if (type === 'L') return 'blue';
+        else if (type === 'L') return 'magenta';
         else if (type === 'O') return 'inverse';
         else if (type === 'G') return 'gray';
-        return 'cyan';
+        return 'blue';
     }
     private getConsoleMethod<Type extends LogType>(type: Type) {
         if (type === 'I') return 'info';
