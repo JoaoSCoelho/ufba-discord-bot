@@ -5,9 +5,15 @@ export interface AdminCommandData {
     name: string;
 }
 
-export default class AdminCommand {
+export default abstract class AdminCommand {
+    public static readonly data: AdminCommandData;
+
     constructor(
-		public data: AdminCommandData,
-	    public execute: (message: Message, client: LocalClient, params: Record<string, string>, words: string[]) => unknown
-    ) {}
+        public readonly message: Message,
+        public readonly client: LocalClient,
+        public readonly params: Record<string, string>,
+        public readonly words: string[]
+    ) { }
+
+    public abstract execute(): Promise<unknown>;
 }

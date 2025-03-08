@@ -1,4 +1,4 @@
-// File Version: 0.0.1
+// File Version: 0.0.3
 
 import * as fs from 'fs';
 import CommandHandler from './CommandHandler';
@@ -7,7 +7,7 @@ import { client } from '..';
 import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes, SlashCommandBuilder } from 'discord.js';
 import path from 'path';
 import { log } from '../classes/LogSystem';
-import AdminCommand from '../classes/AdminCommand';
+import AdminCommand, { AdminCommandData } from '../classes/AdminCommand';
 
 jest.mock('fs');
 jest.mock('path');
@@ -72,25 +72,39 @@ describe('CommandHandler', () => {
         it('should handle valid commands in the commands directory', async () => {
             // Mock estrutura de diretórios e arquivos
             (fs.readdirSync as jest.Mock).mockImplementation((p: string) => {
-                if (p.endsWith('commands')) return ['category1'];
-                if (p.endsWith('category1')) return [{ name: 'command1', isDirectory: () => true }];
-                if (p.endsWith('command1')) return ['index.ts'];
+                if (p.endsWith('commands')) return ['command1', 'command2'];
+                if (p.endsWith('command1') || p.endsWith('command2')) return ['index.ts'];
                 return [];
             });
 
-            const mockCommandData = { name: 'mockCommand' };
-            const mockCommand = new SlashCommand({ ...mockCommandData, toJSON: () => mockCommandData } as SlashCommandBuilder, async () => { });
+            const mockCommand1Data = { name: 'mockCommand1', toJSON() { return this; } } as unknown as SlashCommandBuilder;
+            const mockCommand2Data = { name: 'mockCommand2', toJSON() { return this; } } as unknown as SlashCommandBuilder;
+            class MockCommand1 extends SlashCommand {
+                public static readonly data = mockCommand1Data;
+                public execute = jest.fn(async () => { });
+            }
+            class MockCommand2 extends SlashCommand {
+                public static readonly data = mockCommand2Data;
+                public execute = jest.fn(async () => { });
+            }
 
             (path.join as jest.Mock).mockImplementation((...args) => {
                 if (args.join('/').endsWith('command1/index.ts')) {
-                    return '/mock/commands/category1/command1/index.ts';
+                    return '/mock/commands/command1/index.ts';
+                } else if (args.join('/').endsWith('command2/index.ts')) {
+                    return '/mock/commands/command2/index.ts';
                 }
                 return args.join('/');
             });
 
             jest.doMock(
-                '/mock/commands/category1/command1/index.ts',
-                () => ({ __esModule: true, default: mockCommand }),
+                '/mock/commands/command1/index.ts',
+                () => ({ __esModule: true, default: MockCommand1 }),
+                { virtual: true }
+            );
+            jest.doMock(
+                '/mock/commands/command2/index.ts',
+                () => ({ __esModule: true, default: MockCommand2 }),
                 { virtual: true }
             );
 
@@ -99,8 +113,9 @@ describe('CommandHandler', () => {
 
             await ch.handleCommands();
 
-            expect(client.commands.size).toBe(1);
-            expect(client.commands.get('mockCommand')).toBe(mockCommand);
+            expect(client.commands.size).toBe(2);
+            expect(client.commands.get('mockCommand1')).toBe(MockCommand1);
+            expect(client.commands.get('mockCommand2')).toBe(MockCommand2);
             expect(ch.deployCommands).not.toHaveBeenCalled();
 
             ch = new CommandHandler(true);
@@ -108,8 +123,9 @@ describe('CommandHandler', () => {
 
             await ch.handleCommands();
 
-            expect(ch.deployCommands).toHaveBeenNthCalledWith(1, [mockCommandData]);
-            jest.dontMock('/mock/commands/category1/command1/index.ts');
+            expect(ch.deployCommands).toHaveBeenNthCalledWith(1, [mockCommand1Data, mockCommand2Data]);
+            jest.dontMock('/mock/commands/command1/index.ts');
+            jest.dontMock('/mock/commands/command2/index.ts');
         });
 
         describe('should skip invalid commands', () => {
@@ -122,40 +138,41 @@ describe('CommandHandler', () => {
 
             it('should skip non SlashCommand commands', async () => {
                 (fs.readdirSync as jest.Mock).mockImplementation((p: string) => {
-                    if (p.endsWith('commands')) return ['category1'];
-                    if (p.endsWith('category1')) return [{ name: 'invalidCommand', isDirectory: () => true }];
+                    if (p.endsWith('commands')) return ['invalidCommand'];
                     if (p.endsWith('invalidCommand')) return ['index.ts'];
                 });
 
                 (path.join as jest.Mock).mockImplementation((...args) => {
                     if (args.join('/').endsWith('invalidCommand/index.ts')) {
-                        return '/mock/commands/category1/invalidCommand/index.ts';
+                        return '/mock/commands/invalidCommand/index.ts';
                     }
                     return args.join('/');
                 });
 
-                jest.doMock('/mock/commands/category1/invalidCommand/index.ts', () => ({
+                jest.doMock('/mock/commands/invalidCommand/index.ts', () => ({
                     __esModule: true,
                     default: {},
                 }), { virtual: true });
+
+                client.commands.set = jest.fn();
 
                 await commandHandler.handleCommands();
 
                 expect(client.commands.size).toBe(0);
                 expect(log.warn).toHaveBeenCalled();
-                jest.dontMock('/mock/commands/category1/invalidCommand/index.ts');
+                expect(client.commands.set).not.toHaveBeenCalled();
+                jest.dontMock('/mock/commands/invalidCommand/index.ts');
             });
 
             it('should skip commands without index file', async () => {
                 (fs.readdirSync as jest.Mock).mockImplementation((p: string) => {
-                    if (p.endsWith('commands')) return ['category1'];
-                    if (p.endsWith('category1')) return [{ name: 'command1', isDirectory: () => true }];
+                    if (p.endsWith('commands')) return ['command1'];
                     if (p.endsWith('command1')) return ['indexx.ts']; // invalid file name
                 });
 
                 (path.join as jest.Mock).mockImplementation((...args) => {
                     if (args.join('/').endsWith('command1/index.ts')) {
-                        return '/mock/commands/category1/command1/index.ts';
+                        return '/mock/commands/command1/index.ts';
                     }
                     return args.join('/');
                 });
@@ -168,14 +185,13 @@ describe('CommandHandler', () => {
 
             it('should skip commands that the importCommandInPath fails', async () => {
                 (fs.readdirSync as jest.Mock).mockImplementation((p: string) => {
-                    if (p.endsWith('commands')) return ['category1'];
-                    if (p.endsWith('category1')) return [{ name: 'invalidCommand', isDirectory: () => true }];
+                    if (p.endsWith('commands')) return ['invalidCommand'];
                     if (p.endsWith('invalidCommand')) return ['index.ts'];
                 });
 
                 (path.join as jest.Mock).mockImplementation((...args) => {
                     if (args.join('/').endsWith('invalidCommand/index.ts')) {
-                        return '/mock/commands/category1/invalidCommand/index.ts';
+                        return '/mock/commands/invalidCommand/index.ts';
                     }
                     return args.join('/');
                 });
@@ -194,14 +210,13 @@ describe('CommandHandler', () => {
 
             it('should skip commands that the import fails', async () => {
                 (fs.readdirSync as jest.Mock).mockImplementation((p: string) => {
-                    if (p.endsWith('commands')) return ['category1'];
-                    if (p.endsWith('category1')) return [{ name: 'invalidCommand', isDirectory: () => true }];
+                    if (p.endsWith('commands')) return ['invalidCommand'];
                     if (p.endsWith('invalidCommand')) return ['index.ts'];
                 });
 
                 (path.join as jest.Mock).mockImplementation((...args) => {
                     if (args.join('/').endsWith('invalidCommand/index.ts')) {
-                        return '/mock/commands/category1/invalidCommand/index.ts';
+                        return '/mock/commands/invalidCommand/index.ts';
                     }
                     return args.join('/');
                 });
@@ -244,23 +259,37 @@ describe('CommandHandler', () => {
         });
 
         it('should handle valid admin commands in the admin-commands directory', async () => {
-            (fs.readdirSync as jest.Mock).mockReturnValue(['adminCommand.ts']);
+            (fs.readdirSync as jest.Mock).mockReturnValue(['adminCommand1.ts', 'adminCommand2.ts']);
 
-            const adminCommandData = { name: 'mockAdminCommand' };
-            const mockAdminCommand = new AdminCommand(adminCommandData, async () => { });
+            const adminCommandData1 = { name: 'mockAdminCommand1' };
+            const adminCommandData2 = { name: 'mockAdminCommand2' };
+            class MockAdminCommand1 extends AdminCommand {
+                public static readonly data = adminCommandData1;
+                public execute = jest.fn(async () => { });
+            };
+            class MockAdminCommand2 extends AdminCommand {
+                public static readonly data = adminCommandData2;
+                public execute = jest.fn(async () => { });
+            };
 
-            jest.doMock('/mock/admin-commands/adminCommand.ts', () => ({
+            jest.doMock('/mock/admin-commands/adminCommand1.ts', () => ({
                 __esModule: true,
-                default: mockAdminCommand,
+                default: MockAdminCommand1,
+            }), { virtual: true });
+            jest.doMock('/mock/admin-commands/adminCommand2.ts', () => ({
+                __esModule: true,
+                default: MockAdminCommand2,
             }), { virtual: true });
 
             const commandHandler = new CommandHandler();
 
             await commandHandler.handleAdminCommands();
 
-            expect(client.adminCommands.size).toBe(1);
-            expect(client.adminCommands.get('mockAdminCommand')).toBe(mockAdminCommand);
-            jest.dontMock('/mock/admin-commands/adminCommand.ts');
+            expect(client.adminCommands.size).toBe(2);
+            expect(client.adminCommands.get('mockAdminCommand1')).toBe(MockAdminCommand1);
+            expect(client.adminCommands.get('mockAdminCommand2')).toBe(MockAdminCommand2);
+            jest.dontMock('/mock/admin-commands/adminCommand1.ts');
+            jest.dontMock('/mock/admin-commands/adminCommand2.ts');
         });
 
         it('should skip invalid admin commands', async () => {
@@ -328,29 +357,75 @@ describe('CommandHandler', () => {
     });
 
     describe('importCommandInPath', () => {
-        it.todo('should import command in the path');
-        it('should throw an error if the command is not an instance of SlashCommand', async () => {
-            (fs.readdirSync as jest.Mock).mockImplementation((p: string) => {
-                if (p.endsWith('commands')) return ['category1'];
-                if (p.endsWith('category1')) return [{ name: 'command1', isDirectory: () => true }];
-                if (p.endsWith('command1')) return ['index.ts'];
-            });
+        it('should import slash command in the path', async () => {
+            const mockCommandData = { name: 'mockCommand' } as SlashCommandBuilder;
+
+            class MockCommand extends SlashCommand {
+                public static readonly data = mockCommandData;
+                public execute = jest.fn(async () => { });
+            };
 
             jest.resetModules();
             jest.doMock(
-                '/mock/commands/category1/command1/index.ts',
-                () => new Date(),
+                '/mock/commands/command1/index.ts',
+                () => ({
+                    __esModule: true,
+                    default: MockCommand,
+                }),
                 { virtual: true }
             );
 
             const commandHandler = new CommandHandler();
 
-            await expect(commandHandler['importCommandInPath']('/mock/commands/category1/command1/index.ts', SlashCommand)).rejects.toThrow('The command is not an instance of SlashCommand');
-            expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('não é uma instância de #(SlashCommand)#.'));
-            jest.dontMock('/mock/commands/category1/command1/index.ts');
+            const Command = await commandHandler['importCommandInPath']('/mock/commands/command1/index.ts', SlashCommand);
+
+            expect(Command).toBe(MockCommand);
+            expect(Command.prototype).toBeInstanceOf(SlashCommand);
+        });
+        it('should import admin command in path', async () => {
+            const mockCommandData = { name: 'mockAdminCommand' } as AdminCommandData;
+
+            class MockAdminCommand extends AdminCommand {
+                public static readonly data = mockCommandData;
+                public execute = jest.fn(async () => { });
+            };
+
+            jest.resetModules();
+            jest.doMock(
+                '/mock/admin-commands/adminCommand1.ts',
+                () => ({
+                    __esModule: true,
+                    default: MockAdminCommand,
+                }),
+                { virtual: true }
+            );
+
+            const commandHandler = new CommandHandler();
+
+
+            const Command = await commandHandler['importCommandInPath']('/mock/admin-commands/adminCommand1.ts', AdminCommand);
+
+            expect(Command).toBe(MockAdminCommand);
+            expect(Command.prototype).toBeInstanceOf(AdminCommand);
+        });
+        it('should throw an error if the command is not an subclass of SlashCommand', async () => {
+            jest.resetModules();
+            jest.doMock(
+                '/mock/commands/command1/index.ts',
+                () => Date,
+                { virtual: true }
+            );
+
+            const commandHandler = new CommandHandler();
+
+            await expect(commandHandler['importCommandInPath']('/mock/commands/command1/index.ts', SlashCommand)).rejects.toThrow('The command is not a subclass of SlashCommand');
+            expect(log.warn).toHaveBeenCalledWith('O comando em (#(/mock/commands/command1/index.ts)#) não é uma subclasse de #(SlashCommand)#.');
+
+            jest.dontMock('/mock/commands/command1/index.ts');
         });
         it.todo('should throw an error if the command does not have a default export');
-        it.todo('should throw an error if the command is not an instance of AdminCommand');
+        it.todo('should throw an error if the command is not an subclass of AdminCommand');
+        it.todo('should throw an error if the command is not a class');
         it.todo('should throw an error if the imported command is falsy');
         it.todo('should throw an error if the imported command is not an object');
     });

@@ -1,4 +1,4 @@
-// File Version: 0.0.2
+// File Version: 0.0.3
 
 import * as path from 'path';
 import * as fs from 'fs';
@@ -18,7 +18,7 @@ export default class CommandHandler {
         this.shouldDeploy = shouldDeploy;
     }
 
-    /** Maps all the commands in the directories `'/commands/[type]'`|`'/admin_commands'` and puts them in the attributes `.commands`|`.adminCommands` of the client
+    /** Maps all the commands in the directories `'/commands'`|`'/admin_commands'` and puts them in the attributes `.commands`|`.adminCommands` of the client
      * @param sync If `true`, the commands will be handled synchronously, one after the other.
      */
     public async handleAllCommands(sync: boolean = false) {
@@ -35,50 +35,50 @@ export default class CommandHandler {
      */
     public async handleCommands() {
         const commandsToDeploy: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
+        /** Like `C:/user/bot/src/commands` */
         const commandsPath = path.join(__dirname, '../commands');
-        const commandsFolder = fs.readdirSync(commandsPath);
-
-        for (const categoryFolder of commandsFolder) {
-            const commandsCategoryPath = path.join(commandsPath, categoryFolder);
-            const commandsCategoryFolder = fs.readdirSync(commandsCategoryPath, { withFileTypes: true }).filter((dir) => dir.isDirectory());
+        /** Like `[ 'command1', 'command2', ... ]` */
+        const commandsFolders = fs.readdirSync(commandsPath);
 
 
-            for (const commandFolder of commandsCategoryFolder) {
-                const commandPath = path.join(commandsCategoryPath, commandFolder.name);
-                const indexFile = fs.readdirSync(commandPath).find((file) => file === 'index.js' || file === 'index.ts');
+        for (const commandFolder of commandsFolders) {
+            /** Like `C:/user/bot/src/commands/command1` */
+            const commandPath = path.join(commandsPath, commandFolder);
+            const indexFile = fs.readdirSync(commandPath).find((file) => file === 'index.js' || file === 'index.ts');
 
-                // If the command does not have an index file, it will not be registered
-                if (!indexFile) {
-                    log.warn(`Comando em (#(${commandPath}/)#) não possui arquivo #(index)#.`);
-                    continue;
+            // If the command does not have an index file, it will not be registered
+            if (!indexFile) {
+                log.warn(`Comando em (#(${commandPath}/)#) não possui arquivo #(index)#.`);
+                continue;
+            }
+
+            /** Like `C:/user/bot/src/commands/command1/index.ts` */
+            const indexFilePath = path.join(commandPath, indexFile);
+            let Command: typeof SlashCommand;
+
+            try {
+                Command = await this.importCommandInPath(indexFilePath, SlashCommand);
+            } catch (error: unknown) {
+                if (!BaseError.isHandled(error)) {
+                    log.error(`Erro ao importar o comando em (#(${indexFilePath})#):`,
+                        '\n#(Erro)#:', error);
+
+                    BaseError.handle(error);
                 }
 
-                const indexFilePath = path.join(commandPath, indexFile);
-                let command: SlashCommand;
+                continue; // Ignore this command if could not be imported
+            }
 
-                try {
-                    command = await this.importCommandInPath(indexFilePath, SlashCommand);
-                } catch (error: unknown) {
-                    if (!BaseError.isHandled(error)) {
-                        log.error(`Erro ao importar o comando em (#(${categoryFolder}/${commandFolder.name}/${indexFile})#):`,
-                            '\n#(Erro)#:', error);
-
-                        BaseError.handle(error);
-                    }
-
-                    continue; // Ignore this command if could not be imported
-                }
-
-                client.commands.set(command.data.name, command);
-                log.successh(`Comando #(${command.data.name})# (#(${categoryFolder}/${commandFolder.name}/${indexFile})#) cadastrado com sucesso.`);
+            client.commands.set(Command.data.name, Command);
+            log.successh(`Comando #(${Command.data.name})# (#(${indexFilePath})#) cadastrado com sucesso.`);
 
 
-                if (this.shouldDeploy) {
-                    commandsToDeploy.push(command.data.toJSON());
-                    log.info(`Comando #(${command.data.name})# (#(${categoryFolder}/${commandFolder.name}/${indexFile})#) cadastrado para deploy.`);
-                }
+            if (this.shouldDeploy) {
+                commandsToDeploy.push(Command.data.toJSON());
+                log.info(`Comando #(${Command.data.name})# (#(${indexFilePath})#) cadastrado para deploy.`);
             }
         }
+
 
         log.successh(`#(${client.commands.size})# comandos cadastrados com sucesso.`);
 
@@ -99,16 +99,18 @@ export default class CommandHandler {
     /** Sets in `client.adminCommands` all the commands in the `/admin-commands` folder
     */
     public async handleAdminCommands() {
+        /** Like `C:/user/bot/src/admin-commands` */
         const commandsPath = path.join(__dirname, '../admin-commands');
         const commandsFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
 
 
         for (const commandFile of commandsFiles) {
+            /** Like `C:/user/bot/src/admin-commands/command1.ts` */
             const filePath = path.join(commandsPath, commandFile);
-            let command: AdminCommand;
+            let Command: typeof AdminCommand;
 
             try {
-                command = await this.importCommandInPath(filePath, AdminCommand);
+                Command = await this.importCommandInPath(filePath, AdminCommand);
             } catch (error: unknown) {
                 if (!BaseError.isHandled(error)) {
                     log.error(`Erro ao importar o comando de admin em (#(${filePath})#):`,
@@ -120,8 +122,8 @@ export default class CommandHandler {
                 continue; // Ignore this command if could not be imported
             }
 
-            client.adminCommands.set(command.data.name, command);
-            log.successh(`Comando de admin #(${command.data.name})# (#(${commandFile})#) cadastrado com sucesso.`);
+            client.adminCommands.set(Command.data.name, Command);
+            log.successh(`Comando de admin #(${Command.data.name})# (#(${commandFile})#) cadastrado com sucesso.`);
         }
 
         log.successh(`#(${client.adminCommands.size})# comandos de #(admin)# cadastrados com sucesso.`);
@@ -157,15 +159,16 @@ export default class CommandHandler {
         }
     }
 
-    /** Make a import in the specified path and guarantees that the imported command is a SlashCommand or AdminCommand
+    /** Make a import in the specified path and guarantees that the imported command is a typeof SlashCommand or AdminCommand
      * @param path The path of the command
-     * @param type The type of the command (SlashCommand or AdminCommand)
+     * @param type The type of the command (typeof SlashCommand or typeof AdminCommand)
      * @returns The imported command
      * @throws HandledError('Unknown error while importing the command file')
      * @throws HandledError('The command was not imported correctly')
      * @throws HandledError('The command does not have a default export')
-     * @throws HandledError('The command is not an instance of SlashCommand/AdminCommand')
-     */
+     * @throws HandledError('The command is not a class')
+     * @throws HandledError('The command is not an subclass of SlashCommand/AdminCommand') 
+    */
     private async importCommandInPath<Type extends typeof SlashCommand | typeof AdminCommand>(path: string, type: Type) {
         const module: unknown = await import(path)
             .catch((error: unknown) => {
@@ -180,25 +183,32 @@ export default class CommandHandler {
 
         if (!module || typeof module !== 'object') {
             log.error(`O comando em (#(${path})#) nao foi importado corretamente.`,
-                '\n#(Esperado)#: { default: SlashCommand }',
+                `\n#(Esperado)#: { default: class ${type.name} }`,
                 '\n#(Recebido)#:', module
             );
             throw new HandledError('The command was not imported correctly');
         }
         if (!('default' in module)) {
             log.warn(`O comando em (#(${path})#) nao tem exportação padrão.`,
-                '\n#(Esperado)#: { default: SlashCommand }',
+                `\n#(Esperado)#: { default: class ${type.name} }`,
                 '\n#(Recebido)#:', module
             );
             throw new HandledError('The command does not have a default export');
         }
 
-        // Check if the supposed command is a Command instance
-        if (!(module.default instanceof type)) {
-            log.warn(`O comando em (#(${path})#) não é uma instância de #(${type.name})#.`);
-            throw new HandledError(`The command is not an instance of ${type.name}`);
+        if (typeof module.default !== 'function' || !('prototype' in module.default)) {
+            log.warn(`O comando em (#(${path})#) nao é uma classe.`,
+                `\n#(Esperado)#: { default: class ${type.name} }`,
+                '\n#(Recebido)#:', module
+            );
+            throw new HandledError('The command is not a class');
         }
+        // Check if the supposed command is a child class of the expected type
+        if (!(module.default.prototype instanceof type)) {
+            log.warn(`O comando em (#(${path})#) não é uma subclasse de #(${type.name})#.`);
+            throw new HandledError(`The command is not a subclass of ${type.name}`);
+        };
 
-        return module.default as InstanceType<Type>;
+        return module.default as Type;
     }
 }
