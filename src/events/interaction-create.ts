@@ -4,9 +4,9 @@ import { CommandInteraction, Events } from 'discord.js';
 import ClientEvent from '../classes/ClientEvent';
 import { log } from '../classes/LogSystem';
 import { client } from '..';
-import CommandExecution from '../classes/CommandExecution';
 import LocalClient from '../classes/LocalClient';
 import BaseError from '../Errors/BaseError';
+import SlashCommand from '../classes/SlashCommand';
 
 
 // Captures when a interaction with the bot occurs
@@ -19,21 +19,21 @@ export default new ClientEvent(
             `no canal #(#${interaction.channel?.name ?? interaction.channelId})#`,
             `do servidor #(${interaction.guild?.name ?? interaction.guildId})#.`);
 
-        const command = client.commands.get(interaction.commandName);
+        const Command = client.commands.get(interaction.commandName);
 
-        if (!command) {
+        if (!Command) {
             log.error(`Não foi encontrado o comando /#(${interaction.commandName})# na lista de comandos do bot.`);
             return;
         }
 
+        const commandInstance = new (Command as unknown as new (interaction: CommandInteraction, client: LocalClient) => SlashCommand)(
+            interaction,
+            client
+        );
+
 
         try {
-            // [TASK 1.0] // Remove it when all commands have "execution" class
-            if (command.execute.toString().startsWith('class')) {
-                await new (command.execute as typeof CommandExecution)(interaction, client).run();
-            } else {
-                await (command.execute as (interaction: CommandInteraction, client: LocalClient) => Promise<unknown>)(interaction, client);
-            }
+            await commandInstance.execute();
 
             log.infoh(`Fim da execução do comando #(/${interaction.commandName})#`,
                 `executado por #(@${interaction.user.tag})#`,
