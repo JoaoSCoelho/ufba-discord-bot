@@ -35,14 +35,14 @@ export default class CommandHandler {
      */
     public async handleCommands() {
         const commandsToDeploy: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
-        /** Like `C:/user/bot/src/commands` */
+        /** @example 'C:/user/bot/src/commands' */
         const commandsPath = path.join(__dirname, '../commands');
-        /** Like `[ 'command1', 'command2', ... ]` */
+        /** @example [ 'command1', 'command2', ... ] */
         const commandsFolders = fs.readdirSync(commandsPath);
 
 
         for (const commandFolder of commandsFolders) {
-            /** Like `C:/user/bot/src/commands/command1` */
+            /** @example 'C:/user/bot/src/commands/command1' */
             const commandPath = path.join(commandsPath, commandFolder);
             const indexFile = fs.readdirSync(commandPath).find((file) => file === 'index.js' || file === 'index.ts');
 
@@ -52,7 +52,7 @@ export default class CommandHandler {
                 continue;
             }
 
-            /** Like `C:/user/bot/src/commands/command1/index.ts` */
+            /** @example 'C:/user/bot/src/commands/command1/index.ts' */
             const indexFilePath = path.join(commandPath, indexFile);
             let Command: typeof SlashCommand;
 
@@ -99,13 +99,13 @@ export default class CommandHandler {
     /** Sets in `client.adminCommands` all the commands in the `/admin-commands` folder
     */
     public async handleAdminCommands() {
-        /** Like `C:/user/bot/src/admin-commands` */
+        /** @example 'C:/user/bot/src/admin-commands' */
         const commandsPath = path.join(__dirname, '../admin-commands');
         const commandsFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
 
 
         for (const commandFile of commandsFiles) {
-            /** Like `C:/user/bot/src/admin-commands/command1.ts` */
+            /** @example 'C:/user/bot/src/admin-commands/command1.ts' */
             const filePath = path.join(commandsPath, commandFile);
             let Command: typeof AdminCommand;
 
