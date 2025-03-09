@@ -1,10 +1,12 @@
 // File Version: 0.0.1
 
-import { Events, TextChannel } from 'discord.js';
+import { Events, Message, TextChannel } from 'discord.js';
 import { client } from '..';
 import ClientEvent from '../classes/ClientEvent';
 import { log } from '../classes/LogSystem';
 import BaseError from '../Errors/BaseError';
+import LocalClient from '../classes/LocalClient';
+import AdminCommand from '../classes/AdminCommand';
 
 
 // Captures when a new message is sent
@@ -38,7 +40,9 @@ export default new ClientEvent(Events.MessageCreate, async (message) => {
         .trim()
         .replace(/\\"/g, '%%QUOTATION%%');
 
-    /** Command parameters as a object (if the user use parameters) @see /docs/admin-commands-helper.md#arguments-and-parameters-explanation */
+    /** Command parameters as a object (if the user use parameters) 
+     * @see /docs/admin-commands-helper.md#arguments-and-parameters-explanation 
+     */
     const params = getParamsAsAObject(() => /-(\w+)="([^"]+)"/g, commandMessage);
 
 
@@ -46,9 +50,9 @@ export default new ClientEvent(Events.MessageCreate, async (message) => {
 
 
 
-    const command = client.adminCommands.get(commandName);
+    const Command = client.adminCommands.get(commandName);
 
-    if (!command) return;
+    if (!Command) return;
 
     log.infoh(
         `O admin #(@${message.author.tag})# usou o comando de admin #(${client.prefix}${commandName})#,`,
@@ -58,14 +62,15 @@ export default new ClientEvent(Events.MessageCreate, async (message) => {
         ...(words.length ? ['\nArgumentos:', words] : [])
     );
 
+    const commandInstance = new (Command as unknown as new (message: Message, client: LocalClient, params: Record<string, string>, words: string[]) => AdminCommand)(
+        message,
+        client,
+        params, // In line below, words are passed to the function only if don't have params
+        !Object.values(params).length ? words : []
+    );
 
     try {
-        await command.execute(
-            message,
-            client,
-            params, // In line below, words are passed to the function only if don't have params
-            !Object.values(params).length ? words : []
-        );
+        await commandInstance.execute();
 
         log.infoh(`Fim da execução do comando de admin #(${client.prefix}${commandName})#`,
             `executado por #(@${message.author.tag})#`,
