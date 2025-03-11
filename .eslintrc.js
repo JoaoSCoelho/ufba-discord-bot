@@ -39,7 +39,8 @@ module.exports = {
         '@typescript-eslint/no-duplicate-enum-values': 'off',
         'indent': [
             'error',
-            4
+            4,
+            { 'SwitchCase': 1 }
         ],
         'linebreak-style': [
             'error',
