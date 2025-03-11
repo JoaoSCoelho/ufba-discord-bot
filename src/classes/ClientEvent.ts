@@ -7,8 +7,8 @@ export default class ClientEvent<Event extends keyof ClientEvents> {
      * @param once - `true` if the listener should be called only once.
      */
     constructor(
-        public eventName: Event,
-        public listener: (...args: ClientEvents[Event]) => Awaitable<void>,
-        public once?: boolean,
+        public readonly eventName: Event,
+        public readonly listener: (...args: ClientEvents[Event]) => Awaitable<void>,
+        public readonly once?: boolean,
     ) { }
 }
