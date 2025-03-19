@@ -1,6 +1,6 @@
 import { ActionRowBuilder, Attachment, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ChannelSelectMenuInteraction, Collection, CollectorFilter, MentionableSelectMenuInteraction, RoleSelectMenuInteraction, StringSelectMenuInteraction, UserSelectMenuInteraction } from 'discord.js';
 import Bathroom, { CampusNames, CampusValues, GenderNames, GenderValues } from '../../classes/database/Bathroom';
-import Form from '../../classes/Form';
+import Form from '../../classes/form/Form';
 import { log } from '../../classes/LogSystem';
 import SlashCommand from '../../classes/SlashCommand';
 import BaseError from '../../Errors/BaseError';

@@ -1,6 +1,6 @@
 import { ButtonInteraction, CacheType, ChannelSelectMenuInteraction, Collection, MentionableSelectMenuInteraction, Message, RoleSelectMenuInteraction, SelectMenuComponentOptionData, StringSelectMenuInteraction, UserSelectMenuInteraction } from 'discord.js';
 import Form from './Form';
-import { TurnPartial } from '../utils/TurnPartial';
+import { TurnPartial } from '../../utils/TurnPartial';
 
 export type QuestionType = 'StringSelect' | 'String' | 'Integer' | 'Boolean' | 'Attachments'
 

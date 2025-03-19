@@ -1,29 +1,34 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { EventEmitter } from 'node:events';
 import { ActionRowBuilder, Attachment, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ChannelSelectMenuInteraction, Collection, CollectorFilter, CommandInteraction, ComponentType, InteractionCollector, MappedInteractionTypes, MentionableSelectMenuInteraction, Message, MessageCollector, MessageCollectorOptions, MessageCollectorOptionsParams, MessageComponentInteraction, MessageComponentType, RoleSelectMenuInteraction, SelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder, TextBasedChannel, UserSelectMenuInteraction } from 'discord.js';
-import LocalClient from './LocalClient';
-import { Question, QuestionAttachments, QuestionBoolean, QuestionInteger, QuestionString, QuestionStringSelect, QuestionType, BaseButtonData, BaseButtonDataOption, ParamQuestionAttachments, ParamQuestionBoolean, ParamQuestionInteger, ParamQuestionString, ParamQuestionStringSelect, StringSelectMenuData, StringSelectQuestionOptions, ChangeQuestionAction, StringQuestionOptions, IntegerQuestionOptions, BooleanQuestionOptions, AttachmentsQuestionOptions, BaseQuestionOptions } from './Form.types';
-import { FormEvents } from './Form.types';
-import isObject from '../utils/isObject';
-import discordAnsi from '../utils/discord-ansi';
-import { log } from './LogSystem';
-import { INodeEventEmitter } from '../utils/INodeEventEmitter';
-import BaseError from '../Errors/BaseError';
-import { Obj } from '../utils/Obj';
+import LocalClient from '../LocalClient';
+import { Question, QuestionAttachments, QuestionBoolean, QuestionInteger, QuestionString, QuestionStringSelect, QuestionType, BaseButtonData, BaseButtonDataOption, ParamQuestionAttachments, ParamQuestionBoolean, ParamQuestionInteger, ParamQuestionString, ParamQuestionStringSelect, StringSelectMenuData, StringSelectQuestionOptions, ChangeQuestionAction, StringQuestionOptions, IntegerQuestionOptions, BooleanQuestionOptions, AttachmentsQuestionOptions, BaseQuestionOptions } from '../Form.types';
+import { FormEvents } from '../Form.types';
+import isObject from '../../utils/isObject';
+import discordAnsi from '../../utils/discord-ansi';
+import { log } from '../LogSystem';
+import { INodeEventEmitter } from '../../utils/INodeEventEmitter';
+import BaseError from '../../Errors/BaseError';
+import { Obj } from '../../utils/Obj';
+import HandledError from '../../Errors/HandledError';
 
 
 
 
-
+/** Allows to create a form in Discord with multiple questions and with validation for each one. 
+ * The allowed type of questions are `String`, `StringSelect`, `Integer`, `Boolean` and `Attachments`.
+ */
 export default class Form extends (EventEmitter as unknown as { new(): INodeEventEmitter }) {
     // Collectors savers ------------------------
 
+    /** All collectors opened during the form execution */
     private collectors: (InteractionCollector<MappedInteractionTypes[MessageComponentType]> | MessageCollector)[] = [];
+    /** Only message collectors opened during the form execution */
     private messageCollectors: MessageCollector[] = [];
+    /** Only interaction collector opened during the form execution */
     private interactionCollectors: InteractionCollector<MappedInteractionTypes[MessageComponentType]>[] = [];
 
     // Questions controller vars
-
+    /** The collection of questions that should be asked. Setted in the constructor. */
     public questions: Collection<string, (QuestionStringSelect | QuestionString | QuestionInteger | QuestionBoolean | QuestionAttachments)>;
 
     public lastQuestionIndex: number | undefined;
@@ -52,7 +57,6 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
             StringSelect: () => []
         };
 
-        // @ts-ignore
         this.questions = new Collection(questions.map((question, index, array) => [question.options.name, {
             ...question,
 
@@ -69,16 +73,19 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
                     ...question.options.nextQuestionButton,
                 },
             },
-        }]));
+        } as QuestionStringSelect | QuestionString | QuestionInteger | QuestionBoolean | QuestionAttachments]));
 
     }
 
 
 
 
-    /** Starts the form */
+    /** Starts the form execution.
+     * @param fromIndex The index of the question that the form should start. If not provided, the form will start with the first question.
+     */
     public async run(fromIndex?: number) {
         if (!this.interaction.deferred && !this.interaction.replied)
+            // Turn the interaction to deferred to Discord understand that the bot is working on it
             await this.interaction.deferReply({ ephemeral: true })
                 .catch((error: unknown) => {
                     log.error('Erro ao usar #i(CommandInteraction<CacheType>)###(deferReply())#',
@@ -129,39 +136,92 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
     }
 
+    /** Finish the form with status `stopped` */
     public stop() {
-        this.finishForm('stopped');
+        this.justFinishForm('stopped');
     }
 
-
+    /** Start the asker module for a question.
+     * @param question The question that should be asked.
+     */
     private callQuestionAsker(question: Question<QuestionType>) {
-        // @ts-ignore
+        // @ts-expect-error - The type of "question" is correct
         this.askers[question.type]?.bind(this)(question.options)
             .catch((error: unknown) => {
                 this.emit('error', { error, question });
             });
     }
 
-
+    /** Refreshes the current question. Generally used when the question is responded incorrectly and the form should to restart the question with some alert to the user.
+     * @param byPassOptions `{ warnMessage, infoMessage }` Options to bypass the current question options.
+     * @throws HandledError('It is not possible to refresh the question because the current question index is not defined.')
+     * @throws HandledError('It is not possible to refresh the question because the current question index does not index any question in the form.')
+     */
     public refreshQuestion(byPassOptions?: Partial<Pick<BaseQuestionOptions<boolean, QuestionType>, 'warnMessage' | 'infoMessage'>>) {
-        if (typeof this.currentQuestionIndex !== 'number') return;
+        if (typeof this.currentQuestionIndex !== 'number') {
+            log.error(`Erro ao tentar atualizar a questão atual no Form "#(${this.name})#".`,
+                'O índice da questão atual não está definido.',
+                `\n#(Aberto por)#: #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#`,
+                `\n#(Servidor)#: #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                '\n#(Form.name)#:', this.name,
+                '\n#(Form.currentQuestionIndex)#:', this.currentQuestionIndex,
+
+            );
+
+            const error = new HandledError('It is not possible to refresh the question because the current question index is not defined.');
+
+            this.emit('error', error);
+            throw error;
+        };
 
 
-        /** Stop all collectors so that there is no interference with the refreshed question */
-        this.collectors.forEach((collector) => collector.stop());
+        try {
+            /** Stop all collectors so that there is no interference with the refreshed question */
+            this.collectors.forEach((collector) => collector.stop());
+        } catch (error: unknown) {
+            log.error(`Erro ao tentar parar os coletores do Form "#(${this.name})#"`,
+                `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#,`,
+                'enquanto executava refreshQuestion().',
+                '\n#(Erro)#:', error,
+                '\n#(Form.collectors)#:', this.collectors,
+            );
+
+            BaseError.handle(error);
+
+            this.emit('error', error);
+            throw error;
+        }
 
 
         /** Restarts the question */
 
-        const question = this.questions.toJSON()[this.currentQuestionIndex];
+        const question = this.questions.at(this.currentQuestionIndex);
+
+        if (!question) {
+            log.error(
+                `Problema enquanto tentava atualizar a questão atual no Form "#(${this.name})#".`, `O Índice da questão atual não indexa nenhuma questão no form aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                '\n#(Form.currentQuestionIndex)#:', this.currentQuestionIndex,
+                '\n#(Form.questions.size)#:', this.questions.size,
+            );
+
+            const error = new HandledError('It is not possible to refresh the question because the current question index does not index any question in the form.');
+
+            this.emit('error', error);
+            throw error;
+        }
 
         this.callQuestionAsker({ ...question, options: { ...question.options, ...byPassOptions } });
     }
 
 
 
-    public changeQuestion(action: ChangeQuestionAction, byPassOptions?: Partial<Pick<BaseQuestionOptions<boolean, QuestionType>, 'warnMessage' | 'infoMessage'>>): void
-    public changeQuestion(toIndex: number, byPassOptions?: Partial<Pick<BaseQuestionOptions<boolean, QuestionType>, 'warnMessage' | 'infoMessage'>>): void
+    /** Replaces the current question by another one.
+     * @param arg The index of the question that should be asked or the action that should be taken: `goBack` or `advance`.
+     * @param byPassOptions `{ warnMessage, infoMessage }` Options to bypass the current question options.
+     * @throws HandledError('It is not possible to change the question because the arg does not index any question in the form.')
+     * @throws HandledError('It is not possible to change the question because the current question index does not index any question in the form.')
+     */
     public changeQuestion(arg: number | ChangeQuestionAction, byPassOptions?: Partial<Pick<BaseQuestionOptions<boolean, QuestionType>, 'warnMessage' | 'infoMessage'>>) {
 
         // Updates the last and current question index vars
@@ -169,10 +229,25 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
         this.lastQuestionIndex = this.currentQuestionIndex;
 
         if (typeof arg === 'number') {
-            // If the "arg" is "toIndex"
+            // If the "arg" is an index
+
+            if (arg < 0 || arg >= this.questions.size) {
+                log.error(`Erro ao tentar mudar a questão no Form "#(${this.name})#".`,
+                    `O argumento dado não indexa nenhuma questão no form aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                    '\n#(Form.currentQuestionIndex)#:', this.currentQuestionIndex,
+                    '\n#(Form.questions.size)#:', this.questions.size,
+                    '\n#(arg)#:', arg,
+                );
+
+                const error = new HandledError('It is not possible to change the question because the arg does not index any question in the form.');
+
+                this.emit('error', error);
+                throw error;
+            }
+
             this.currentQuestionIndex = Math.min(Math.max(arg, 0), this.questions.size - 1);
         } else {
-            // If the "arg" is "action"
+            // If the "arg" is an action
             this.currentQuestionIndex = arg === 'goBack' ?
                 Math.max((this.lastQuestionIndex ?? 0) - 1, 0) :
                 Math.min((this.lastQuestionIndex ?? 0) + 1, this.questions.size - 1);
@@ -180,93 +255,156 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
 
 
-        /** Stop all collectors so that there is no interference with the next question */
-        this.collectors.forEach((collector) => collector.stop());
+        try {
+            /** Stop all collectors so that there is no interference with the next question */
+            this.collectors.forEach((collector) => collector.stop());
+        } catch (error: unknown) {
+            log.error(`Erro ao tentar parar os coletores do Form "#(${this.name})#"`,
+                `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#,`,
+                'enquanto executava changeQuestion().',
+                '\n#(Erro)#:', error,
+                '\n#(Form.collectors)#:', this.collectors,
+            );
+
+            BaseError.handle(error);
+
+            this.emit('error', error);
+            throw error;
+        }
 
 
 
-        this.emit('changeQuestion', this.currentQuestionIndex, this.lastQuestionIndex, typeof arg === 'string' ? arg : undefined);
+        this.emit('changeQuestion',
+            this.currentQuestionIndex,
+            this.lastQuestionIndex,
+            typeof arg === 'string' ? arg : undefined);
 
 
 
-        /** Starts the next question */
+        /** Starts the changed question */
 
-        const newQuestion = this.questions.toJSON()[this.currentQuestionIndex];
+        const newQuestion = this.questions.at(this.currentQuestionIndex);
+
+        if (!newQuestion) {
+            log.error(`Problema enquanto tentava mudar a questão no Form "#(${this.name})#".`, `O Índice da questão atual não indexa nenhuma questão no form aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#), no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                '\n#(Form.currentQuestionIndex)#:', this.currentQuestionIndex,
+                '\n#(Form.questions.size)#:', this.questions.size,
+            );
+
+            const error = new HandledError('It is not possible to change the question because the current question index does not index any question in the form.');
+            this.emit('error', error);
+            throw error;
+        }
 
         this.callQuestionAsker({ ...newQuestion, options: { ...newQuestion.options, ...byPassOptions } });
     }
 
-
-    public finishForm(reason?: string) {
-        if (reason) {
-            justFinish.bind(this)();
-        } else {
-            // Check all questions with checkers
-            Promise.all(this.questions.map(async (question) => {
-                /** `string` if some error are found in checking process  */
-                // @ts-ignore
-                const checkerError = await this.checkers[question.type]?.bind(this)(question.options, question.response)
-                    .catch((error: unknown) => {
-                        throw { question, error };
-                    }) as string | undefined;
-
-                // Returns [questionName, error or undefined]
-                return [question.options.name, checkerError] as [string, string | undefined];
-            }))
-                .then((possiblyErrors: [string, string | undefined][]) => {
-                    const foundError = possiblyErrors.find(([, reason]) => reason !== undefined) as [string, string] | undefined;
-
-                    if (foundError) {
-                        // Call the question that have some error again with the error in "warnMessage"
-                        const questionWithErrorIndex = this.questions.toJSON().findIndex((question) => question.options.name === foundError[0]);
-
-                        return this.changeQuestion(questionWithErrorIndex, { warnMessage: foundError[1] });
-                    }
-
-                    justFinish.bind(this)();
-
-                    const questionMessageOptions = {
-                        message: this.questionMessage,
-                        content: '✅ Formulário concluído!',
-                        embeds: [],
-                        components: [],
-                    };
-
-                    this.interaction.editReply(questionMessageOptions)
-                        .catch((error: unknown) => {
-                            log.error('Erro ao usar #i(CommandInteraction<CacheType>)###(editReply(Message))#',
-                                `enquanto finalizava o Form "#(${this.name})#",`,
-                                `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
-                                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
-                                '\n#(Erro)#:', error,
-                                '\n#(MessageOptions)#:', questionMessageOptions,
-                                '\n#(CommandInteraction)#:', this.interaction
-                            );
-                            BaseError.handle(error);
-                            this.emit('error', error);
-                        });
-
-                })
-                .catch((error: unknown) => {
-                    this.emit('error', error);
-                });
-
-
-        }
-
-        return this.questions.mapValues((question) => question.response);
-
-
-
-
-        function justFinish(this: Form) {
+    /** Stops all running collectors, and finishes the form.
+     * @param reason The reason why the form was finished.
+     * @emits 'finishForm' The form was finished.
+     * @emits 'error' If an error occurred while stopping the collectors.
+     */
+    private justFinishForm(reason: string) {
+        try {
             /** Stop all collectors so that there is no interference on the rest of code execution */
             this.collectors.forEach((collector) => collector.stop());
+        } catch (error: unknown) {
+            log.error(`Erro ao tentar parar os coletores do Form "#(${this.name})#"`,
+                `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#,`,
+                `enquanto executava justFinishForm(reason: "${reason}").`,
+                '\n#(Erro)#:', error,
+                '\n#(Form.collectors)#:', this.collectors,
+            );
 
-            this.finished = true;
-
-            this.emit('finishForm', reason, this.questions.mapValues((question) => question.response));
+            BaseError.handle(error);
+            this.emit('error', error);
+            throw error;
         }
+
+        this.finished = true;
+
+        this.emit('finishForm', reason, this.questions.mapValues((question) => question.response));
+    }
+
+    /** Check all questions with checkers and finish the form if there is no error. Also conclude the form in discord UI.
+     * @returns The responses of all questions.
+     * @emits 'error' If an error occurred while finishing the form.
+     */
+    public finishForm() {
+
+        // Check all questions with checkers
+        Promise.all(this.questions.map(async (question) => {
+            /** `string` if some error are found in checking process  */
+            // @ts-expect-error - The type of "question" is correct
+            const checkerError = await this.checkers[question.type]?.bind(this)(question.options, question.response)
+                .catch((error: unknown) => {
+                    log.error(`Erro ao tentar checar a questão "#(${question.options.name})# no Form "#(${this.name})#".`,
+                        `Aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                        '\n#(Erro)#:', error,
+                        '\n#(Question)#:', question,
+                    );
+                    BaseError.handle(error);
+                    // DO NOT EMIT ERROR HERE! THIS ERROR ARE EMITTED IN THE CATCH BELOW.
+                    throw { question, error };
+                }) as string | undefined;
+
+            // Returns [questionName, error | undefined]
+            return [question.options.name, checkerError] as [string, string | undefined];
+        }))
+            .then((possiblyErrors: [string, string | undefined][]) => {
+                const foundError = possiblyErrors.find(([, reason]) => reason !== undefined) as [string, string] | undefined;
+
+                if (foundError) {
+                    // Call the question that have some error again with the error in "warnMessage"
+                    const questionWithErrorIndex = this.questions.toJSON().findIndex((question) => question.options.name === foundError[0]);
+
+                    return this.changeQuestion(questionWithErrorIndex, { warnMessage: foundError[1] });
+                }
+
+                this.justFinishForm('concluded');
+
+                const questionMessageOptions = {
+                    message: this.questionMessage,
+                    content: '✅ Formulário concluído!',
+                    embeds: [],
+                    components: [],
+                };
+
+                this.interaction.editReply(questionMessageOptions)
+                    .catch((error: unknown) => {
+                        log.error('Erro ao usar #i(CommandInteraction<CacheType>)###(editReply(Message))#',
+                            `enquanto finalizava o Form "#(${this.name})#",`,
+                            `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                            `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                            '\n#(Erro)#:', error,
+                            '\n#(MessageOptions)#:', questionMessageOptions,
+                            '\n#(CommandInteraction)#:', this.interaction
+                        );
+                        BaseError.handle(error);
+                        this.emit('error', error);
+                    });
+
+            })
+            .catch((error: unknown) => {
+                if (!BaseError.isHandled(error)) {
+                    log.error('Erro ao rodar checkers no Form "#(${this.name})#".',
+                        `Aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
+                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
+                        '\n#(Erro)#:', error,
+                    );
+
+                    BaseError.handle(error);
+                }
+                this.emit('error', error);
+            });
+
+
+
+
+        return this.questions.mapValues((question) => question.response);
     }
 
 
@@ -454,7 +592,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
                     collector.on('end', (_collected, reason) => {
                         if (reason === 'time' || reason === 'idle') {
-                            if (!this.finished) this.finishForm(reason);
+                            if (!this.finished) this.justFinishForm(reason);
                             reject(reason);
                         }
                     });
@@ -791,7 +929,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
                 componentCollector.on('end', (_collected, reason) => {
                     if (reason === 'time' || reason === 'idle') {
-                        if (!this.finished) this.finishForm(reason);
+                        if (!this.finished) this.justFinishForm(reason);
                         reject(reason);
                     }
                 });
@@ -1190,7 +1328,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
                 collector.on('end', (_collected, reason) => {
                     if (reason === 'time' || reason === 'idle') {
-                        if (!this.finished) this.finishForm(reason);
+                        if (!this.finished) this.justFinishForm(reason);
                         reject(reason);
                     }
                 });
@@ -1536,7 +1674,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
                 componentCollector.on('end', (_collected, reason) => {
                     if (reason === 'time' || reason === 'idle') {
-                        if (!this.finished) this.finishForm(reason);
+                        if (!this.finished) this.justFinishForm(reason);
                         reject(reason);
                     }
                 });
