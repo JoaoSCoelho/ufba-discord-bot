@@ -5,7 +5,7 @@ import { log } from '../../classes/LogSystem';
 import SlashCommand from '../../classes/SlashCommand';
 import BaseError from '../../Errors/BaseError';
 import registerBathroomData from './data';
-import { Question } from '../../classes/Form.types';
+import { Question } from '../../classes/form/Form.types';
 import bathroomEmbedFactory from '../../shared/bathroomEmbedFactory';
 import isObject from '../../utils/isObject';
 
