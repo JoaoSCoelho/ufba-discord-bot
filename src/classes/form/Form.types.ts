@@ -1,37 +1,17 @@
-import { ButtonInteraction, CacheType, ChannelSelectMenuInteraction, Collection, MentionableSelectMenuInteraction, Message, RoleSelectMenuInteraction, SelectMenuComponentOptionData, StringSelectMenuInteraction, UserSelectMenuInteraction } from 'discord.js';
+import { Attachment, ButtonInteraction, CacheType, ChannelSelectMenuInteraction, Collection, MentionableSelectMenuInteraction, Message, RoleSelectMenuInteraction, SelectMenuComponentOptionData, StringSelectMenuInteraction, UserSelectMenuInteraction } from 'discord.js';
 import Form from './Form';
 import { TurnPartial } from '../../utils/TurnPartial';
+import { AskerResponse } from './askers/Asker';
 
 export type QuestionType = 'StringSelect' | 'String' | 'Integer' | 'Boolean' | 'Attachments'
 
-export interface Question<Type extends QuestionType> {
-    type: Type,
-    options: Parameters<Form['askers'][Type]>[0],
-    response: Awaited<ReturnType<Form['askers'][Type]>>
+export interface Question {
+    type: QuestionType,
+    options: QuestionOptions,
+    response: AskerResponse
 }
 
-export interface QuestionStringSelect extends Question<'StringSelect'> { type: 'StringSelect' }
-export interface ParamQuestionStringSelect extends TurnPartial<QuestionStringSelect, 'response'> { }
-
-export interface QuestionString extends Question<'String'> { type: 'String' }
-export interface ParamQuestionString extends TurnPartial<QuestionString, 'response'> { }
-
-export interface QuestionInteger extends Question<'Integer'> { type: 'Integer' }
-export interface ParamQuestionInteger extends TurnPartial<QuestionInteger, 'response'> { }
-
-export interface QuestionBoolean extends Question<'Boolean'> { type: 'Boolean' }
-export interface ParamQuestionBoolean extends TurnPartial<QuestionBoolean, 'response'> { }
-
-export interface QuestionAttachments extends Question<'Attachments'> { type: 'Attachments' }
-export interface ParamQuestionAttachments extends TurnPartial<QuestionAttachments, 'response'> { }
-
-
-export type ComponentInteraction = StringSelectMenuInteraction<CacheType> | ButtonInteraction<CacheType> | UserSelectMenuInteraction<CacheType> | RoleSelectMenuInteraction<CacheType> | MentionableSelectMenuInteraction<CacheType> | ChannelSelectMenuInteraction<CacheType>
-
-
-
-
-export interface BaseQuestionOptions<Req extends boolean, Type extends QuestionType> {
+export interface BaseQuestionOptions {
     name: string,
 
     nextQuestionButton?: Partial<BaseButtonDataOption> & {
@@ -73,7 +53,9 @@ export interface BaseQuestionOptions<Req extends boolean, Type extends QuestionT
         hidden?: boolean
     }
 
-    /** The command of the question. @example 'Escolha qual o seu Pokemon favorito dentre as opções abaixo!' | 'Digite seu nome completo' */
+    /** The command of the question. 
+     * @example 'Escolha qual o seu Pokemon favorito dentre as opções abaixo!' | 'Digite seu nome completo' 
+     */
     message: string,
     /** Showed as a reply block in normal color below the `message` */
     infoMessage?: string,
@@ -86,25 +68,13 @@ export interface BaseQuestionOptions<Req extends boolean, Type extends QuestionT
 
     /** Defines how long the question will stop receiving interactions after being idle */
     collectorIdle?: number,
-    required?: Req,
+    required?: boolean,
 
     /** Array of filters that will be executed when the user try to finish the form
-     * @returns a `string` that will be used as `warnMessage` or undefined if response pass on filter
+     * @returns a `string` that will be used as `warnMessage` or `undefined` if response pass on filter
      */
-    onFinishFilters?: ((response: Awaited<ReturnType<Form['askers'][Type]>>) => Promise<string | undefined>)[]
+    onFinishFilters?: ((response: AskerResponse) => Promise<string | undefined>)[]
 
-    /** Executed when the user is trying to input a new value. 
-     * @obs prevents the default action, use `onResponseUpdate` or `onChangeFilter` if you don't want it
-     * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
-     * 
-     * `PromiseRejection<{ rejectReason: string }>` // if want to reject question
-     * 
-     * `Promise<null>` // if want to bypass the question resolving
-     */
-    onChange?: (
-        this: Form,
-        ...args: [interaction: ComponentInteraction] | [message: Message]
-    ) => Promise<Awaited<ReturnType<Form['askers'][Type]>> | null>
     /** Executed when the user is trying to input a new value. 
      * @obs not default executed if you are using `onChange`
      * @obs don't prevents the default action. Is executed inside `defaultOnChange()`, before set user input to response.
@@ -126,20 +96,9 @@ export interface BaseQuestionOptions<Req extends boolean, Type extends QuestionT
      */
     onResponseUpdate?: (
         this: Form,
-        question: Question<QuestionType>
+        question: Question
     ) => Promise<unknown>,
-    /** Executed when the "cleanButton" is clicked 
-     * @obs prevents the default action, use `onClean` or `onResponseUpdate` if you don't want it
-     * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
-     * 
-     * `PromiseRejection<{ rejectReason: string }>` // if want to reject question
-     * 
-     * `Promise<null>` // if want to bypass the question resolving
-     */
-    onCleanButtonClick?: (
-        this: Form,
-        interaction: ButtonInteraction<CacheType>
-    ) => Promise<Awaited<ReturnType<Form['askers'][Type]>> | null>,
+
     /** Executed when the question was cleared
      * @obs not default executed if you are using `onCleanButtonClick`
      * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
@@ -150,21 +109,9 @@ export interface BaseQuestionOptions<Req extends boolean, Type extends QuestionT
      */
     onClean?: (
         this: Form,
-        question: Question<QuestionType>
+        question: Question
     ) => Promise<unknown>,
-    /** Executed when the "prevQuestionButton" or "nextQuestionButton" is clicked 
-     * @obs prevents the default action, use `onChangeQuestion` if you don't want it
-     * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
-     * 
-     * `PromiseRejection<{ rejectReason: string }>` // if want to reject question
-     * 
-     * `Promise<null>` // if want to bypass the question resolving
-     */
-    onChangeQuestionButtonClick?: (
-        this: Form,
-        action: 'advance' | 'goBack',
-        interaction: ButtonInteraction<CacheType>
-    ) => Promise<Awaited<ReturnType<Form['askers'][Type]>> | null>,
+
     /** Executed everytime current question is updated 
      * @obs not default executed if you are using `onChangeQuestionButtonClick`
      * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
@@ -176,20 +123,9 @@ export interface BaseQuestionOptions<Req extends boolean, Type extends QuestionT
     onChangeQuestion?: (
         this: Form,
         action: 'advance' | 'goBack',
-        interaction: ButtonInteraction<CacheType>
+        interaction: ButtonInteraction
     ) => Promise<unknown>,
-    /** Executed when the "finishFormButton" is clicked 
-     * @obs prevents the default action, use `onFinishForm` if you don't want it
-     * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
-     * 
-     * `PromiseRejection<{ rejectReason: string }>` // if want to reject question
-     * 
-     * `Promise<null>` // if want to bypass the question resolving
-     */
-    onFinishFormButtonClick?: (
-        this: Form,
-        interaction: ButtonInteraction<CacheType>
-    ) => Promise<Awaited<ReturnType<Form['askers'][Type]>> | null>,
+
     /** Executed when the Form is finished in this question
      * @obs not default executed if you are using `onFinishFormButtonClick`
      * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
@@ -200,20 +136,15 @@ export interface BaseQuestionOptions<Req extends boolean, Type extends QuestionT
      */
     onFinishForm?: (
         this: Form,
-        interaction: ButtonInteraction<CacheType>
+        interaction: ButtonInteraction
     ) => Promise<unknown>,
 }
 
-
-
-export interface StringSelectQuestionOptions<Req extends boolean, Returns extends string> extends BaseQuestionOptions<Req, 'StringSelect'> {
+export interface StringSelectQuestionOptions<Returns extends string> extends BaseQuestionOptions {
     /** Updating documentation for props that are in BaseQuestionOptions ------------------------------------- */
 
     /** @default 30_000 // 30 seconds */
-    collectorIdle?: BaseQuestionOptions<Req, 'StringSelect'>['collectorIdle'],
-
-    /** Executed when the user select or unselect anything in select menu */
-    onChange?: BaseQuestionOptions<Req, 'StringSelect'>['onChange'],
+    collectorIdle?: BaseQuestionOptions['collectorIdle'],
 
     /** ------------------------------------------------------------------------------------------------------ */
 
@@ -242,11 +173,11 @@ export interface StringSelectQuestionOptions<Req extends boolean, Returns extend
 
 }
 
-export interface StringQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'String'> {
+export interface StringQuestionOptions extends BaseQuestionOptions {
     /** Updating documentation for props that are in BaseQuestionOptions ------------------------------------- */
 
     /** @default 60_000 // 60 seconds */
-    collectorIdle?: BaseQuestionOptions<Req, 'String'>['collectorIdle'],
+    collectorIdle?: BaseQuestionOptions['collectorIdle'],
 
     /** ------------------------------------------------------------------------------------------------------ */
 
@@ -274,11 +205,11 @@ export interface StringQuestionOptions<Req extends boolean> extends BaseQuestion
     placeholder?: string
 }
 
-export interface IntegerQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Integer'> {
+export interface IntegerQuestionOptions extends BaseQuestionOptions {
     /** Updating documentation for props that are in BaseQuestionOptions ------------------------------------- */
 
     /** @default 60_000 // 60 seconds */
-    collectorIdle?: BaseQuestionOptions<Req, 'Integer'>['collectorIdle'],
+    collectorIdle?: BaseQuestionOptions['collectorIdle'],
 
     /** ------------------------------------------------------------------------------------------------------ */
 
@@ -323,11 +254,11 @@ export interface IntegerQuestionOptions<Req extends boolean> extends BaseQuestio
     notAIntegerMessage?: string,
 }
 
-export interface BooleanQuestionOptions<Req extends boolean> extends BaseQuestionOptions<Req, 'Boolean'> {
+export interface BooleanQuestionOptions extends BaseQuestionOptions {
     /** Updating documentation for props that are in BaseQuestionOptions ------------------------------------- */
 
     /** @default 30_000 // 30 seconds */
-    collectorIdle?: BaseQuestionOptions<Req, 'Boolean'>['collectorIdle'],
+    collectorIdle?: BaseQuestionOptions['collectorIdle'],
 
     /** ------------------------------------------------------------------------------------------------------ */
 
@@ -349,17 +280,18 @@ export interface BooleanQuestionOptions<Req extends boolean> extends BaseQuestio
     placeholder?: string
 }
 
-export interface AttachmentsQuestionOptions<Req extends boolean> extends Omit<BaseQuestionOptions<Req, 'Attachments'>, 'required'> {
+export interface AttachmentsQuestionOptions extends Omit<BaseQuestionOptions, 'required'> {
     /** Updating documentation for props that are in BaseQuestionOptions ------------------------------------- */
 
     /** @default 60_000 // 60 seconds */
-    collectorIdle?: BaseQuestionOptions<Req, 'Boolean'>['collectorIdle'],
+    collectorIdle?: BaseQuestionOptions['collectorIdle'],
 
     /** ------------------------------------------------------------------------------------------------------ */
 
 
-    /** The min quantity of attachments that the user can finish the form. @default 0 */
-    minAttachments?: Req extends true ? number : 0,
+    /** The min quantity of attachments that the user can finish the form. 
+     * @default 0 */
+    minAttachments?: number,
     /** The max quantity of attachments that the user can finish the form.
      * @obs These value defines the length of Attachments carousel.
      * @default minAttachments
@@ -413,8 +345,8 @@ export interface AttachmentsQuestionOptions<Req extends boolean> extends Omit<Ba
     onChangeAttachmentButtonClick?: (
         this: Form,
         action: 'advance' | 'goBack',
-        interaction: ButtonInteraction<CacheType>
-    ) => Promise<Awaited<ReturnType<Form['askers']['Attachments']>> | null>,
+        interaction: ButtonInteraction
+    ) => Promise<Attachment[] | null>,
     /** Executed everytime current attachment is updated 
      * @obs not default executed if you are using `onChangeAttachmentButtonClick`
      * @returns `Promise<ReturnTypeOfQuestion>` // if want to resolve question
@@ -426,9 +358,33 @@ export interface AttachmentsQuestionOptions<Req extends boolean> extends Omit<Ba
     onChangeAttachment?: (
         this: Form,
         action: 'advance' | 'goBack',
-        interaction: ButtonInteraction<CacheType>
+        interaction: ButtonInteraction
     ) => Promise<unknown>,
 }
+
+export type QuestionOptions = StringSelectQuestionOptions<string> | StringQuestionOptions | IntegerQuestionOptions | BooleanQuestionOptions | AttachmentsQuestionOptions;
+
+export interface QuestionStringSelect extends Question { type: 'StringSelect' }
+export interface ParamQuestionStringSelect extends TurnPartial<QuestionStringSelect, 'response'> { }
+
+export interface QuestionString extends Question { type: 'String' }
+export interface ParamQuestionString extends TurnPartial<QuestionString, 'response'> { }
+
+export interface QuestionInteger extends Question { type: 'Integer' }
+export interface ParamQuestionInteger extends TurnPartial<QuestionInteger, 'response'> { }
+
+export interface QuestionBoolean extends Question { type: 'Boolean' }
+export interface ParamQuestionBoolean extends TurnPartial<QuestionBoolean, 'response'> { }
+
+export interface QuestionAttachments extends Question { type: 'Attachments' }
+export interface ParamQuestionAttachments extends TurnPartial<QuestionAttachments, 'response'> { }
+
+
+export type ComponentInteraction = StringSelectMenuInteraction<CacheType> | ButtonInteraction<CacheType> | UserSelectMenuInteraction<CacheType> | RoleSelectMenuInteraction<CacheType> | MentionableSelectMenuInteraction<CacheType> | ChannelSelectMenuInteraction<CacheType>
+
+
+
+
 
 
 
@@ -463,7 +419,7 @@ export interface BaseButtonDataOption extends Omit<BaseButtonData, 'disabled'> {
 export interface FormEvents {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     error: any[]
-    responseUpdate: [question: Question<QuestionType>]
+    responseUpdate: [question: Question]
     changeQuestion: [currentQuestionIndex?: number, lastQuestionIndex?: number, action?: 'advance' | 'goBack']
     finishForm: [reason: string | undefined, responses: Collection<string, Awaited<ReturnType<Form['askers'][QuestionType]>>>]
 }

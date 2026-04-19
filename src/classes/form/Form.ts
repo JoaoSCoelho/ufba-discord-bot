@@ -20,12 +20,16 @@ import HandledError from '../../Errors/HandledError';
 export default class Form extends (EventEmitter as unknown as { new(): INodeEventEmitter }) {
     // Collectors savers ------------------------
 
-    /** All collectors opened during the form execution */
-    private collectors: (InteractionCollector<MappedInteractionTypes[MessageComponentType]> | MessageCollector)[] = [];
-    /** Only message collectors opened during the form execution */
-    private messageCollectors: MessageCollector[] = [];
-    /** Only interaction collector opened during the form execution */
-    private interactionCollectors: InteractionCollector<MappedInteractionTypes[MessageComponentType]>[] = [];
+    // /** All collectors opened during the form execution */
+    // private collectors: (InteractionCollector<MappedInteractionTypes[MessageComponentType]> | MessageCollector)[] = [];
+    // /** Only message collectors opened during the form execution */
+    // private messageCollectors: MessageCollector[] = [];
+    // /** Only interaction collector opened during the form execution */
+    // private interactionCollectors: InteractionCollector<MappedInteractionTypes[MessageComponentType]>[] = [];
+    /** Main message collector used by the form */
+    public messageCollector: MessageCollector | undefined;
+    /** Main interaction collector used by the form */
+    public interactionCollector: InteractionCollector<MappedInteractionTypes[MessageComponentType]> | undefined;
 
     // Questions controller vars
     /** The collection of questions that should be asked. Setted in the constructor. */
@@ -49,7 +53,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
     ) {
         super();
 
-        const DEFAULT_RESPONSES: { [Key in QuestionType]: () => Question<Key>['response'] } = {
+        const DEFAULT_RESPONSES: { [Key in QuestionType]: () => Question['response'] } = {
             Attachments: () => [],
             Boolean: () => undefined,
             Integer: () => undefined,
@@ -57,7 +61,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
             StringSelect: () => []
         };
 
-        this.questions = new Collection(questions.map((question, index, array) => [question.options.name, {
+        this.questions = new Collection(questions.map((question, index) => [question.options.name, {
             ...question,
 
             response: question.response ?? DEFAULT_RESPONSES[question.type](),
@@ -69,7 +73,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
                     ...question.options.prevQuestionButton,
                 },
                 nextQuestionButton: {
-                    hidden: index === (array.length - 1),
+                    hidden: index === (questions.length - 1),
                     ...question.options.nextQuestionButton,
                 },
             },
@@ -144,9 +148,9 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
     /** Start the asker module for a question.
      * @param question The question that should be asked.
      */
-    private callQuestionAsker(question: Question<QuestionType>) {
-        // @ts-expect-error - The type of "question" is correct
+    private callQuestionAsker(question: Question) {
         this.askers[question.type]?.bind(this)(question.options)
+            .then((response) => log.other(response))
             .catch((error: unknown) => {
                 this.emit('error', { error, question });
             });
@@ -157,7 +161,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
      * @throws HandledError('It is not possible to refresh the question because the current question index is not defined.')
      * @throws HandledError('It is not possible to refresh the question because the current question index does not index any question in the form.')
      */
-    public refreshQuestion(byPassOptions?: Partial<Pick<BaseQuestionOptions<boolean, QuestionType>, 'warnMessage' | 'infoMessage'>>) {
+    public refreshQuestion(byPassOptions?: Partial<Pick<BaseQuestionOptions, 'warnMessage' | 'infoMessage'>>) {
         if (typeof this.currentQuestionIndex !== 'number') {
             log.error(`Erro ao tentar atualizar a questão atual no Form "#(${this.name})#".`,
                 'O índice da questão atual não está definido.',
@@ -305,7 +309,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
      * @emits 'finishForm' The form was finished.
      * @emits 'error' If an error occurred while stopping the collectors.
      */
-    private justFinishForm(reason: string) {
+    public justFinishForm(reason: string) {
         try {
             /** Stop all collectors so that there is no interference on the rest of code execution */
             this.collectors.forEach((collector) => collector.stop());
@@ -414,7 +418,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
     public askers = {
         async StringSelect<Returns extends string, Req extends boolean>(
             this: Form,
-            options: StringSelectQuestionOptions<Req, Returns>
+            options: StringSelectQuestionOptions<Returns>
         ) {
             if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
@@ -511,8 +515,8 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
 
             // Creates the question collector (collects any interaction in question components)
-            const collector = this.createMessageComponentCollector(question, {
-                filter: this.defaultCollectorFilter.bind(this),
+            this.interactionCollector = question.createMessageComponentCollector({
+                filter: (i) => i.user.id === this.interaction.user.id,
                 idle: maxIdleTime,
             });
 
@@ -1863,7 +1867,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
     public checkers = {
         async StringSelect<Returns extends string, Req extends boolean>(
             this: Form,
-            options: StringSelectQuestionOptions<Req, Returns>,
+            options: StringSelectQuestionOptions<Returns>,
             response: Awaited<ReturnType<typeof this.askers.StringSelect<Returns, Req>>>
         ) {
             if (response.some((value) => !options.select.options.map(option => option.value).includes(value)))
@@ -1878,7 +1882,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
         async String<Req extends boolean>(
             this: Form,
-            options: StringQuestionOptions<Req>,
+            options: StringQuestionOptions,
             response: Awaited<ReturnType<typeof this.askers.String<Req>>>
         ) {
             if (options.required && !response)
@@ -1890,7 +1894,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
         async Integer<Req extends boolean>(
             this: Form,
-            options: IntegerQuestionOptions<Req>,
+            options: IntegerQuestionOptions,
             response: Awaited<ReturnType<typeof this.askers.Integer<Req>>>
         ) {
             if (options.required && typeof response !== 'number')
@@ -1902,7 +1906,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
         async Boolean<Req extends boolean>(
             this: Form,
-            options: BooleanQuestionOptions<Req>,
+            options: BooleanQuestionOptions,
             response: Awaited<ReturnType<typeof this.askers.Boolean<Req>>>
         ) {
             if (options.required && typeof response !== 'boolean')
@@ -1914,7 +1918,7 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
         async Attachments<Req extends boolean>(
             this: Form,
-            options: AttachmentsQuestionOptions<Req>,
+            options: AttachmentsQuestionOptions,
             response: Awaited<ReturnType<typeof this.askers.Attachments<Req>>>
         ) {
             const minAttachments = Math.max(options.minAttachments ?? 0, 0);
@@ -1927,15 +1931,15 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
 
             if (required && !response.length) {
-                (this.questions.get(options.name)! as Question<'Attachments'>).options.attachmentIndex = 0;
+                (this.questions.get(options.name)!.options as AttachmentsQuestionOptions).attachmentIndex = 0;
 
                 return options.requiredFieldMessage ?? 'Este é um campo obrigatório!';
             } else if (response.length < minAttachments) {
-                (this.questions.get(options.name)! as Question<'Attachments'>).options.attachmentIndex = response.length;
+                (this.questions.get(options.name)!.options as AttachmentsQuestionOptions).attachmentIndex = response.length;
 
                 return lessThanTheMinimumAttachmentsMessage;
             } else if (response.length > maxAttachments) {
-                (this.questions.get(options.name)! as Question<'Attachments'>).options.attachmentIndex = maxAttachments - 1;
+                (this.questions.get(options.name)!.options as AttachmentsQuestionOptions).attachmentIndex = maxAttachments - 1;
 
                 return greaterThanTheMaximumAttachmentsMessage;
             }
@@ -1958,192 +1962,106 @@ export default class Form extends (EventEmitter as unknown as { new(): INodeEven
 
 
 
-    // defaultsFunctions
 
 
-    /** Creates a `defaultOnChangeQuestionButtonClick` */
-    private defaultOnChangeQuestionButtonClickFactory<Type extends QuestionType>(options: Parameters<Form['askers'][Type]>[0]) {
-        /** Is executed when don't have a `option.onChangeQuestionButtonClick` */
-        return async function defaultOnChangeQuestionButtonClick(
-            this: Form,
-            action: ChangeQuestionAction,
-            i: ButtonInteraction<CacheType>
-        ) {
-            if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
 
-            if (!i.deferred && !i.replied) await i.deferUpdate()
-                .catch((error: unknown) => {
-                    log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
-                        'enquanto executava #(defaultOnChangeQuestionButtonClick)#',
-                        `para a question "#(${options.name})#"`,
-                        `no Form "#(${this.name})#",`,
-                        `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
-                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
-                        '\n#(Erro)#:', error,
-                        '\n#(ButtonInteraction)#:', i,
-                        '\n#(CommandInteraction)#:', this.interaction
-                    );
-                    BaseError.handle(error);
-                    throw error;
-                });
 
 
 
-            const returns = this.questions.get(options.name)!.response as Awaited<ReturnType<Form['askers'][Type]>> | undefined;
 
 
+    // public defaultCollectorFilter(this: Form, i: Parameters<CollectorFilter<[StringSelectMenuInteraction<CacheType> | UserSelectMenuInteraction<CacheType> | RoleSelectMenuInteraction<CacheType> | MentionableSelectMenuInteraction<CacheType> | ChannelSelectMenuInteraction<CacheType> | ButtonInteraction<CacheType>]>>[0]) {
+    //     return i.user.id === this.interaction.user.id;
+    // };
 
-            this.changeQuestion(action);
 
-            if (options.onChangeQuestion) await options.onChangeQuestion.bind(this)(action, i);
 
 
-            return returns;
-        };
-    }
 
-    /** Creates a `defaultOnFinishFormButtonClick` */
-    private defaultOnFinishFormButtonClickFactory<Type extends QuestionType>(options: Parameters<Form['askers'][Type]>[0]) {
-        /** Is executed when don't have a `option.onFinishFormButtonClick` */
-        return async function defaultOnFinishFormButtonClick(
-            this: Form,
-            i: ButtonInteraction<CacheType>
-        ) {
-            if (!this.questions.get(options.name)) throw new Error(`Don't exists a question with this name: "${options.name}"`);
 
+    // public createMessageComponentCollector(message: Message, options?: MessageCollectorOptionsParams<MessageComponentType, boolean> | undefined) {
+    //     const collector = message.createMessageComponentCollector(options);
 
+    //     this.collectors.push(collector);
+    //     this.interactionCollectors.push(collector);
 
-            if (!i.deferred && !i.replied) await i.deferUpdate()
-                .catch((error: unknown) => {
-                    log.error('Erro ao usar #i(ButtonInteraction<CacheType>)###(deferUpdate())#',
-                        'enquanto executava #(defaultOnFinishFormButtonClick)#',
-                        `para a question "#(${options.name})#"`,
-                        `no Form "#(${this.name})#",`,
-                        `aberto pelo usuário #(@${this.interaction.user.tag})# (#g(${this.interaction.user.id})#),`,
-                        `no servidor #(${this.interaction.guild?.name ?? this.interaction.guildId ?? 'DM'})#.`,
-                        '\n#(Erro)#:', error,
-                        '\n#(ButtonInteraction)#:', i,
-                        '\n#(CommandInteraction)#:', this.interaction
-                    );
-                    BaseError.handle(error);
-                    throw error;
-                });
+    //     return collector;
+    // }
 
+    // public createMessageCollector(channel: TextBasedChannel, options?: MessageCollectorOptions | undefined) {
+    //     const collector = channel.createMessageCollector(options);
 
+    //     this.collectors.push(collector);
+    //     this.messageCollectors.push(collector);
 
+    //     return collector;
+    // }
 
-            const returns = this.questions.get(options.name)!.response as Awaited<ReturnType<Form['askers'][Type]>> | undefined;
 
+    // COMENTAR A PARTIR DAQUI
 
-            this.finishForm();
 
 
-            if (options.onFinishForm) await options.onFinishForm.bind(this)(i);
+    // // Action row factories ----------------------------------------------
 
-            return returns;
-        };
-    }
+    // private rowNavigateBetweenQuestionsFactory(prevQuestionButton?: BaseButtonData, nextQuestionButton?: BaseButtonData, finishFormButton?: BaseButtonData) {
+    //     const currentQuestionButton = new ButtonBuilder()
+    //         .setCustomId(`current-question-button-${Date.now()}`)
+    //         .setLabel(`${(this.currentQuestionIndex ?? 0) + 1}/${this.questions.size}`)
+    //         .setDisabled(true)
+    //         .setStyle(ButtonStyle.Secondary);
 
+    //     const actionRow = new ActionRowBuilder<ButtonBuilder>()
+    //         .setComponents(...[
+    //             ...(prevQuestionButton ? [this.prevQuestionButtonFactory(prevQuestionButton)] : []),
+    //             currentQuestionButton,
+    //             ...(nextQuestionButton ? [this.nextQuestionButtonFactory(nextQuestionButton)] : []),
+    //             ...(finishFormButton ? [this.finishFormButtonFactory(finishFormButton)] : []),
+    //         ]);
 
+    //     return actionRow;
+    // }
 
+    // private rowCleanButtonFactory(customId: string, label: string) {
+    //     return new ActionRowBuilder<ButtonBuilder>()
+    //         .setComponents(
+    //             new ButtonBuilder()
+    //                 .setCustomId(customId)
+    //                 .setLabel(label)
+    //                 .setStyle(ButtonStyle.Secondary)
+    //         );
+    // }
 
 
 
+    // // Button factories --------------------------------------------------------
 
+    // private prevQuestionButtonFactory(nextQuestionButton: BaseButtonData) {
+    //     return this.basicButtonFactory(nextQuestionButton)
+    //         .setStyle(ButtonStyle.Secondary);
+    // }
 
+    // private nextQuestionButtonFactory(nextQuestionButton: BaseButtonData) {
+    //     return this.basicButtonFactory(nextQuestionButton)
+    //         .setStyle(ButtonStyle.Success);
+    // }
 
-    private defaultCollectorFilter(this: Form, i: Parameters<CollectorFilter<[StringSelectMenuInteraction<CacheType> | UserSelectMenuInteraction<CacheType> | RoleSelectMenuInteraction<CacheType> | MentionableSelectMenuInteraction<CacheType> | ChannelSelectMenuInteraction<CacheType> | ButtonInteraction<CacheType>]>>[0]) {
-        return i.user.id === this.interaction.user.id;
-    };
+    // private finishFormButtonFactory(finishFormButton: BaseButtonData) {
+    //     return this.basicButtonFactory(finishFormButton)
+    //         .setStyle(ButtonStyle.Success);
+    // }
 
+    // private basicButtonFactory(button: BaseButtonData) {
+    //     return new ButtonBuilder()
+    //         .setCustomId(button.customId)
+    //         .setLabel(button.label)
+    //         .setDisabled(!!button.disabled);
+    // }
 
 
 
-
-
-    private createMessageComponentCollector(message: Message, options?: MessageCollectorOptionsParams<MessageComponentType, boolean> | undefined) {
-        const collector = message.createMessageComponentCollector(options);
-
-        this.collectors.push(collector);
-        this.interactionCollectors.push(collector);
-
-        return collector;
-    }
-
-    private createMessageCollector(channel: TextBasedChannel, options?: MessageCollectorOptions | undefined) {
-        const collector = channel.createMessageCollector(options);
-
-        this.collectors.push(collector);
-        this.messageCollectors.push(collector);
-
-        return collector;
-    }
-
-
-
-
-
-
-    // Action row factories ----------------------------------------------
-
-    private rowNavigateBetweenQuestionsFactory(prevQuestionButton?: BaseButtonData, nextQuestionButton?: BaseButtonData, finishFormButton?: BaseButtonData) {
-        const currentQuestionButton = new ButtonBuilder()
-            .setCustomId(`current-question-button-${Date.now()}`)
-            .setLabel(`${(this.currentQuestionIndex ?? 0) + 1}/${this.questions.size}`)
-            .setDisabled(true)
-            .setStyle(ButtonStyle.Secondary);
-
-        const actionRow = new ActionRowBuilder<ButtonBuilder>()
-            .setComponents(...[
-                ...(prevQuestionButton ? [this.prevQuestionButtonFactory(prevQuestionButton)] : []),
-                currentQuestionButton,
-                ...(nextQuestionButton ? [this.nextQuestionButtonFactory(nextQuestionButton)] : []),
-                ...(finishFormButton ? [this.finishFormButtonFactory(finishFormButton)] : []),
-            ]);
-
-        return actionRow;
-    }
-
-    private rowCleanButtonFactory(customId: string, label: string) {
-        return new ActionRowBuilder<ButtonBuilder>()
-            .setComponents(
-                new ButtonBuilder()
-                    .setCustomId(customId)
-                    .setLabel(label)
-                    .setStyle(ButtonStyle.Secondary)
-            );
-    }
-
-
-
-    // Button factories --------------------------------------------------------
-
-    private prevQuestionButtonFactory(nextQuestionButton: BaseButtonData) {
-        return this.basicButtonFactory(nextQuestionButton)
-            .setStyle(ButtonStyle.Secondary);
-    }
-
-    private nextQuestionButtonFactory(nextQuestionButton: BaseButtonData) {
-        return this.basicButtonFactory(nextQuestionButton)
-            .setStyle(ButtonStyle.Success);
-    }
-
-    private finishFormButtonFactory(finishFormButton: BaseButtonData) {
-        return this.basicButtonFactory(finishFormButton)
-            .setStyle(ButtonStyle.Success);
-    }
-
-    private basicButtonFactory(button: BaseButtonData) {
-        return new ButtonBuilder()
-            .setCustomId(button.customId)
-            .setLabel(button.label)
-            .setDisabled(!!button.disabled);
-    }
-
-
-
-
+    // ATÉ AQUI
 
 
 
